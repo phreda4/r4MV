@@ -1,0 +1,59 @@
+^r4/lib/btn.txt
+
+#teclasAlpha1
+"Qq1" "Ww2" "Ee3" "Rr4" "Tt5" "Yy6" "Uu7" "Ii8" "Oo9" "Pp0"
+"Aa!" "Ss@" "Dd#" "Ff$" "Gg""" "Hh&" "Jj*" "Kk?" "Ll/" "^_\"
+"Zz_" "Xx%" "Cc'" "Vv(" "Bb)" "Nn-" "Mm+" "[{." "|=;" "]},"
+",;<" "   " ".:>" "   " "   " "   " "AAA" "123" ">!" "<--"
+
+#modo 0
+#:vkey 0
+
+:kbac	1 'vkey ! ;
+:kdel   2 'vkey ! ;
+:kins   3 'vkey ! ;
+
+:kenter 13 'vkey ! ;
+:ktab   9 'vkey ! ;
+:kcambio
+	modo 0? ( 1 )( 0 ) 'modo ! drop ;
+:kcambion
+	2 'modo ! ;
+
+
+#especial kbac kdel kins kcambion kcambio ktab kenter
+
+:tecesp
+	dup 2 << 'especial + @ exec ;
+
+#icons "BAC" "DEL" "INS" "123" "aBc" "->|" "<--"
+
+:teclaesp
+	33 -
+	home azul
+	'tecesp btn
+	blanco 2 << 'icons + printc ;
+
+:tec
+	dup 2 << 'teclasAlpha1 + modo + c@ 'vkey ! ;
+
+:tecla
+	32 >? ( teclaesp ; )
+	home negro
+	'tec btn
+	blanco 2 << 'teclasAlpha1 +
+	modo + c@ "%k" printc ;
+
+::vkeyboard
+	sw 10 / sh 12 /	2dup dim
+	0 >r
+	0 ( 4 <? )(
+		0 ( 10 <? )(
+			pick3 over * pick4 2/ +
+			pick3 pick3 * pick4 2/ + pick4 3 << +
+			pos
+			r tecla
+			1 r+
+			1+ ) drop
+		1+ ) drop
+	2drop rdrop ;

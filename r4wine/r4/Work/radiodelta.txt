@@ -1,0 +1,45 @@
+^r4/lib/gui.txt
+^r4/lib/mem.txt
+
+#filename "RDS_RADIO.TXT"
+#filename2 "C:/Archivos de programa/Hardata/Weather/Weather.html"
+#homepage "http://delta105.com.ar/in.php?m=%s"
+#homepage2 "http://delta105.com.ar/in.php?t=%s"
+#file1
+#file2
+#file3
+#file4
+
+:redone
+	file1 'filename load 0 swap c!
+	file1 file2 = 1? ( drop ; ) drop
+	file1 file2 strcpy
+	file1 'homepage mprint 0 file1 openurl drop
+	;
+
+:redone2
+	file2 'filename2 load 0 swap c!
+	file2 file3 = 1? ( drop ; ) drop
+	file2 file3 strcpy
+	file2 'homepage2 mprint 0 file2 openurl drop
+	;
+
+:main
+	mark
+	here 'file1 !
+	here $fff + 'file2 !
+	here $1fff + 'file3 !
+	here $2fff + 'file4 !
+	file1 'filename load 0 swap c!
+	0 file2 !
+	file3 'filename2 load 0 swap c!
+	0 file4 !
+	show clrscr
+		verde "Radio Delta" print cr
+		blanco "Escuchando: " print file1 print cr
+		'exit >esc<
+		10 .segs .restart
+		redone
+		redone2 ;
+
+: main ;

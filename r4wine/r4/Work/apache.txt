@@ -1,0 +1,540 @@
+| presupuesto de Apache
+|Listado de Precios
+|	Alta/Baja/Modificacion/Listados
+|	Modificacion por porcentaje
+|Registro de Clientes
+|	Alta/Baja/Modificacion/Listados
+|	Alta automatica por presupuesto
+|Confeccion de presupuesto
+|	Registro
+| 2011 PHREDA
+|-----------
+^r4/lib/gui.txt
+^r4/lib/parse.txt
+^r4/lib/grid.txt
+^r4/lib/formkit.txt
+^r4/lib/prnutil.txt
+^r4/lib/clock.txt
+
+#dbprecios 0 "db/apache/precios.db"
+#dbclientes 0 "db/apache/clientes.db"
+#dbpresupuestos 0 "db/apache/presupuestos.db"
+
+#fkprecios 0 "db/apache/precios.fk"
+#fkclientes 0 "db/apache/clientes.fk"
+#fkcab 0 "db/apache/cab.fk"
+#fkpie 0 "db/apache/pie.fk"
+#fkpresupuestos 0 "db/apache/presupuestos.fk"
+
+|--- GRILLA
+#grprecios 0 0
+$10100 $601 $40102 0
+"Codigo|Descripcion|Precio"
+
+#grclientes 0 0
+$400 $201 $202 0
+"Nombre|Dirección|Localidad"
+
+#grpresupuestos 0 0
+$10100 $401 $202 $203 0
+"Fecha|Cliente|Dirección|Localidad"
+
+
+|---- titulo
+:titulo
+	clrscr
+	64 gc.top
+	$777676 $FE0000 hfil
+	0.09 0.1 fdim
+	0.9 0.88 fpos almanaque
+	scr blanco fonta-Arial14
+|	cr2
+	" Agro y Maquinarias de Gustavo Pérez " print
+|*** DEBUG
+|	dup "(%d)" print
+|****
+	cr cr2
+	;
+
+:nro2 | v -- ""
+	100 /mod
+	10 <? ( "%d,0%d" )( "%d,%d" )
+	>r swap r> mprint ;
+
+|--- filtro
+#pad )( 64
+#valor
+
+:testreg | reg -- reg 1/0
+	'pad over reg?i ;
+
+:dofilter
+	'pad c@ 1? ( 'testreg nip ) 'dbprecios dbfilterv ;
+:clearfilter
+	0 'grprecios 4+ !
+	0 'pad !
+	0 'dbprecios dbfilterv ;
+
+:consolaprecios
+	fonta-arial14
+	verde " FILTRO: " print blanco 'pad 48 input
+	'dofilter lostfoco
+|	1 setfoco
+	;
+
+#texpor )( 16
+
+:cambio1art
+	'texpor ?real2 0? ( 2drop ; ) nip
+	100 / 100 +
+	2 'fkprecios fkgetm
+	?real2 nip 100 */
+	50 + 100 / 100 * | limpia centavos
+	nro2
+	2 'fkprecios fksetm
+	;
+
+:updart
+	exit
+	'fkprecios fkserialice
+	grprecios 'dbprecios dbupdate ;
+
+:artedit
+	'fkprecios fkclear
+	grprecios 'dbprecios dbgetreg
+	'fkprecios fkdeserialice
+	0 'texpor !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Articulos > Editar " print
+		verde 'updart " Actualizar " sp btnt
+		rojo 'exit " Cancelar " sp btnt
+		cr cr blanco "  Articulo " print cr
+		sp sp chome!
+		negro
+		'fkprecios fkedit
+		cr cr
+		fonta-arial14
+		verde "%% de Modificación: " print
+		blanco sp 'texpor 11 input
+		rojo
+		'cambio1art "Cambiar" sp btnt cr
+		cminiflecha	;
+
+
+:cambio1
+	2 'fkprecios fkgetm
+	?real2 nip
+	valor 100 */
+	50 + 100 / 100 * | limpia centavos
+	nro2
+	2 'fkprecios fksetm
+	;
+
+:cambiopre
+	'texpor ?real2 0? ( 2drop ; )
+	100 / 100 +
+	'valor ! drop
+	exit
+	0 (
+		'fkprecios fkclear
+		dup 'dbprecios dbgetreg
+		'fkprecios fkdeserialice
+        cambio1
+		'fkprecios fkserialice
+		dup 'dbprecios dbupdate
+		1+ 'dbprecios dbcntregs
+		>=? )
+	drop
+	;
+
+:artporc
+	clearfilter
+	0 'texpor !
+	refreshfoco
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Articulos > Modificación por porcentaje " print cr cr
+		consolaprecios cr cr2
+		verde " Porcentaje de modificación: " print
+		blanco sp 'texpor 11 input cr cr
+		rojo
+		'cambiopre "Modificar Precios" sp btnt cr cr2
+		blanco
+		'dbprecios dbcntregs " %d Articulos " print
+		font-vard-12
+		8 'tx1 ! sw 8 - 'tx2 !
+		26 'grprecios 'dbprecios dbgrid cr
+		cminiflecha	;
+
+|------------------------------------------
+:articulos
+	clearfilter
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Articulos " print
+		cyan
+		'artedit " Editar " sp btnt
+		[ artporc clearfilter ; ] " Porcentaje " sp btnt
+
+		cr cr blanco "  Articulos" print
+		fonta-arial10
+		8 'tx1 ! sw 8 - 'tx2 !
+		36 'grprecios 'dbprecios dbgrid
+		cminiflecha	;
+
+|------------------------------------------
+:clientes
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Clientes" print cr cr
+		blanco "  Clientes" print
+		fonta-arial10
+		8 'tx1 ! sw 8 - 'tx2 !
+		26 'grclientes 'dbclientes dbgrid
+		cminiflecha	;
+
+
+|------------ HACER PRESUPUESTO -------------
+#codigo )( 16
+#detalle )( $ffff
+
+#grlistapre 0 0
+$800 $40201 0
+"Descripción del Producto|Precio"
+
+#subtotal 0
+#decreto1228
+#desctxt )( 16
+#descuento 0
+#iva 0
+#total 0
+
+#totales )( $3fff
+#grtotales 0 0
+$30100 $40101 0
+0
+
+|------------ Imprime presupuesto
+:printheader
+	"db/apache/apacheg.bmp" 200 200 docbit
+	11 0 "Arial Black" docfont
+	3050 200 docat "Agro y Maquinarias" doctext
+	3000 300 docat "de Gustavo Pérez S.A." doctext
+	9 0 "Arial" docfont
+	2900 450 docat "Av. Independencia 993 - San Cayetano" doctext
+	2870 550 docat "Tel. 02983-470696 Cel. 02983-15412837" doctext
+	2890 650 docat "E-mail: agroymaquinarias@hotmail.com" doctext
+	2880 750 docat "WWW.AGROYMAQUINARIAS.COM.AR" doctext
+
+	12 0 "Arial" docfont
+	100 1000 docat
+	0 'fkcab fkgetm "Fecha: %a" mprint doctext
+	3400 1000 docat "PRESUPUESTO" doctext
+	100 1100 docat
+	1 'fkcab fkgetm "Señor/es: %a" mprint doctext
+	100 1200 docat
+	2 'fkcab fkgetm "Dirección: %a" mprint doctext
+	2400 1200 docat
+	3 'fkcab fkgetm "Localidad: %a" mprint doctext
+	100 1300 docat
+	4 'fkcab fkgetm "Provincia: %a" mprint doctext
+	2400 1300 docat
+	5 'fkcab fkgetm "Teléfono: %a" mprint doctext
+	100 1400 docat
+	6 'fkcab fkgetm "E-mail: %a" mprint doctext
+	2400 1400 docat
+	7 'fkcab fkgetm "C.U.I.T.: %a" mprint doctext
+	50 950 docat 4550 950 docline
+	50 1550 docat 4550 1550 docline
+	;
+
+:printfooter
+	50 6050 docat 4550 6050 docline
+	100 6100 docat
+	0 'fkpie fkgetm "Condiciones de Pago: %a " mprint doctext
+	100 6300 docat
+	1 'fkpie fkgetm "Oferta Válida Hasta: %a" mprint doctext
+	2400 6300 docat
+	2 'fkpie fkgetm "Fecha Estimada de Entrega: %a" mprint doctext
+	100 6400 docat
+	3 'fkpie fkgetm "Confeccionó Presupuesto: %a" mprint doctext
+	;
+
+#yl
+#ym
+:prdescripcion
+	1600 'yl !
+	'detalle
+	(	dup "%a" mprint 3000 200 yl prtext 'ym !
+		>fld> 0? ( drop ; )
+		dup "%a" mprint memnro2 800 3400 yl prtextr drop ym 'yl !
+		>fld> 0? ) drop ;
+
+:prtotales
+	100 yl 25 + docat 4500 yl 25 + docline
+	50 'yl +!
+	'totales
+	(	dup "%a" mprint 1000 2400 yl prtext drop
+		>fld> 0? ( drop ; )
+		dup "%a" mprint memnro2 800 3400 yl prtextr 'yl !
+		>fld> 0? ) drop ;
+
+:imprpre
+	docini
+	printheader
+	prdescripcion
+	prtotales
+	printfooter
+	docend ;
+
+|------- edita presupuesto
+
+:recaltot
+	mark
+	'totales 'here !
+	subtotal nro2 "Subtotal: |%s|" ,print
+	decreto1228 nro2 "Decreto 12,28: |%s|" ,print
+	descuento nro2 "Descuento: |%s|" ,print
+	iva nro2 "IVA 10,5%%: |%s|" ,print
+	total nro2 "TOTAL NETO: |%s|" ,print
+	0 ,c
+	empty ;
+
+
+:dec1228nopNO
+	over
+	<fld< <fld< "Pulverizadora" =pre 1? ( drop ; ) drop
+	dup 1228 10000 */ 'decreto1228 +!
+	;
+
+:dec1228
+	over
+	<fld< <fld< "sembradora" =pre 0? ( drop ; ) drop
+	dup 1228 10000 */ 'decreto1228 +!
+	;
+
+:recalc
+	0 'subtotal !
+	0 'decreto1228 !
+        'detalle ( c@+ 1? )( drop ) swap !
+	'detalle ( >fld> 1? )( ?real2 |?sint
+		dec1228
+		'subtotal +! ) drop
+	subtotal
+	decreto1228 -
+	dup 'desctxt ?real2 nip 10000 */ 'descuento !
+	descuento -
+	dup 1050 10000 */ dup 'iva ! + 'total !
+	recaltot
+	;
+
+:addline
+	'codigo 0 'dbprecios dbsearchstr
+	0? ( drop ; ) | no existe codigo
+	@
+	>fld> dup "%a|" mprint 'detalle strcat
+	>fld> "%a|" mprint 'detalle strcat
+	0 'codigo !
+	recalc ;
+
+:deleteline | nro --
+	2* 'detalle swap >>fld
+	dup >fld> >fld> | rdel rnex
+	0? ( 2drop ; )
+	swap strcpy recalc ;
+
+:delline
+	grlistapre -1 =? ( drop ; )
+	deleteline
+	recalc
+	;
+
+|--- elige de lista
+:agregalinea
+	grprecios 'dbprecios dbgetreg "%a" mprint 'codigo strcpy
+	addline
+	exit ;
+
+:listaelige
+	>xfb
+	clearfilter
+	refreshfoco
+	show xfb>scr
+		0.9 0.86 fdim 0 dup fpos
+		cyan oscuro gc.fbox
+		gc2win font-vard-12-bold
+		cr cr cr cr
+		blanco " Lista de Precios" print
+|		font-vard-12
+		29 'grprecios 'dbprecios dbgrid cr
+		blanco
+		consolaprecios cr cr2
+		verde 'agregalinea dup <enter> " Aceptar " sp sp .btnt
+		rojo  'exit dup >esc< " Cancelar " sp sp .btnt
+		cminiflecha ;
+
+:listaline
+	listaelige
+	recalc ;
+
+|------- guarda presupuesto
+:savepresupuesto
+	mark	| agrega presupuesto
+	'fkcab fkserialice+
+	'detalle fktom+
+	'totales fktom+
+	'fkpie fkserialice+
+	$7e ,c 13 ,c 10 ,c 0 ,c
+	empty
+	'dbpresupuestos dbinsert
+
+	mark	| agrega cliente
+	'fkcab fkserialice
+	here >fld> 'here !
+	'dbclientes dbinsert
+	empty
+	;
+
+:exitpre
+	exit
+	1 'fkcab fkgetm c@ 0? ( drop ; ) drop | sin nombre cliente
+	total 0? ( drop ; ) drop | sin total
+	savepresupuesto
+	;
+
+#linead )( 512
+#preciod )( 16
+
+:addlinea
+	'preciod ?real2 0? ( 2drop ; ) 2drop
+	'preciod 'linead "%a|%a|" mprint 'detalle strcat
+	0 'linead !
+	0 'preciod !
+	recalc
+	;
+
+:addlineasiva
+	'preciod ?real2 0? ( 2drop ; ) nip
+	'linead 'detalle strcat
+	"|" 'detalle strcat
+	10000 11050 */ 1+
+	nro2 'detalle strcat
+	"|" 'detalle strcat
+	0 'linead !
+	0 'preciod !
+	recalc
+	;
+
+:nuevopre
+	0 'desctxt !
+	0 'detalle !
+	-1 'grlistapre !
+        'fkcab fkclear
+	recalc
+	show titulo
+		rojo 'exitpre dup >esc< "X" sp sp 2 menur
+		blanco " >> Nuevo Presupuesto    " print
+                [ 'detalle memmap ; ] <f1>
+		amarillo
+		'imprpre "Imprimir" btnt
+		cr cr
+		sp chome! negro
+		'fkcab fkedit cr cr2
+
+		sw 128 - 'tx2 !
+		cyan oscuro
+		6 linesfill
+		blanco " Código: " print 'codigo 16 input
+		cyan
+		'addline " + " sp .link
+		'delline " - " sp .link
+		verde 'listaline " LISTA " sp .link
+		cr
+		blanco " Descripción: " print
+		'linead 512 3 120 inputm	| 'var max h w -- | *** campo memo
+|		'linead 80 input sp
+                cr cr cr
+		" $ " print
+		'preciod 16 input
+		|***con/sin iva
+		verde 'addlinea " + " sp .link
+		'addlineasiva " +s/IVA " sp .link
+		cr
+		blanco
+		" Descuento: " print 'desctxt 16 input
+		'recalc lostfoco
+		cr cr2
+		10 'detalle 'grlistapre memgrids
+		negro
+		sw 2/ dup 3 >> + 'tx1 !
+		5 'totales 'grtotales memgrid
+		4 'tx1 ! cr
+		negro
+		'fkpie fkedit
+
+		cminiflecha	;
+
+|------------------------------------------
+:presupuesto
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Presupuesto " print
+		verde
+		0 " Ver " btnt
+		cr cr
+		blanco "  Presupuestos" print
+		fonta-arial10
+		8 'tx1 ! sw 8 - 'tx2 !
+		26 'grpresupuestos 'dbpresupuestos dbgrid
+		cminiflecha	;
+
+|---- PRINCIPAL
+#logo
+#mensaje )( 64
+
+:main
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Menu Principal" print cr cr cr
+		sp sp sp chome!
+
+		verde
+		'nuevopre dup <f1> "F1- Nuevo Presupuesto" sp 20 btntf cr cr
+		'articulos dup <f2> "F2- Articulos" sp 20 btntf cr cr
+		'presupuesto dup <f3> "F3- Presupuestos" sp 20 btntf cr cr
+		'clientes dup <f4> "F4- Clientes" sp 20 btntf cr cr
+
+|		azul oscuro
+|		1 23 gotoxy 'mensaje print
+
+		cminimano	;
+
+:ini
+	mark
+
+	'fkprecios fkload
+	'fkclientes fkload
+	'fkcab fkload
+	'fkpie fkload
+	'fkpresupuestos fkload
+
+	'dbprecios dbload
+	'dbclientes dbload
+	'dbpresupuestos dbload
+
+	docres "%dx%d" mprint 'mensaje strcpy
+
+	;
+
+: $777676 paper ini 33 main ;
+
+| revisar decreto
+|* agrandar campo y que permita con y sin iva
+|* resetear filtro y hoja de grilla
+
+| sembradoras,descompactadoras y mixers 8%
+| pulverizador 5%
+| tractor 3%
+|
+| modificacion de precios, la segunda vuelta modifica mal

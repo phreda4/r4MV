@@ -1,0 +1,172 @@
+| ordenanzas
+| PHREDA 2009
+|----------------------------------
+^r4/lib/gui.txt
+^r4/lib/trace.txt
+^r4/lib/fontt.txt
+
+#texto
+#$texto
+#cursor
+
+#indice
+#indice>
+
+:imprimetexto
+	cursor
+	( c@+ 1? )(
+			bout? 1? ( 3drop ; ) drop
+			lout? 1? ( cr pick2 2 - c@ emit ) drop
+ 			emit )
+	2drop ;
+
+:<<13 | a -- a
+	( texto >? )( dup c@ $ff and
+		14 <? ( drop 1- ; )
+		drop 1- ) ;
+
+:>>13 | a -- a
+	( $texto <? )( c@+ $ff and
+		14 <? ( drop ; )
+		drop )
+	drop $texto 2 - ;
+
+
+:trim | adr -- adr
+	( c@+ 1? )( $ff and
+		32 >? ( drop 1- ; )
+		drop
+		) drop 1- ;
+
+:-trim | adr -- adr
+	( dup c@ $ff and 33 <? )( drop 1- ) drop 1+ ;
+
+:nline | adr n --
+	"'" ,s
+	( 1? )( swap c@+ ,c swap 1- ) 2drop
+	"'," ,s
+	trim ;
+
+:fline | adr --
+	"'" ,s
+	( c@+ $ff and 31 >? )( ,c ) 2drop
+	"'," ,s
+	trim ;
+
+:text | adr adr --
+	"'" ,s
+	( over <? )( c@+ ,c ) 2drop
+	"'," ,s
+	trim ;
+
+:=p | s1 s2 -- 1/0
+	( c@+ 1? )( rot c@+ rot - 1? ( 3drop 0 ; ) drop swap ) 3drop 1 ;
+
+:find | adr "texto" -- adr'
+	( 2dup =p 0? )( drop swap 1+ $texto >? ( 2drop 0 ; ) swap ) 2drop ;
+
+#anio
+#bloque
+#nbloque
+#expte
+#orden
+#origen
+#texto
+#textolast
+#com1
+#com2
+
+
+:rescata
+	expte >>13 -trim
+	4 - 'anio !
+	anio 2 -
+	( dup c@ $2f <>? )( drop 1- ) drop
+	1+ dup 'bloque !
+
+	0 swap
+	( c@+ $2f <>? )( drop swap 1+ swap ) 2drop
+	'nbloque !
+
+	com1 trim 'com1 !
+	com2 -trim 'com2 !
+	;
+
+:gensql
+ 	rescata
+	"INSERT INTO ordenanza (anio,bloque,expte,ordenanza,texto,comentario,derogada,modificada) VALUES (" ,ln
+
+	anio 4 nline
+	bloque nbloque nline
+    expte fline
+	orden fline
+	textolast texto text
+	com2 com1 text
+	"'','');" ,ln
+	;
+
+:buscacampos
+	trim
+	dup 'expte !
+	>>13 trim
+	dup 'texto !
+	dup "ORDENANZA Nº" find
+	0? ( drop "COMUNICACIÓN Nº" find )( nip )
+	dup 1- -trim 'textolast !
+	13 + dup 'orden !
+	>>13 dup 'com1 !
+|	dup "TESTIMONIO" find 2 - <<13 <<13
+	"TESTIMONIO" find 0? ( $texto nip ; )
+	2 - <<13 <<13
+	dup 'com2 !
+	;
+
+||||||||||||||
+:main
+	here dup 'texto ! dup 'cursor !
+	"db/dbMSC/ORDENANZA ANO 2012B.txt" load dup '$texto !
+|	"db/dbMSC/ORDENANZA-ANO-2012.txt" load dup '$texto !
+|	"db/dbMSC/ordenanzas 2011.txt" load dup '$texto !
+|	"db/dbMSC/ordenanzas2010-1.txt" load dup '$texto !
+|	"db/dbMSC/ordenanzas2010-2.txt" load dup '$texto !
+|	"db/dbMSC/Ordenanzas_2010.txt" load dup '$texto !
+|	"db/dbMSC/ordenanzas2008-2010.txt" load dup '$texto !
+|	"db/dbMSC/TODAS-1960-2008.txt" load dup '$texto !
+	4+ 'here !
+	mark
+
+	texto ( $texto <? )(
+		buscacampos
+		gensql
+|		trace
+|		dup memmap
+		) drop
+
+	"insert2012B.txt" savemem
+	empty
+	$ffffff paper
+	$0 'inkb !
+	$ffffff 'inka !
+	show
+
+	'exit >esc<
+	[ cursor <<13 'cursor ! ; ] <up>
+	[ cursor >>13 'cursor ! ; ] <dn>
+
+		clrscr
+		0.9 dup fdim 0 dup fpos
+		verde gc.box
+		gc2win
+		'vardana8 tfont
+		home azul
+		cursor "%h " print
+		":r4 " print
+		cr
+        negro
+		imprimetexto
+		cmano ;
+
+:   mark
+	33 main
+	;
+

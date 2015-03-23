@@ -1,0 +1,131 @@
+<html>
+    <head>
+        <title>Oliver's JS Raytracer</title>
+        <script>
+            var noImageData = false;
+            var numWorkers = 4;
+            var blockSize = 20;
+            var canvasSize = 400;
+            var goImmediately = false;
+            var reuseWorkers = true;
+            var vsync = true;
+            window.__defineGetter__("go", function(){ goImmediately = true; });
+            (function(){
+                try {             
+                    eval(window.location.search.toString().substring(1));
+                } catch (e) {}
+            })();
+            window.onload = function () {
+                controls = document.getElementById("controls");
+                workerCount = document.createElement("select");
+                workerCount.id = "workerCount";
+                if (window.Worker) {
+                    for (var i = 1; i <= 16; ++i) {
+                        var opt = document.createElement("option");
+                        opt.value = i;
+                        opt.appendChild(document.createTextNode(i));
+                        workerCount.appendChild(opt);
+                    }
+                    var opt = document.createElement("option");
+                    opt.value = 0;
+                    opt.appendChild(document.createTextNode("disabled"));
+                    workerCount.appendChild(opt);
+                    workerCount.value = numWorkers;
+                } else {
+                    workerCount.disabled = true;
+                    var opt = document.createElement("option");
+                    opt.value = 0;
+                    opt.appendChild(document.createTextNode("no workers"));
+                    workerCount.appendChild(opt);
+                }
+                var workerCountLabel = document.createElement("label");
+                workerCountLabel.appendChild(document.createTextNode("Number of Workers:"));
+                workerCountLabel.setAttribute("for", "workerCount");
+                controls.insertBefore(workerCountLabel, document.getElementById("renderButton"));
+                controls.insertBefore(workerCount, document.getElementById("renderButton"));
+                useImageData = document.createElement("input");
+                useImageData.type="checkbox";
+                var supportsImageData = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype.putImageData;
+                useImageData.checked = supportsImageData;
+
+                if (supportsImageData){
+                    var useImageDataLabel = document.createElement("label");
+                    useImageDataLabel.appendChild(document.createTextNode("Use ImageData API:"));
+                    useImageDataLabel.setAttribute("for", "useImageData");
+                    useImageData.id = "useImageData";
+                    controls.insertBefore(useImageDataLabel, document.getElementById("renderButton"));
+                    controls.insertBefore(useImageData, document.getElementById("renderButton"));
+                }
+                
+                
+                var canvas = document.getElementById("renderCanvas");
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+                if (goImmediately) render();
+            }
+        </script>
+        <script src="jobqueue.js"></script>
+        <script src="rtstructs.js"></script>
+        <script src="renderer.js"></script>
+        <script src="scene.js"></script>
+        <style type="text/css">html*#canvasError { display: none; }</style>
+    </head>
+    <body>
+        <canvas id="renderCanvas" width="400px" height="400px">
+            <div id="canvasError">You need a browser that supports DOM Canvas to view this demo, such as Safari (or any other WebKit based browser), or more or less any other non-IE browser </div>
+        </canvas><br />
+        <div id="console"></div>
+        <script>
+            function log(str) {
+               var console = document.getElementById("console");
+               console.appendChild(document.createTextNode(str + '\n'));
+            }
+            var rendering = false;
+            var angle = 0;
+            var queue;
+            var lastWorkerCount = -1;
+            function render(profile) {
+				if (rendering)
+				    return;
+				var renderButton = document.getElementById("renderButton");
+				renderButton.innerText = "Cancel";
+				renderButton.onclick = function() {
+			        renderButton.disabled = true;
+					renderButton.innerText = "Cancelling...";
+				    queue.stop(function() {
+    			        renderButton.disabled = false;
+    					rendering = false;
+    					renderButton.innerText = "Go!";
+    					renderButton.onclick = render;
+				    });
+				};
+				rendering = true;
+				var startDate = new Date().getTime();
+				var canvasElem = document.getElementById("renderCanvas");
+				var _canvas = canvasElem.getContext("2d");
+				var _camera = new Camera([-40*Math.sin(angle), 30 + 10 * Math.sin(angle*1.2), 40*Math.cos(angle)], [0, 0, 0], [0, 1, 0]);
+				_camera.onFinished = function() {
+					var deltaTime = new Date().getTime() - startDate;
+					rendering = false;
+					renderButton.onclick = render;
+					if (!window.animate) {
+    					log("Time taken: " + deltaTime/1000 + "s");
+    					renderButton.innerText = "Go!";
+    				}  else {
+    				    angle+=0.1;
+    				    setTimeout(render, 10);
+				    }
+    				    
+				};
+				queue = (workerCount.value === lastWorkerCount && reuseWorkers) ? queue : new JobQueue(workerCount.value);
+				lastWorkerCount = workerCount.value;
+				_camera.render(queue, createScene, _canvas, canvasElem.width, canvasElem.height,
+				               useImageData.checked);
+            }
+        </script>
+        <br />
+        <div id="controls">
+        <button id="renderButton" onclick="render()">Go!</button>
+        </div>
+    </body>
+</html>

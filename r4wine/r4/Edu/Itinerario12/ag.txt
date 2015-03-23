@@ -1,0 +1,17 @@
+| Motor para Aventura Grafica
+|
+^r4/lib/gui.txt
+^r4/lib/part16.txt
+
+
+#objetos 0 0
+#xp #yp
+
+:inicio
+	show clrscr
+		'exit >esc< ;
+:ram
+	mark
+	1024 'objetos p.ini
+	;
+: ram inicio ;

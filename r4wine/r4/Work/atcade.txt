@@ -1,0 +1,272 @@
+^r4/lib/gui.txt
+^r4/lib/input.txt
+
+^r4/lib/db2.txt
+^r4/lib/grid.txt
+^r4/lib/clock.txt
+^r4/lib/leebmp.txt
+
+| sistema de registro de fichas
+| PHREDA 2012
+|--------------------------
+
+#logobm
+
+:titulo
+	clrscr
+	fonta-Arial14b
+	64 gc.top
+	gc.all $FFE084 $101010 hfil
+|	gris gc.fbox
+	58 gc.botton
+|$FFE084 ink gc.fbox
+|	gris gc.fbox
+	gc.all $101010 $FFE084 hfil
+
+	scr blanco
+|	cr2
+	" ATCADE - Obleas de Socios" print
+|*** DEBUG
+|	dup "(%d)" print
+|****
+	cr cr2
+	0.09 0.1 fdim
+	0.9 0.88 fpos almanaque
+	fonta-Arial14 scr
+	;
+
+|------------- OBLEA
+#hayoblea
+
+#socio )( 9
+#apellido )( 31
+#nombre )( 31
+#cuit )( 21
+#direccion )( 41
+#tel )( 11
+#chasis )( 16
+#marca )( 16
+#patente )( 8
+
+#dbatcade 0 "db/atcade/obleas.db"
+#dborden socio apellido nombre cuit direccion tel chasis marca patente 0
+#grobleas 0 0
+$100 $401 $302 $204 $208 0
+"Socio|Apellido|Nombre|Direccion|Patente"
+
+:resetoblea
+	-1 'hayoblea !
+	-1 'grobleas !
+	cleardbgrid
+
+	0 'apellido !
+	0 'nombre !
+	0 'cuit !
+	0 'direccion !
+	0 'tel !
+	0 'chasis !
+	0 'marca !
+	0 'patente !
+	0 'socio ! ;
+
+:li
+	blanco linefill negro sp ;
+:inputoblea
+	sw dup 2 >> - 'tx2 !
+	blanco " Nro Socio: " print cr li	'socio 8 input cr
+	blanco " Apellido: " print cr li 'apellido 30 input cr
+	blanco " Nombre: " print cr li 'nombre 30 input cr
+	blanco " Cuit: " print cr li 'cuit 20 input cr
+	blanco " Dirección: " print cr li 'direccion 40 input cr
+	blanco " Teléfono: " print cr li 'tel 10 input cr
+	blanco " Chasis: " print cr li 'chasis 15 input cr
+	blanco " Marca: " print cr li 'marca 15 input cr
+	blanco " Patente: " print cr li 'patente 7 input cr ;
+
+:printoblea
+	sw dup 2 >> - 'tx2 !
+	blanco " Nro Socio: " print cr li 'socio print cr
+	blanco " Apellido: " print cr li 'apellido print cr
+	blanco " Nombre: " print cr li 'nombre print cr
+	blanco " Cuit: " print cr li 'cuit print cr
+	blanco " Dirección: " print cr li 'direccion print cr
+	blanco " Teléfono: " print cr li 'tel print cr
+	blanco " Chasis: " print cr li 'chasis print cr
+	blanco " Marca: " print cr li 'marca print cr
+	blanco " Patente: " print cr li 'patente print cr ;
+
+|-------------- busca oblea
+#pad )( 48
+
+|--------
+:obleafil
+	'pad over reg?i ;
+
+:filteroble
+	'pad c@ 1? ( 'obleafil nip ) 'dbatcade dbfilterv ;
+
+:buscaoblea
+	sp sp 0 "?:" cyan btnt sp sp
+	 'filteroble 'pad 32 inputexec cr cr
+	 'dbatcade dbcntregs "%d Obleas " print
+	fonta-Arial10
+	grobleas
+	22 'grobleas 'dbatcade dbgrid
+	grobleas swap =? ( drop ; )
+	dup 'dbatcade dbgetreg 'dborden dbDeSerial
+	'hayoblea !
+	refreshfoco
+	;
+
+|---------------------------------------------
+:insoble
+	exit
+	'dborden dbSerial 'dbatcade dbinsertlog ;
+
+:alta
+	resetoblea
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Alta de Oblea " print
+		cr cr sp chome!
+
+		inputoblea
+		cr cr
+		verde 'insoble " Aceptar " sp .btnt
+		rojo 'exit " Cancelar " sp .btnt
+		cminiflecha ;
+
+|---------------------------------------------
+:deloble
+	exit
+	hayoblea 'dbatcade dbdeletelog ;
+
+:bajaoblea
+	printoblea
+	cr cr
+	verde 'deloble " Eliminar " sp .btnt
+	rojo 'exit " Cancelar " sp .btnt
+	;
+
+:baja
+	0 'dbatcade dbfilterv
+	resetoblea
+	0 'pad !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Baja de Oblea " print
+		cr cr sp chome!
+		hayoblea -? ( buscaoblea )( bajaoblea ) drop
+		cminiflecha ;
+
+|---------------------------------------------
+:modoble
+	hayoblea 0 <? ( drop ; ) drop
+	exit
+	'dborden dbSerial hayoblea 'dbatcade dbupdatelog ;
+	;
+
+:modioblea
+	inputoblea cr cr
+	verde 'modoble " Modificar " sp .btnt
+	rojo 'exit " Cancelar " sp .btnt
+	;
+
+:modificacion
+	0 'dbatcade dbfilterv
+	resetoblea
+	0 'pad !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Modificación de Oblea " print
+		cr cr sp chome!
+		hayoblea -? ( buscaoblea )( modioblea ) drop
+		cminiflecha ;
+
+|---------------------------------------------
+:cadareg
+	( 1? )( dup "%a;" ,print >fld> ) drop
+	-1 'here +! ,cr ;
+
+:genplan
+	mark
+	"Socio;Apellido;Nombre;CUIT;Dirección;Teléfono;Chasis;Marca;Patente" ,s ,cr
+	'cadareg 'dbatcade dbmapi
+	date "planillas/planilla %d-%d-%d.csv" mprint savemem
+	empty ;
+
+:buscao
+	buscaoblea
+	cr cr fonta-arial14
+	verde 'genplan " Generar Planilla " sp .btnt ;
+
+|---- imprimir
+
+:printheader
+	"db/atcade/logo-atcade-horiz.bmp" 1200 200 docbit ;
+
+#yl
+:lpcr
+	100 'yl +!
+	1200 yl docat ;
+:lptab
+	2400 yl docat ;
+
+:prdescripcion
+	11 0 "Arial Black" docfont 1000 'yl !
+	lpcr
+	"Nro Socio: " doctext lptab 'socio doctext lpcr
+	"Apellido: " doctext lptab 'apellido doctext lpcr
+	"Nombre: " doctext lptab 'nombre doctext lpcr
+	"Cuit: " doctext lptab 'cuit doctext lpcr
+	"Dirección: " doctext lptab 'direccion doctext lpcr
+	"Teléfono: " doctext lptab 'tel doctext lpcr
+	"Chasis: " doctext lptab 'chasis doctext lpcr
+	"Marca: " doctext lptab 'marca doctext lpcr
+	"Patente: " doctext lptab 'patente doctext lpcr ;
+
+:printobl
+	docini
+	printheader
+	prdescripcion
+	docend ;
+
+:printo
+	printoblea
+	cr cr cr cr cr fonta-arial14
+	verde 'printobl " Imprimir Oblea " sp .btnt ;
+
+:consulta
+	0 'dbatcade dbfilterv
+	resetoblea
+	0 'pad !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Consulta de Oblea " print
+		cr cr sp chome!
+		hayoblea -? ( buscao )( printo ) drop
+		cminiflecha ;
+
+
+:main
+	mark
+	"db/atcade/logo-atcade.bmp" bmp.load 'logobm !
+	'dbatcade dbload
+	0 paper
+|	$FFE084 paper
+	show titulo
+		400 100 bmp.xyreal
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Menu Principal" print
+		cr cr cr
+		sp sp chome!
+		cr rojo
+		'alta dup <f1> "F1 - Alta" sp 16 btntf cr cr
+		'baja dup <f2> "F2 - Baja" sp 16 btntf cr cr
+		'modificacion dup <f3> "F3 - Modificación" sp 16 btntf cr cr
+		'consulta dup <f4> "F4 - Consulta" sp 16 btntf cr cr
+		'exit >esc<
+		cminiflecha	;
+
+: 33 main ;
+

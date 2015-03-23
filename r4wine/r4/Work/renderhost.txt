@@ -1,0 +1,124 @@
+^r4/lib/gui.txt
+^r4/lib/db2.txt
+^r4/lib/input.txt
+^r4/lib/fonta.txt
+
+|agroymaquinarias.com.ar|184.107.148.226|agroymaq|info@renderdesignsc.com.ar|09 Jun 25 11:48|home|512|3|render_h512|x3|render|host.oporthost.com|1245941306|3984|524288~
+
+#d_Domain )( 32
+#d_IP	)( 16
+#d_UserName	)( 16
+#d_Email	)( 32
+#d_StartDate )( 16
+#d_DiskPartition )( 16
+#d_Quota	)( 16
+#d_DiskSpaceUsed	)( 16
+#d_Package	)( 32
+#d_Theme	)( 16
+#d_Owner	)( 16
+#d_Server	)( 16
+#d_UnixStartdate	)( 16
+#d_DiskSpace	)( 16
+#d_Used(bytes)	)( 16
+#d_Quota(bytes)	)( 16
+
+#dbrhost 0 "db/render/datoshost.db"
+#dorhost
+d_Domain d_IP d_UserName d_Email d_StartDate d_DiskPartition d_Quota d_DiskSpaceUsed d_Package
+d_Theme	d_Owner	d_Server d_UnixStartdate d_DiskSpace d_Used(bytes) d_Quota(bytes)
+0
+
+#grrhost 0 0
+$100 $101 $102 $103 $104 0
+"Domain|IP|User Name|Email|Start Date"
+
+
+:m
+	mark
+	'dbrhost dbload
+	;
+
+:titulo
+	clrscr
+	fonta-Arial14b
+	scr blanco cr
+	" Render Host - Planilla de vencimientos al " print
+	date "%d/%d/%d" print cr
+|*** DEBUG
+|	dup "(%d)" print
+|****
+	fonta-Arial14
+
+	;
+
+#mm "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec"
+
+#postodate )( 8192
+#postodate>
+
+
+:yapaso | dia mes --
+	date 2drop 1+ date2jul ;
+
+:calday | dia mes --
+	date drop nip | mes
+	<? ( yapaso ; )
+	date drop nip | mes
+	=? ( swap date nip nip <? ( swap yapaso ; ) swap )
+	| no paso
+	date 2drop date2jul
+	;
+
+#mes )( 4
+:datetopos | reg -- nro
+	4 >>fld
+	3 + | 11.
+	dup c@ 'mes c!
+	1+ dup c@ 'mes 1+ c!
+	1+ dup c@ 'mes 2 + c!
+	0 'mes 3 + c!
+	2 + str>int | nroday
+	'mes 'mm lstmatch 1+ | month
+	calday
+	date swap rot date2jul -
+	;
+
+:calcyord || vec nro adri adrr -- vec nro adri
+	dup	datetopos
+	postodate> !+ !+ 'postodate> ! ;
+
+:colores
+	31 <? ( drop rojo ; )
+	62 <? ( drop amarillo ; )
+	drop verde
+	;
+:main
+	'postodate 'postodate> !
+	'calcyord 'dbrhost dbmap
+	postodate> 'postodate - 3 >> 1+ 'postodate shellsort
+	show titulo
+		cr
+		chome!
+		'postodate ( postodate> <? )(
+			@+ colores
+			@+ "  %a " print
+			cr
+			) drop
+		chome
+		'postodate ( postodate> <? )(
+			@+ colores
+			@+ 4 >>fld " %a  " print
+			cr
+			) drop
+		chome
+		'postodate ( postodate> <? )(
+			@+ dup colores " %d dias" print
+			cr
+			4+ ) drop
+		chome< cr
+		blanco
+		"  ESC para salir..." print
+		'exit >esc<
+		;
+
+: m main ;

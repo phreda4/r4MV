@@ -1,0 +1,268 @@
+| ejemplo de rtabla
+| agenda
+| dbtable.txt
+| PHREDA 2011
+|-----------------------------
+^r4/lib/btn.txt
+^r4/lib/dlgfile.txt
+
+^r4/lib/db2.txt
+^r4/lib/formkit.txt
+
+^r4/lib/fontt.txt
+
+
+#dbvar 0
+#dbrname )( 64
+
+#path
+#dbnombre )( 64
+#filedb )( 32
+#cntcmp
+#cmps )( 8192
+
+#regmax
+#regnow
+
+#mensaje
+
+:titulo
+	cls scr home
+	fonta-Arial14
+	32 gc.top
+	$00528A $10101 hfil
+	blanco
+	" DataBase " printr cr
+|*** DEBUG
+		dup "(%d)" print
+|****
+	cr cr2 scr ;
+
+:loaddatabse
+	path "*" dlgfileload 0? ( drop ; ) drop
+	dlgfilename 'dbnombre strcpy
+	'dbnombre path "%s/%s" mprint 'dbrname strcpy
+	'dbvar dbload
+	'dbvar dbcntregs 'regmax !
+	;
+
+|------------------------------------------
+:serialicetable
+	mensaje 'here !
+	'cmps
+	0 (  cntcmp <? )(
+		over ,s "|" ,s
+		swap 32 + swap
+		1+ ) 2drop
+	,cr
+	;
+
+:otromas
+	nextfoco
+	1 'cntcmp +! ;
+
+:unomenos
+	prevfoco
+	-1 'cntcmp +! ;
+
+:creardb
+	0 'filedb c!
+	1 'cntcmp !
+	here 'mensaje !
+	serialicetable
+
+	show clrscr
+		font-vard-12-bold home cr
+
+		blanco " :r4DB " print
+		dup cntcmp " (%d %d) " print
+
+		verde
+		"TABLA: " print
+		gris 'filedb 31 input
+
+		cr cr
+		verde
+		"  Columnas" print
+		cr cr
+|		font-vard-8
+
+		chome!
+		0 ( cntcmp <? )(
+			dup verde "  %d." print gris
+			dup 5 << 'cmps + 24 input
+			cr cr2
+			allowchome
+			1+ ) drop
+
+		cntcmp
+|		"%d " print
+		31 <? ( 'otromas "+" verde sp .btnt )
+		0 >? ( 'unomenos "-" violeta sp .btnt )
+		drop
+
+		serialicetable
+		mensaje cr cr print
+
+		cmano  
+	'exit >esc<
+	;
+
+
+:camposdb
+	show clrscr
+|		25 fonth |		fonti
+		font-vard-12-bold home
+		blanco "Campos DB" printc cr
+
+		2 2 gotoxy "Nombre: " print
+		gris 'dbnombre print cr
+		verde
+		3 3 gotoxy "Campo" print
+		19 3 gotoxy "Largo" print
+		25 3 gotoxy "Tipo" print
+
+|		0 ( cntflds <? )(
+			0 over 4+ gotoxy
+			dup "%d." verde print gris
+			3 over 4+ gotoxy
+|			dup dbtitle "%a" print
+			19 over 4+ gotoxy
+|			dup dblen "%d" print
+			25 over 4+ gotoxy
+|			dup dbtipo "%t" print
+|			1+ ) drop
+		|cr dbdump
+		cmano  
+	'exit >esc<
+	;
+
+:varedit
+	cntcmp "%d" print cr
+	0 ( cntcmp <? )( 1+
+		2 over 4+ gotoxy
+		dup "%d." print
+		dup 4 << 'cmps + 15 input cr
+		) drop
+|	 2 10 at 'largo 3 getline
+	;
+
+:abrirdb
+	4 'cntcmp !
+	show clrscr
+|		40 fonth
+		font-vard-12-bold
+		verde
+|		0 ( cntflds <? )(
+|			dup dbtitle "%a" pick2 dblen boxprint
+|			1+ ) drop cr cr
+		0 ( 20 <? )(
+|			cntregs <? (
+|			dup getreg
+|			0 ( cntflds <? )(
+	|			dup dbfld "%a" pick2 dblen boxprint
+|				1+ ) drop
+|				)
+			cr
+			1+ ) drop
+		|dbdump
+		cmano
+	'exit >esc<
+	;
+
+#actreg 0
+
+:actualiza
+	actreg dbupdate
+	exit
+	;
+
+:editareg
+|	cpyreg
+	show clrscr blanco
+|		20 fonth
+		font-vard-12-bold home
+		dup "%d " print
+		actreg "Reg:%d" print cr
+|		editreg
+
+		0.28 0.08 fdim
+		0.0 -0.9 fpos
+		verde 'actualiza "Agregar" btnt
+
+		cmano
+	'exit >esc<
+	;
+
+|-------------
+:getreg | nro --
+	'dbvar dbgetreg 'regnow ! ;
+
+:printreg
+	chome!
+	0 regnow
+	( 1? )(
+		swap dup "%d.-" print 1+ swap
+		dup "%a" print cr
+		allowchome
+		>fld> ) 2drop
+	;
+
+:browsedb
+	0 'actreg !
+	0 getreg
+	show clrscr
+		font-vard-12-bold home
+		blanco
+		"Browse table" print cr
+		actreg "Registro:%d" print cr
+		verde cr
+		printreg cr
+		cmano
+	'exit >esc<
+	[ actreg 1? ( 1- ) dup 'actreg ! getreg ; ] <le>
+	[ actreg 1+ regmax =? ( 1- ) dup 'actreg ! getreg ; ] <ri>
+	[ editareg ; ] <enter>
+	;
+
+#m0 "vacio"
+
+#texto 'm0
+
+:dumpdb
+	dbvar 0? ( drop ; ) drop
+	'dbnombre "%s " print
+	'dbvar dbcntregs "%d regs" print cr
+	;
+
+:main
+	show clrscr
+		font-vard-12-bold home cr
+		rojo
+		'exit "Salir" sp btnt
+		blanco "RTable" printc cr
+		dup "%d" print cr texto print cr cr
+
+		cyan
+
+		'creardb dup <f1> "F1.Crear" sp btnt
+		'camposdb dup <f2> "F2.Leer" sp btnt
+		'abrirdb dup <f3> "F3.Tabla" sp btnt
+		'browsedb dup <f4> "F4.Browse" sp btnt
+		'loaddatabse dup <f5> "F5.LOAD" sp btnt
+
+		cr cr
+		dumpdb
+
+|	[ "alt" 'texto ! ; ] <alt>
+	[ "ctrl" 'texto ! ; ] <ctrl>
+	[ "" 'texto ! ; ] dup >ctrl< >alt<
+
+
+		'exit >esc<
+    	cmano ;
+
+:
+	"db/gestoria" dir
+	"db/gestoria" 'path !
+	33 mark main ;

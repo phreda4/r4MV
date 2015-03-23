@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Canvas test</title>
+		<style type="text/css">
+		H1 {
+			font-family: Arial, Sans-serif;
+			font-size: 24px;
+			color: navy;	
+			font-weight: normal;
+			position: absolute;
+			left: 45px;
+			top: 0;
+		}
+		</style>
+		<!--[if IE]><script src="excanvas.js"></script><![endif]-->
+		<script type="text/javascript">			
+			window.onload = function() {
+				var drawingCanvas = document.getElementById('myDrawing');
+				
+				// Check the element is in the DOM and the browser supports canvas
+				if(drawingCanvas && drawingCanvas.getContext) {
+					// Initaliase a 2-dimensional drawing context
+					var context = drawingCanvas.getContext('2d');
+					
+					// Create the yellow face
+					context.strokeStyle = "#000000";
+					context.fillStyle = "#FFFF00";
+					context.beginPath();
+					context.arc(100,100,50,0,Math.PI*2,true);
+					context.closePath();
+					context.stroke();
+					context.fill();
+					
+					// Add 2 green eyes					
+					context.strokeStyle = "#000000";
+					context.fillStyle = "#FFFFFF";
+					context.beginPath();
+					context.arc(80,80,8,0,Math.PI*2,true);
+					context.closePath();
+					context.stroke();
+					context.fill();
+					
+					context.fillStyle = "#009966";
+					context.beginPath();
+					context.arc(80,80,5,0,Math.PI*2,true);
+					context.closePath();
+					context.fill();
+					
+					context.strokeStyle = "#000000";
+					context.fillStyle = "#FFFFFF";
+					context.beginPath();
+					context.arc(120,80,8,0,Math.PI*2,true);
+					context.closePath();
+					context.stroke();
+					context.fill();
+					
+					context.fillStyle = "#009966";
+					context.beginPath();
+					context.arc(120,80,5,0,Math.PI*2,true);
+					context.closePath();
+					context.fill();
+					
+					// Create the diamond-shaped nose
+					context.fillStyle = "#000000";
+					context.beginPath();
+					context.moveTo(93,100);
+					context.lineTo(100,93);
+					context.lineTo(107,100);
+					context.lineTo(100,107);
+					context.closePath();
+					context.fill();
+
+					// Add the smile					
+					context.strokeStyle = "#000000";
+					context.beginPath();
+					context.moveTo(70,110);
+					context.quadraticCurveTo(100,150,130,110);
+					context.quadraticCurveTo(100,150,70,110);				
+					context.closePath();
+					context.stroke();
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<canvas id="myDrawing" width="200" height="200">
+			<p>Your browser doesn't support canvas.</p>
+		</canvas>
+		<h1>Hello World!</h1>
+	</body>
+</html>

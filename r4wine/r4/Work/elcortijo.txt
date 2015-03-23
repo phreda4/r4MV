@@ -1,0 +1,437 @@
+| ticket el cortijo
+| epson tu220
+| PHREDA 2011
+|----------------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/clock.txt
+^r4/lib/db2.txt
+^r4/lib/input.txt
+
+|---------- DATOS ----------------
+
+|---- ARTICULOS
+#dbarticulos 0 "db/elcortijo/articulos.db"
+|---- HISTORIA
+#dbhistoria 0 "db/elcortijo/historia.db"
+#grhistoria 0 0
+$10400 $10201 $10202 $40303 0
+"Fecha|Mesa|Segundos|Total"
+
+|---- RESUMEN
+#ventatotal
+#cantidadmesas
+#totalesart )( 1024
+
+|---- MESAS
+#estado
+#nromesa
+#timet
+#total
+#orden )( 1024
+#mesalen
+
+#ordenstr )( 256
+
+#cntmesas 0
+#mesasmax 24
+#mesas 0
+
+|--- orden
+| 8 bits | 24 bits
+| nro art| cantidad
+| 256 articulos = 1024 bytes
+
+:ordenreset
+	'orden 256 ( 1? )( 1- 0 rot !+ swap ) 2drop ;
+
+:orden+art | cantidad nro --
+	2 << 'orden + +! ;
+
+:orden>str
+	'orden >r
+	'ordenstr
+	255 ( 1? )( 1-
+		r@+ $7f and $30 +
+		rot c!+
+		swap )
+	rdrop
+	drop 0 swap c! ;
+
+:timeinsec
+	time 3600 * swap 60 * + + ;
+
+|--------- mesas ahora
+:savemesasa
+	mesas mesasmax mesalen * "db/elcortijo/mesasa.db" save
+	mark
+	timeinsec ,
+	date swap rot date2jul ,
+	"db/elcortijo/mesasa.ti" savemem
+	empty
+	'ventatotal 1032 "db/elcortijo/mesasa.hy" save
+	 ;
+
+:loadmesasa
+	mesas "db/elcortijo/mesasa.db" load drop
+	here "db/elcortijo/mesasa.ti" load here =? ( drop ; ) drop
+
+	here >r
+	timeinsec 				| tf
+	r@+                     | ti
+	date swap rot date2jul r> @ -    | dif
+	0? ( drop - )( 1- 86400 * 86400 rot - + + )
+
+|	trace
+	mesas
+	mesasmax ( 1? )( 1-
+		swap pick2 over 8 + +!
+		mesalen + swap )
+	3drop
+	'ventatotal "db/elcortijo/mesasa.hy" load drop
+	;
+
+:mesa@ | nro --
+	mesalen * mesas +
+	'estado
+	swap mesalen cmove ;
+
+:mesa! | nro --
+	mesalen * mesas +
+	'estado
+	mesalen cmove ;
+
+|-------------------------------
+:titulo
+	clrscr
+	fonta-Arial14
+
+	64 gc.top gc.all $ff0000 $a0a0a0 vfil
+|	$770000 paper
+	scr blanco
+|	cr2
+	" El Cortijo " print
+|*** DEBUG
+|	dup "(%d)" print
+|****
+	cr cr2
+	0.09 0.1 fdim
+	0.9 0.88 fpos almanaque
+	fonta-Arial14 scr
+	;
+
+:titulomesa
+	clrscr
+	40 gc.top gc.all
+	$ff0000 $a0a0a0 vfil
+	scr fonta-Arial14 cr2
+	;
+
+:descuento
+	estado 8 >> 0? ( ; )
+	total 100 */ ;
+
+|------- IMPRIME TICKET ------------------
+#yl
+
+:doccr
+	"A" docsize 'yl +! drop ;
+
+:imptiketl
+	255 pick3 - 'dbarticulos dbgetreg
+	10 yl docat
+	>fld> dup " %a " mprint doctext
+	220 yl docat
+	>fld> "$ %a" mprint doctext
+	320 yl docat
+	dup "x %d " mprint doctext
+	doccr ;
+
+#linea "------------------------------------------------------------"
+
+:imprimetiket
+	0 'yl !
+	docini
+	"db/elcortijo/logo.bmp" 50 0 docbit
+	8 0 "Arial" docfont
+	doccr doccr doccr doccr
+	120 yl docat
+	"CUIT: 27-12099392-0" doctext doccr
+	10 yl docat nromesa 1+ "Mesa %d" mprint doctext doccr
+	10 yl docat date "%d/%d/%d" mprint doctext
+	300 yl docat time "%d:%d:%d" mprint doctext
+	doccr
+	10 yl docat 'linea doctext
+	doccr
+	'orden 256 ( 1? )( 1-
+		swap @+ 1? ( imptiketl ) drop
+		swap ) 2drop
+	10 yl docat 'linea doctext doccr
+
+	10 0 "Arial" docfont
+	50 yl docat "Total:" doctext
+	220 yl docat "$" doctext
+	240 yl docat total descuento - nro2str doctext doccr doccr
+	7 0 "Arial" docfont
+	15 yl docat
+	"* Ticket no válido como factura" doctext
+	doccr
+	docend
+	;
+
+|----------------------------------------------------
+:unomenos
+	-1 over orden+art ;
+
+:unomas
+	1 over orden+art ;
+
+:tiketlinea
+	255 pick3 - dup
+	'dbarticulos dbgetreg
+	>fld> dup " %a" print
+	>fld> ?real2 nip pick2 * 'total +!
+
+	25 col
+	'unomenos "-" link
+	over " %d " print
+	'unomas "+" link
+	sp cr
+	allowchome
+	drop
+	;
+
+:ticketmesa
+	blanco
+	0 'total !
+	'orden 256 ( 1? )( 1-
+		swap @+ 1? ( tiketlinea ) drop
+		swap ) 2drop
+	;
+
+| nro consumo |imprimir|cerrar+imp|cerrar|agregar
+|------------------ ARTICULOS
+:clickart
+	1 pick2 orden+art ;
+
+:listart
+|	dup blanco "%a " print >fld> cyan
+|	3 col
+	>fld> dup >fld> cyan
+	'clickart rot rot swap "%a (%a)" 17 btntfe
+	cr cr2 allowchome ;
+
+:articulos
+|	fonta-arial10b
+	'listart 'dbarticulos dbmapn ;
+
+|------------- teclas
+#codar
+#cntar
+
+:clearline
+	"" dup 'codar strcpy 'cntar strcpy
+	refreshfoco	;
+
+:addline
+	'cntar ?sint 0? ( 2drop ; ) nip
+	'codar ?sint nip
+	orden+art
+	clearline ;
+
+|--------------------------------------------
+:cerrarmesa | inserta en historio
+	orden>str
+	13 'ordenstr total descuento - timet nromesa time date
+	"%d/%d/%d %d:%d:%d|%d|%d|%d|%s~%k"
+	mprint count "db/elcortijo/historia.db" APPEND
+
+	total 'ventatotal +!
+	1 'cantidadmesas +!
+	'totalesart >r
+	'orden 256 ( 1? )( 1- swap
+		@+ r +! 4 r+ swap )
+	2drop rdrop
+
+	0 'estado !
+	0 'total !
+	ordenreset
+	exit ;
+
+:mesatick
+	mesas
+	mesasmax ( 1? )( 1-
+		swap 1 over 8 + +!
+		mesalen + swap ) 2drop ;
+
+
+|--------------------------------------------
+:unamesa
+	estado 0? (
+		1 'estado !
+		0 'timet !
+		) drop
+	clearline
+	show titulomesa
+		rojo 'exit "X" sp sp 2 menur
+		blanco nromesa 1+ " >> Mesa %d > " print
+		amarillo 'imprimetiket " Tiket " sp btnt
+		rojo 'cerrarmesa " Cerrar " sp btnt
+		cyan
+		[ 1 'estado ! ; ] "Sin Decuento" sp btnt
+		[ 30 8 << 1 or 'estado ! ; ] "Decuento 30%%" sp btnt
+		[ 20 8 << 1 or 'estado ! ; ] "Decuento 20%%" sp btnt
+		[ 10 8 << 1 or 'estado ! ; ] "Decuento 10%%" sp btnt
+
+|		cyan
+|		"  ID:" print 'codar 2 input
+|		"  CNT:" print 'cntar 2 input
+|		'addline lostfoco
+		cr cr
+		sp chome!
+		ticketmesa
+		"--------------------------------- " print cr
+		| descuento
+		descuento 1? ( estado 8 >> " Descuento %d%%" print cr )
+		" Total:" print
+		16 col "$ " print total swap - nro2str print
+
+		34 col
+		cr
+		chome
+		articulos
+		'exit >esc<
+		cmano
+		1 .segs .restart mesatick ;
+
+|----------------------------------------------------
+:clickmesas
+	pick2
+	dup mesa@
+	dup 'nromesa !
+	unamesa
+	mesa!
+	;
+
+:mesacerrada
+	gris 'clickmesas 160 64 btnpx
+	negro
+	pick2 1+ "  Mesa %d" print cr
+	"  Cerrada" print cr
+	cr ;
+
+:tiempo | nsec -- ""
+	60 <? ( " %d sec. " ; )
+	3600 <? ( 60 / " %d min." ; )
+	60 / 60 /mod swap " %d hr. %d min. "
+	;
+
+:mesaabierta
+	amarillo 'clickmesas 160 64 btnpx
+	blanco
+	pick2 1+ "  Mesa %d" print cr
+	azul
+	over 8 + @
+	tiempo
+|	60 / " %d min."
+	print cr
+	negro
+	"  $ " print
+	over 12 + @ nro2str print cr ;
+
+:mostrarmesas
+|	cntmesas "Mesas abiertas: %d " print cr
+|	cr cr
+	chome!
+	mesas
+	0 ( mesasmax <? )(
+		swap
+		dup @ 0? ( mesacerrada )( mesaabierta ) drop
+		mesalen + swap
+ 		22 col cr2 allowchome 1+ )
+	2drop ;
+
+
+:historico
+	'dbhistoria dbload
+	show titulo
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Historico > " print
+		cr cr
+   		fonta-arial10 blanco
+		" Mesas Cerradas" print
+		16 'tx1 ! sw 16 - 'tx2 !
+		25 'grhistoria 'dbhistoria dbgrid
+
+		'exit >esc<
+		cminimano
+		1 .segs .restart mesatick ;
+
+
+:diarioini
+	0 'ventatotal !
+	0 'cantidadmesas !
+	'totalesart 256 ( 1? )( 1-
+		0 rot !+ swap )
+	2drop
+	;
+
+:listtot
+	>fld> " %a " print
+	23 col over 2 << 'totalesart + @ "x %d" print
+	cr allowchome ;
+
+:listatotales
+	fonta-arial10b
+	'listtot 'dbarticulos dbmapn ;
+
+:diario
+	show titulo
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Diario > " print
+		rojo
+		'diarioini dup <f1> "F1 - Inicio" sp 14 btntf
+
+		cr cr
+   		blanco
+		" Acumulado Diario: $ " print
+		ventatotal nro2str print cr
+		cantidadmesas " Cantidad de Mesas: %d " print cr
+		chome!
+        listatotales
+
+		'exit >esc<
+		cminimano
+		1 .segs .restart mesatick ;
+
+:main
+	show titulo
+		0.5 hdim 0.5 0.2 fpos clockexp
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Menu Principal > " print
+		verde
+		'diario dup <f1> "F1 - Diario" sp 14 btntf
+		'historico dup <f2> "F2 - Historico" sp 14 btntf
+		cr cr
+		sp chome!
+		blanco
+		mostrarmesas
+		'exit >esc<
+		cminiflecha
+		1 .segs .restart mesatick ;
+
+:ini
+	mark
+		| memoria para cada mesa
+	here 'mesas !
+	mesasmax
+	'mesalen 'estado - dup 'mesalen !
+	* 'here +!
+		| clear todo
+	mesas ( here <? )( 0 swap !+ ) drop
+
+	'dbarticulos dbload
+	;
+
+
+: ini 33 loadmesasa main savemesasa ;

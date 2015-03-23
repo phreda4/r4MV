@@ -1,0 +1,226 @@
+| VESPRITE editor
+| PREDA 2013
+|-------------------------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/dlgcolora.txt
+
+^r4/lib/vesprite.txt
+^r4/lib/rfont.txt
+^r4/lib/ricons.txt
+
+^r4/lib/trace.txt
+
+^inc/ric/fontawesomewebfont.ric
+^inc/rft/robotoregular.rft
+
+|-----------------
+#color $00
+
+#dibujo )( $ffff
+#dibujo> 'dibujo
+
+#seleccion )( $ffff
+#seleccion> 'seleccion
+
+#xa -1 #ya #xb #yb
+
+#indpol )( $fff
+#indpol> 'indpol
+
+#trazo )( $fff
+#trazo> 'trazo
+
+:-trazo
+	'trazo 0 over ! 'trazo> ! ;
+
+:++trazo | px --
+	trazo> 4 - @ =? ( drop ; )
+:+trazo | p --
+	trazo> !+ 0 over ! 'trazo> ! ;
+:trazo!
+	trazo> 4 - dup @ $f and rot or swap ! ;
+
+:dibujotrazo
+	'trazo @+
+	0? ( 2drop ; )
+	gc>xy op
+	( @+ 1? )(
+		gc>xy line ) 2drop
+	;
+
+:dibnodos | a--
+	( @+ 1? )( gc>xy 2 box ) 2drop ;
+
+:cldibujo
+	'dibujo 0 over ! 'dibujo> !
+	'indpol 0 over ! 'indpol> ! ;
+
+:-dibujo | --
+	-4 'dibujo> +! ;
+
+:+dibujo | p --
+	dibujo> !+ 'dibujo> ! ;
+:0dibujo
+	0 dibujo> ! ;
+
+|----------------------------------------
+:addline | agrega trazo a vesprite
+	'trazo @+ 0? ( 2drop ; )
+	8 or +dibujo
+	( @+ 1? )( 9 or +dibujo ) 2drop
+	0dibujo ;
+
+|----------------------------------------
+#xcycwh 0 0 0 0
+
+:savebox
+	xc yc w h 'xcycwh !+ !+ !+ ! ;
+
+:loadbox
+	'xcycwh @+ 'h ! @+ 'w ! @+ 'yc ! @ 'xc ! ;
+
+:resetves
+	cldibujo
+	-trazo
+	;
+
+|----------------------------------------
+:sortab
+	xa xb >? ( xb 'xa ! dup 'xb ! ) drop
+	ya yb >? ( yb 'ya ! dup 'yb ! ) drop ;
+
+:inab | x y -- 1/0
+	ya <? ( 2drop 0 ; ) yb >? ( 2drop 0 ; ) drop
+	xa <? ( drop 0 ; ) xb >? ( drop 0 ; ) drop
+	1 ;
+
+:drawdot
+	over gc>xy 2 fbox ;
+
+:selecc.draw
+	'seleccion ( seleccion> <? )(
+		@+ @ dup $f and 3 >? ( 12 <? ( drawdot ) ) 2drop
+		) drop ;
+
+:selecc.reset
+	'seleccion 'seleccion> ! ;
+
+:selecc.set
+	sortab
+	'dibujo ( dibujo> <? )(
+		@+ gc>xy inab 1? ( over 4 - seleccion> !+ 'seleccion> ! ) drop
+		) drop
+	;
+
+|--- modo hoja
+#xv #yv
+
+:vista.move
+	xymouse
+	dup yv - 'yc +! 'yv !
+	dup xv - 'xc +! 'xv !
+	savebox
+	;
+
+:vista.dn
+	xymouse 'yv ! 'xv ! ;
+
+:hojayzoom
+	'vista.dn 'vista.move guiDnMove ;
+
+|----- modos de cursor
+:dibujando
+	color ink
+	[ xymouse xy>gc ++trazo ; ]
+	[ addline -trazo ; ]
+	guiDraw
+	dibujotrazo ;
+
+:seleccion | --
+	[ xymouse 2dup 'ya ! 'xa ! 'yb ! 'xb ! ; ]
+	[ xymouse 'yb ! 'xb ! ; ]
+	[ selecc.set -1 'xa ! ; ]
+	guiMap cyan
+	selecc.draw
+	xa -? ( drop ; ) ya xb yb caja
+	;
+
+:zoomcursor
+	'vista.dn 'vista.move guiDnMove ;
+
+:menudibujo
+	;
+
+:menuzoom
+	;
+
+:menusistema
+	'resetves btnb 'i.trash drawric
+	;
+
+#menubtn 'menudibujo
+#modocursor 'dibujando
+
+|--------------------------------
+:elijecolor
+	dlgcolora
+	coloractual 'color !
+	;
+
+:elijesistema
+	'menusistema 'menubtn !
+	'seleccion 'modocursor !
+	;
+
+:elijedibujo
+	'menudibujo 'menubtn !
+	'dibujando 'modocursor !
+	;
+
+:elijezoom
+	'menuzoom 'menubtn !
+	'zoomcursor 'modocursor !
+	;
+
+
+:editandoves  | --
+	-trazo
+
+	0 0 fpos
+	sw sh 2dup max dup dim
+	2/ 'yc ! 2/ 'xc !
+	savebox
+
+	33
+	show clrscr
+		|--- vista
+		negro dup "%d " print
+
+		loadbox
+		'dibujo vesprite
+		modocursor exec
+
+		|--- botonera
+		48 qdim
+		sw 32 - sh 32 - pos
+		rojo 'exit dup >esc< btne blanco 'i.off drawric
+		32 sh 32 - pos
+		verde 'elijecolor btne blanco 'i.tint drawric gc>>
+		verde 'elijedibujo btne blanco 'i.pencil drawric gc>>
+		verde 'elijesistema btne blanco 'i.hand_up drawric gc>>
+		verde 'elijezoom btne blanco 'i.search drawric gc>>
+
+		cyan
+		menubtn exec
+
+		cminiflecha ;
+
+
+|--------------------------------------------------
+:	mark $ffffff paper
+	resetves
+	'dibujo "mem/notepad.ves" load 'dibujo> !
+	editandoves
+	'dibujo dibujo> over - "mem/notepad.ves" save
+	;

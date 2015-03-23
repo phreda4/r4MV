@@ -1,0 +1,964 @@
+|--------- Amapola -------------
+|Articulos
+|	Alta/Baja/Modificacion/Listados
+|Control de Stock
+|	Alta/Baja/Modificacion/Listados
+|	Historial
+|Gestion de Clientes
+|	Alta/Baja/Modificacion/Listados
+|	Condicionales/Cuenta Corriente
+|	Historial
+|Proveedores
+|	Alta/Baja/Modificacion/Listados
+|	Historial
+|
+| PHREDA 2011
+|-------------------------------
+^r4/lib/gui.txt
+^r4/lib/grid.txt
+^r4/lib/formkit.txt
+^r4/lib/clock.txt
+
+#logo
+
+#dbcliente 0 "db/amapola/cliente.db"
+#dbarticulo 0 "db/amapola/articulo.db"
+#dbventa 0 "db/amapola/venta.db"
+#dbcondi 0 "db/amapola/condicional.db"
+
+#fkcliente 0 "db/amapola/cliente.fk"
+#fkarticulo 0 "db/amapola/articulo.fk"
+#fkventa 0 "db/amapola/venta.fk"
+#fkcondi 0 "db/amapola/condicional.fk"
+
+|--- GRILLA
+#grarticulo 0 0
+$10200 $501 $40103 $10106 0
+"Codigo|Descripcion|Precio|Cantidad"
+
+#grcliente 0 0
+$501 $402 $205 $40207 0
+"Nombre|Dirección|Teléfono|Saldo"
+
+#grventa 0 0
+$10200 $50803  $40202 0
+"Fecha|Descripción|Total"
+
+#grcondicional 0 0
+$10200 $401 $10202 0
+"Fecha|Cliente|Codigo"
+
+#mensajev 0
+
+|---- titulo
+:titulo
+	clrscr
+	fonta-Arial14
+	64 gc.top
+	gc.all
+	$ff00ff $7f7f7f vfil
+
+	scr blanco
+|	cr2
+	" Amapola " print
+|*** DEBUG
+	2dup "(%d %d)" print
+|****
+	cr cr2
+	0.09 0.1 fdim
+	0.9 0.88 fpos almanaque
+	fonta-Arial14 scr
+	;
+
+#pad )( 64
+
+:testreg | reg -- reg 1/0
+	'pad over reg?i ;
+
+:dofiltercli
+	'pad c@ 1? ( 'testreg nip ) 'dbcliente dbfilterv ;
+
+|----------------------------------------------------
+#padart )( 32
+#codart )( 16
+#cntart )( 8
+
+
+#fecha )( 16
+#cliente )( 32
+#nomcliente )( 32
+#regcliente -1
+#codcliente )( 8
+#dircliente )( 32
+#loccliente )( 32
+#cuicliente )( 32
+#telcliente )( 16
+#emacliente )( 32
+#salcliente )( 16
+#notcliente )( 32
+
+
+:resetcli
+	0 'dbcliente dbfilterv
+	0 'cliente !
+	-1 'regcliente !
+:clearcli
+	0 'codcliente !
+	0 'nomcliente !
+	0 'dircliente !
+	0 'loccliente !
+	0 'cuicliente !
+	0 'telcliente !
+	0 'emacliente !
+	0 'salcliente !
+	0 'notcliente !
+	refreshfoco
+	;
+
+:buscacli
+	.exit 1? ( drop ; ) drop
+	'cliente c@ 0? ( drop ; ) drop
+	regcliente -1 =? ( drop 'cliente 1 'dbcliente dbsearchany
+		)( 	drop 'cliente 1 'dbcliente dbsearchnext )
+	0? ( drop clearcli ; ) | no mas clientes
+:setcliente
+	dup 'regcliente !
+	'fkcliente fkdeserialice
+	0 'fkcliente fkgetm 'codcliente strcpy
+	1 'fkcliente fkgetm 'nomcliente strcpy
+	2 'fkcliente fkgetm 'dircliente strcpy
+	3 'fkcliente fkgetm 'loccliente strcpy
+	4 'fkcliente fkgetm 'cuicliente strcpy
+	5 'fkcliente fkgetm 'telcliente strcpy
+	6 'fkcliente fkgetm 'emacliente strcpy
+	7 'fkcliente fkgetm 'salcliente strcpy
+	8 'fkcliente fkgetm 'notcliente strcpy
+	;
+
+:-s- "   " print ;
+
+:fichacliente
+	regcliente -1 =? ( rojo oscuro )( negro ) drop
+	3 linesfill blanco
+	sp 'nomcliente print -s- 'dircliente print	-s- 'loccliente print cr
+	sp 'cuicliente print -s- 'telcliente print -s- 'emacliente print cr
+|	'codcliente print
+|	sp 'salcliente print -s- 'notcliente print
+	cr cr2 ;
+
+|--------
+:clientefil
+	'cliente over reg?i ;
+
+:filterclikey
+	'cliente c@ 1? ( 'clientefil nip ) 'dbcliente dbfilterv ;
+
+|--------
+:elijecliente | nrocliente -- nrocliente
+	dup 'dbcliente dbgetreg
+	setcliente
+	'nomcliente 'cliente strcpy
+	exit ;
+
+:--BuscaCliente
+	cleardbgrid
+	resetcli
+	-1 'grcliente !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Busca Cliente " print
+|		rojo 'resetcli " NUEVO" sp btnt
+		cr cr sp chome!
+		sp sp 'buscacli "? CLIENTE:" cyan btnt
+		'exit <enter>
+		sp sp
+		'filterclikey 'cliente 32 inputexec
+		'buscacli lostfoco
+		'nomcliente c@ 1? ( sp sp 'exit "OK" verde sp btnt blanco ) drop
+		cr cr
+        fichacliente
+		blanco "  Clientes  " print
+		fonta-arial10
+		grcliente
+		18 'grcliente 'dbcliente dbgrid
+		grcliente swap <>? ( elijecliente ) drop
+		cminiflecha ;
+
+|----------------------------------------------------
+:inscli
+	exit
+	1 'fkcliente fkgetm c@ 0? ( drop ; ) drop
+	'fkcliente fkserialice
+	'dbcliente dbinsertlog ;
+
+:updcli
+	exit
+	'fkcliente fkserialice
+	grcliente 'dbcliente dbupdatelog ;
+
+:delcli
+	exit
+	grcliente 'dbcliente dbdeletelog ;
+
+#maxi
+
+:maxtos
+	str>int maxi <? ( drop ; )
+	'maxi ! ;
+
+:nuevocli
+	'fkcliente fkclear
+	0 'maxi !
+	'maxtos 'dbcliente dbmap
+	maxi "%d" mprint 0 'fkcliente fksetm
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Clientes > Nuevo " print
+		verde 'inscli " Aceptar " sp btnt
+		rojo 'exit " Cancelar " sp btnt
+		cr cr sp chome!
+		blanco "Cliente" print cr
+		negro
+		'fkcliente fkedit
+		cminiflecha ;
+
+:editacli
+	'fkcliente fkclear
+	grcliente 'dbcliente dbgetreg
+	'fkcliente fkdeserialice
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Cliente > Editar " print
+		verde 'updcli " Actualizar " sp btnt
+		rojo
+		'exit " Cancelar " sp btnt
+		'delcli " Borrar " sp btnt
+		cr cr sp chome!
+		blanco "Cliente" print cr
+		negro
+		'fkcliente fkedit
+		cminiflecha ;
+
+:clientes
+	0 'dbcliente dbfilterv
+	cleardbgrid
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Clientes" print
+		violeta
+		'nuevocli " Nuevo " sp btnt
+		'editacli " Editar " sp btnt
+		cr cr sp chome!
+		blanco "  Clientes  " print
+		fonta-arial10
+		grcliente
+		26 'grcliente 'dbcliente dbgrid
+		grcliente swap <>? ( editacli ) drop
+		cminiflecha ;
+
+
+|----------------------------------------------------
+:updart
+	exit
+	'fkarticulo fkserialice
+	grarticulo 'dbarticulo dbupdatelog ;
+
+:delart
+	exit
+	grarticulo 'dbarticulo dbdeletelog ;
+
+:insart
+	0 'fkarticulo fkgetm
+	dup c@ 0? ( 2drop "FALTA CODIGO" 'mensajev ! ; ) drop
+	0 'dbarticulo dbsearchstr
+	1? ( drop "YA EXISTE ESE ARTICULO" 'mensajev ! ; ) drop
+	'fkarticulo fkserialice
+	'dbarticulo dbinsertlog
+	exit ;
+
+:nuevoart
+	'fkarticulo fkclear
+	0 'mensajev !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Articulos > Nuevo " print
+		verde 'insart " Aceptar " sp btnt
+		rojo 'exit " Cancelar " sp btnt
+		cr cr sp chome!
+		blanco "Articulo " print
+		mensajev 0? ( drop )( blink 1? ( negro )( blanco ) drop cr print )
+		cr negro
+		'fkarticulo fkedit
+		cminiflecha ;
+
+:editaart
+	'fkarticulo fkclear
+	grarticulo 'dbarticulo dbgetreg
+	'fkarticulo fkdeserialice
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Articulos > Editar " print
+		verde 'updart " Actualizar " sp btnt
+		rojo
+		'delart " Borrar " sp btnt
+		'exit " Cancelar " sp btnt
+		cr cr sp chome!
+		blanco "Articulo" print cr
+		negro
+		'fkarticulo fkedit
+		cminiflecha ;
+
+
+:testart | reg -- reg 1/0
+	'padart over reg?i ;
+
+:filterart
+	'padart c@ 1? ( 'testart nip ) 'dbarticulo dbfilterv
+	0 'grarticulo 4+ !
+	;
+
+:articulos
+	0 'dbarticulo dbfilterv
+	0 'padart !
+	-1 'grarticulo !
+	refreshfoco
+	cleardbgrid
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Buscar articulos" print
+		verde
+		'nuevoart " Nuevo " sp btnt
+|		'editaart " Editar " sp btnt
+		cr cr sp chome!
+		verde 'filterart "?" btnt sp
+		blanco
+		'filterart 'padart 32 inputexec
+
+		cr cr2 blanco "  Articulos  " print
+		fonta-arial10
+		sw 8 - 'tx2 !
+		grarticulo
+		24 'grarticulo 'dbarticulo dbgrid
+		grarticulo <>? ( editaart -1 'grarticulo ! ) drop
+		cminiflecha ;
+
+|----------------------
+#detalleventa )( $ffff
+
+#stotal )( 16
+#total
+#spagado )( 16
+#pagado
+
+#grlistaven 0 0
+$400 $701 $10202 $40203 $40204 0
+"Codigo|Descripción|Cantidad|Precio|Total"
+
+#grlistavenc 0 0
+$400 $701 $10202 $40203 $40203 0
+"Codigo|Descripción|Cantidad|Precio|Total"
+
+:ventalist
+	cleardbgrid
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> ventas > Listado " print
+		cr cr sp chome!
+		blanco "Ventas" print
+		fonta-arial10
+		26 'grventa 'dbventa dbgrid
+		cminiflecha ;
+
+:impventa
+	;
+
+|----------------------
+:recalc
+	0 'stotal !
+	0 'total !
+	'detalleventa
+	( >fld> 1? )( >fld> >fld> >fld> ?real2 'total +! >fld> ) drop
+	total nro2str 'stotal strcpy
+	;
+
+:addline
+	'codart 0 'dbarticulo dbsearchstr
+	0? ( drop ; ) | no existe codigo
+	'cntart ?sint nip 0? ( 2drop ; ) drop | no hay cantida
+	@
+	dup "%a|" mprint 'detalleventa strcat | codigo
+	>fld> dup "%a|" mprint 'detalleventa strcat | descripcion
+	'cntart "%s|" mprint 'detalleventa strcat | cantidad
+	>fld> >fld>
+	dup "%a|" mprint 'detalleventa strcat
+	?real2 'cntart ?sint nip *
+	nro2str 'detalleventa strcat
+	"|" 'detalleventa strcat
+	drop
+	0 'codart !
+	"" 'cntart strcpy
+	1 setfoco | para ingresar otro
+	recalc ;
+
+:deleteline | nro --
+	5 * 'detalleventa swap >>fld
+	dup >fld> >fld> >fld> >fld> >fld> | rdel rnex
+	0? ( 2drop ; )
+	swap strcpy ;
+
+:delline
+	grlistaven -1 =? ( drop ; )
+	deleteline
+	recalc ;
+
+:actualizasaldo
+	total pagado - 0? ( drop ; )
+	'codcliente 0 'dbcliente dbsearchstr 0? ( 2drop ; ) @
+	'fkcliente fkclear
+	dup 'fkcliente fkdeserialice
+
+    7 'fkcliente fkgetm ?real2 nip
+	rot + nro2str
+	7 'fkcliente fksetm
+
+	'fkcliente fkserialice
+	'dbcliente dbupdatemlog ;
+
+:artstock | cant 'articulo --
+	0 'dbarticulo dbsearchstr 0? ( 2drop ; ) @
+	'fkarticulo fkclear
+
+	dup 'fkarticulo fkdeserialice
+
+    6 'fkarticulo fkgetm
+	?sint nip rot - "%d" mprint
+	6 'fkarticulo fksetm
+
+	'fkarticulo fkserialice
+	'dbarticulo dbupdatemlog ;
+
+#tcod )( 32
+:actualizastock
+	'detalleventa
+	(	dup "%a" mprint 'tcod strcpy
+		>fld> >fld> 0? ( drop ; )
+		dup "%a" mprint ?sint nip
+		'tcod artstock
+		>fld> >fld> >fld> 0? )
+	drop ;
+
+:saveventa
+	actualizastock
+	actualizasaldo
+	mark |-- agrega venta
+	'fecha ,s "|" ,s
+	'codcliente ,s "|" ,s
+	'stotal ,s "|" ,s
+	'detalleventa fktom+
+	$7e ,c 13 ,c 10 ,c 0 ,c
+	empty
+	'dbventa dbinsertlog
+
+	pagado 0? ( drop ; ) drop
+	mark |-- agrega pago si hay
+	'fecha ,s "|" ,s
+	'codcliente ,s "|" ,s
+	"-" ,s 'spagado ,s "|" ,s
+	"SU PAGO|" ,s
+	$7e ,c 13 ,c 10 ,c 0 ,c
+	empty
+	'dbventa dbinsertlog ;
+
+:todopagado
+	total dup 'pagado !
+	nro2str
+	'spagado strcpy
+	;
+
+:exitventa
+	total 0? ( drop "No hay articulos !" 'mensajev ! ; ) drop | sin total
+|	regcliente -1 =? ( drop "No hay Cliente !" 'mensajev ! ; ) drop | sin cliente
+	regcliente -1 =? ( todopagado ) drop
+	'spagado c@ 0? ( drop "Falta indicar cuanto pago !" 'mensajev ! ; ) drop | sin cliente
+	'spagado ?real2 nip 'pagado !
+	saveventa
+	exit
+	;
+
+:clientesinregistrar
+	'cliente 'nomcliente strcpy
+	"-1" 'codcliente strcpy
+	0 'dircliente !
+	0 'loccliente !
+	"NO REGISTRADO" 'cuicliente strcpy
+	0 'telcliente !
+	0 'emacliente !
+	;
+
+:clicklista
+	grlistaven -1 =? ( drop ; )
+	5 * 'detalleventa swap >>fld >fld>
+	0? ( drop ; ) drop
+	oscurecetodo
+	>xfb
+	show xfb>scr
+		0 0 fpos 0.7 0.3 fdim home
+		negro
+		6 linesfill
+		verde cr
+		grlistaven 5 * 'detalleventa swap >>fld >fld>
+		" Articulo: " blanco print
+		dup "%a" verde print
+		" Cantidad: " blanco print
+		>fld> " %a" verde print
+		cr cr cr
+		cyan
+|		'sumcnt " 1+ " sp sp .btnt
+|		'rescnt " 1- " sp sp .btnt
+		rojo
+		[ grlistaven deleteline recalc exit ; ] " Borrar " sp sp .btnt
+|		'acondicional "Condicional" sp sp .btn
+		'exit >esc<
+		cminiflecha ;
+
+:ventas
+	--BuscaCliente
+	'cliente c@ 0? ( drop ; ) drop
+	regcliente -1 =? ( clientesinregistrar ) drop
+
+	'fkventa fkclear
+	-1 'grlistaven !
+	0 'detalleventa !
+	0 'codart !
+	0 'cntart !
+
+	0 'spagado !
+	0 'pagado !
+	0 'stotal !
+	0 'mensajev !
+	"" 'cntart strcpy
+	date rot 100 mod rot rot "%d/%d/%d" mprint 'fecha strcpy
+	recalc
+:ventacondicional | viene de condicional
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Ventas " print
+|		violeta 'ventalist " Listado " sp btnt
+|		amarillo 'impventa "Imprimir" sp btnt
+
+		cr cr sp chome!
+		8 'tx1 !
+		sw 8 - 'tx2 !
+		fichacliente
+		azul oscuro 4 linesfill blanco
+		" Código:" print 'codart 16 sp input
+		" Cantidad:" print 'cntart 8 sp inputint
+		verde
+		'addline " Agrega " sp .link
+|		'delline " - " sp .link
+		cr blanco
+		" Total:   " print 14 col "$ " print 'stotal print cr
+		" Entrego: " print 14 col "$ " print 'spagado 16 input cr
+		cr2
+		grlistaven
+		13 'detalleventa 'grlistaven memgrids
+		grlistaven <>? ( clicklista -1 'grlistaven ! )
+		drop
+		cr
+
+		sw 8 - 'tx2 !
+		verde 'exitventa "Aceptar" sp .btnt
+		rojo 'exit "Cancelar" sp .btnt
+		sp sp sp
+		mensajev 1? ( blink 1? ( blanco )( negro ) drop print )( drop )
+
+		cminiflecha ;
+
+|--------------- Condicional
+| filtro de condicionales en clientes
+:condiclie
+	'codcliente over 1 nfld=?i ; | str reg n
+
+#grcondi 0 0
+$100 $202 $603 0
+"Fecha|Codigo|Descripción"
+
+#artpventa )( 8192	| cadena de articulos
+
+:addcline
+	'codart 0 'dbarticulo dbsearchstr
+	0? ( drop ; ) | no existe codigo
+	@ >fld>
+
+	mark |-- agrega condicional
+	'fecha ,s "|" ,s
+	'codcliente ,s "|" ,s
+	'codart ,s "|" ,s
+	"%a|" ,print
+	$7e ,c 13 ,c 10 ,c 0 ,c
+	empty
+	'dbcondi dbinsertlog
+	0 'codart !
+	1 setfoco | para ingresar otro
+	'condiclie 'dbcondi dbfilterv
+	;
+
+:condev | devuelve
+	grcondi 'dbcondi dbdeletelog
+	'condiclie 'dbcondi dbfilterv
+	exit ;
+
+:condven | vende
+	grcondi 'dbcondi dbgetreg >fld> >fld>
+	"%a|" mprint 'artpventa strcat
+	grcondi 'dbcondi dbdeletelog
+	'condiclie 'dbcondi dbfilterv
+	exit ;
+
+:clickcondi
+	oscurecetodo
+	>xfb
+	show xfb>scr
+		0 0 fpos 0.7 0.3 fdim home
+		negro
+		6 linesfill
+		verde cr
+		grcondi 'dbcondi dbgetreg >fld> >fld> >fld>
+		" Articulo: " blanco print
+		"%a" verde print
+
+		cr cr cr
+		cyan
+		'condev "Devuelve" sp sp .btnt
+		'condven " Venta " sp sp .btnt
+
+		'exit >esc<
+		cminiflecha ;
+
+
+:exitventacond
+	artpventa 0? ( drop exit ; ) drop
+	'artpventa (
+		dup "%a" mprint
+		'codart strcpy
+		"1" 'cntart strcpy
+		addline
+		>fld> 0? ) drop
+	recalc
+	ventacondicional
+	exit ;
+
+:condicional
+	--BuscaCliente
+	'cliente c@ 0? ( drop ; ) drop
+	regcliente -1 =? ( drop ; ) drop | solo clientes registrados
+
+	'condiclie 'dbcondi dbfilterv
+	-1 'grcondi !
+
+	'fkventa fkclear
+	0 'detalleventa !
+	0 'codart !
+	0 'cntart !
+	0 'spagado !
+	0 'pagado !
+	0 'stotal !
+	0 'mensajev !
+	"" 'cntart strcpy
+	date rot 100 mod rot rot "%d/%d/%d" mprint 'fecha strcpy
+
+	0 'artpventa ! | ningun articulo p/venta
+	show titulo
+		rojo 'exitventacond dup >esc< "X" sp sp 2 menur
+		blanco " >> Condicionales " print
+
+		cr cr sp chome!
+		8 'tx1 !
+		sw 8 - 'tx2 !
+		fichacliente
+		azul oscuro 3 linesfill blanco
+		cr
+		" Código:" print 'codart 16 sp input
+		verde
+		'addcline " CONDICIONAL " sp .link
+		cr blanco
+		grcondi
+		10 'grcondi 'dbcondi dbgrid
+		grcondi <>? ( clickcondi -1 'grcondi ! )
+		drop
+
+		sw 8 - 'tx2 !
+		cr
+		verde 'exitventacond " Venta " sp .btnt
+		sp sp sp
+		mensajev 1? ( blink 1? ( blanco )( negro ) drop print )( drop )
+
+		cminiflecha ;
+
+|----------------------------------------------------
+#notacta )( 32
+#valorcta )( 8
+
+:actsaldo
+	'valorcta ?real2 nip 0? ( drop ; )
+	'codcliente 0 'dbcliente dbsearchstr 0? ( 2drop ; ) @
+	'fkcliente fkclear
+	dup 'fkcliente fkdeserialice
+
+    7 'fkcliente fkgetm ?real2 nip
+	rot + nro2str 7 'fkcliente fksetm
+
+	'fkcliente fkserialice
+	'dbcliente dbupdatemlog ;
+
+:regventa
+	date rot 100 mod rot rot "%d/%d/%d" mprint 'fecha strcpy
+	'valorcta ?real2 nip 0? ( drop ; ) drop
+	mark |-- agrega pago si hay
+	'fecha ,s "|" ,s
+	'codcliente ,s "|" ,s
+	'valorcta ,s "|" ,s
+	'notacta ,s "|" ,s
+	$7e ,c 13 ,c 10 ,c 0 ,c
+	empty
+	'dbventa dbinsertlog ;
+
+:ctacliente
+	actsaldo
+	regventa
+	exit
+	;
+
+:saldarctacliente
+	"SU PAGO" 'notacta strcpy
+	'salcliente ?real2 nip neg nro2str 'valorcta strcpy
+	;
+
+:ventaclie
+	'codcliente over 1 nfld=?i ; | str reg n
+
+#valor1
+
+:updven
+	exit
+	'fkventa fkserialice
+	grventa 'dbventa dbupdatelog
+    2 'fkventa fkgetm ?real2 nip valor1 swap -
+
+| actualizar salcliente
+	'salcliente ?real2 nip over - nro2str 'salcliente strcpy
+
+	nro2str 'valorcta strcpy actsaldo
+	0 'notacta !
+	0 'valorcta !
+	;
+
+:delven
+	exit
+	grventa 'dbventa dbdeletelog ;
+
+:editaventas
+	'fkventa fkclear
+	grventa 'dbventa dbgetreg
+	'fkventa fkdeserialice
+    2 'fkventa fkgetm ?real2 nip 'valor1 !
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Movimientos > Editar " print
+		verde 'updven " Actualizar " sp btnt
+		rojo
+		'delven " Borrar " sp btnt
+		'exit " Cancelar " sp btnt
+		cr cr sp chome!
+		blanco "Movimiento" print cr
+		negro
+		'fkventa fkedit
+		cminiflecha ;
+
+:editaventa
+	editaventas
+	'ventaclie 'dbventa dbfilterv
+	-1 'dbventa dbsortdate
+	;
+
+:ctactes
+	--BuscaCliente
+	'cliente c@ 0? ( drop ; ) drop
+	regcliente -1 =? ( drop ; ) drop
+	'ventaclie 'dbventa dbfilterv
+|	makeresumen
+	-1 'dbventa dbsortdate
+	0 'notacta !
+	0 'valorcta !
+
+	cleardbgrid
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Cuentas Corrientes " print
+|		violeta 'movlist " Listado " sp btnt
+|		amarillo 'impmov "Imprimir" sp btnt
+|		'codcliente print
+
+		cr cr sp chome!
+		fichacliente
+		sw 8 - 'tx2 !
+		blanco	fonta-arial14
+		'salcliente "Saldo:  $%s   " print
+		 verde 'saldarctacliente "Saldar Todo" .btnt
+		| 'notcliente "  Notas: %s" print cr
+		cr cr2
+		cyan oscuro 4 linesfill
+		blanco
+		" Descripción : " print 'notacta 31 input cr
+		" Valor (-Crédito) : " print 'valorcta 7 input cr
+        cr2
+		verde 'ctacliente " Ok " sp .btnt
+		rojo 'exit " Cancelar " sp .btnt cr cr
+
+		fonta-arial10 blanco
+		" Ultimos Movimientos   " print
+		verde 'editaventa " EDITAR " btnt
+|		rojo 'borraventa " BORRAR " sp btnt
+		14 'grventa 'dbventa dbgrid
+		cminiflecha ;
+
+|----------------------------------------------------
+#fechaini )( 10
+#fechafin )( 10
+#fechai
+#fechaf
+
+:infecha
+	dup str>date
+	fechai <? ( drop 0 ; )
+	fechaf >? ( drop 0 ; )
+	drop 1 ;
+
+:recalcmov
+	'fechaini str>date 'fechai !
+	'fechafin str>date 'fechaf !
+	'infecha 'dbventa dbfilterv
+	;
+
+|----------------------------------------------------
+:cliente>nombre
+	"%a" mprint 0 'dbcliente dbsearchstr
+	1? ( @ >fld> "%a" mprint )( "" nip ) | cuando no hay cliente
+|	@ >fld> "%a" mprint
+	gcell ;
+
+#grmovimi 0 0
+$10200 $60601 $50803  $40202 0
+"Fecha|Cliente|Descripción|Total"
+'cliente>nombre
+
+:movimientos
+	0 'dbcliente dbfilterv
+	date swap rot date2jul 7 - jul2date
+	swap rot "%d/%d/%d" mprint 'fechaini strcpy
+	date "%d/%d/%d" mprint 'fechafin strcpy
+	recalcmov
+	cleardbgrid
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> movimientos " print cr cr
+		sp chome!
+		"De: " print  'fechaini 10 input
+		" Hasta: " print 'fechafin 10 input
+		'recalcmov sp " Ok " .btnt cr cr2
+
+   		fonta-arial10 blanco
+		" Movimientos   " print
+		25 'grmovimi 'dbventa dbgrid
+		cminiflecha ;
+
+
+|----------------------------------------------------
+#grcondil 0 0
+$100 $60201 $603 0
+"Fecha|Codigo|Descripción"
+'cliente>nombre
+
+:condevl | devuelve
+	grcondil 'dbcondi dbdeletelog
+	exit ;
+
+:clickcondil
+	oscurecetodo
+	>xfb
+	show xfb>scr
+		0 0 fpos 0.7 0.3 fdim home
+		negro
+		6 linesfill
+		verde cr
+		grcondil 'dbcondi dbgetreg >fld> >fld> >fld>
+		" Articulo: " blanco print
+		"%a" verde print
+
+		cr cr cr
+		cyan
+		'condevl "Devuelve" sp sp .btnt
+
+		'exit >esc<
+		cminiflecha ;
+
+
+:listacond
+	cleardbgrid
+	-1 'grcondil !
+	0 'dbcliente dbfilterv
+	0 'dbcondi dbfilterv
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> Condicionales Pendientes" print
+
+		cr cr sp chome!
+		grcondil
+		18 'grcondil 'dbcondi dbgrid
+		grcondil <>? ( clickcondil -1 'grcondil ! )
+		drop
+
+		cminiflecha ;
+
+
+|----------------------------------------------------
+:main
+	show titulo
+		0.5 hdim 0.5 0.2 fpos clockexp
+
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Menu Principal" print
+		cr cr cr
+		sp sp chome!
+
+		$f3468d ink
+		'ventas dup <f1> "F1 - Ventas" sp 24 btntf cr cr
+		'condicional dup <f2> "F2 - Condicional" sp 24 btntf cr cr
+		'ctactes dup <f3> "F3 - Ctas Ctes" sp 24 btntf cr cr
+		'clientes dup <f4> "F4 - Clientes" sp 24 btntf cr cr
+		'articulos dup <f5> "F5 - Articulos" sp 24 btntf cr cr
+		'movimientos dup <f6> "F6 - Movimientos" sp 24 btntf cr cr
+		'listacond dup <f7> "F7 - Condicionales Pendientes" sp 24 btntf cr cr
+
+		'exit >esc<
+		cminiflecha	;
+
+:ini
+	mark
+	'fkcliente fkload
+	'fkarticulo fkload
+	'fkventa fkload
+	'fkcondi fkload
+
+	'dbcliente dbload
+	'dbarticulo dbload
+	'dbventa dbload
+	'dbcondi dbload
+	;
+
+: $7f7f7f paper ini 33 main ;
+
+| ** print.txt con , y con .
+| ** parse.txt con año 100 mod
+| * delete en ventas, falta ajuste saldo y cantidad
+| ** ventas por dia o rango

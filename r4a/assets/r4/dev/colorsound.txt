@@ -1,0 +1,17 @@
+| from 
+| http://www.endolith.com/wordpress/2010/09/15/a-mapping-between-musical-notes-and-colors/
+|Note	Freq (Hz)	+40 oct. (THz)	Wavelength (nm)	R	G	B	Color	HTML name
+|F?4	370	407	737	174	0	0		dark red
+|G4	392	431	696	255	0	0		red
+|G?4	415	457	657	255	0	0		red
+|A4	440	484	620	255	102	0		orange-red
+|B?4	466	513	585	255	239	0		yellow
+|B4	494	543	552	153	255	0		chartreuse
+|C5	523	575	521	40	255	0		lime
+|C?5	554	610	492	0	255	242		aqua
+|D5	587	646	464	0	122	255		sky blue
+|D?5	622	684	438	5	0	255		blue
+|E5	659	725	414	71	0	237		blue
+|F5	698	768	390	99	0	178		indigo
+
+

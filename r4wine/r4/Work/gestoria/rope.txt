@@ -1,0 +1,12 @@
+| r4 Operaciones
+| PHREDA 2012
+|-------------------
+^r4/lib/gui.txt
+
+
+:main
+	show clrscr
+		'exit >esc< ;
+
+
+: mark main ;

@@ -1,0 +1,877 @@
+| Mesa de entrada
+| Municipalidad de San Cayetano
+| 2009 PHREDA
+|------------------------------
+^r4/lib/gui.txt
+^r4/lib/dlg.txt
+^r4/lib/fontt.txt
+^r4/lib/fonta.txt
+^r4/lib/clock.txt
+
+^r4/lib/dbtabla.txt
+^r4/lib/form.txt
+^r4/lib/dbgrilla.txt
+^r4/lib/printer.txt
+
+#nombreaux )( 64
+
+|----- registros por año
+#cntaudiencias
+#cntlibredeuda
+#cntoficios
+#cntcorreoen
+#cntcorreosa
+#cntexpedien
+#cntexpedisa
+
+:ininroreg
+	1 'cntaudiencias !
+	1 'cntlibredeuda !
+	1 'cntoficios !
+	1 'cntcorreoen !
+	1 'cntcorreosa !
+	1 'cntexpedien !
+	1 'cntexpedisa !
+	;
+
+:savenroreg
+	'cntaudiencias 28 date 2drop "dbmesa/reg%d.db" mprint save ;
+
+:loadnroreg
+	ininroreg
+	'cntaudiencias date 2drop "dbmesa/reg%d.db" mprint load drop
+| seguridad
+	date 2drop "dbmesa/audi-%d.db" mprint dbload
+	0 dbmax 1+ 'cntaudiencias !
+	date 2drop "dbmesa/libr-%d.db" mprint dbload
+	0 dbmax 1+ 'cntlibredeuda !
+	date 2drop "dbmesa/ofic-%d.db" mprint dbload
+	0 dbmax 1+ 'cntoficios !
+	date 2drop "dbmesa/coen-%d.db" mprint dbload
+	0 dbmax 1+ 'cntcorreoen !
+	date 2drop "dbmesa/cosa-%d.db" mprint dbload
+	0 dbmax 1+ 'cntcorreosa !
+	date 2drop "dbmesa/exen-%d.db" mprint dbload
+	0 dbmax 1+ 'cntexpedien !
+	date 2drop "dbmesa/exsa-%d.db" mprint dbload
+	0 dbmax 1+ 'cntexpedisa !
+;
+
+
+|--------------------------------
+:titulo
+|	font-vard-12-bold |2 fonthb
+|	font-vard-12-quad |2 fonthb
+	fonta-verdana14b
+
+	1.0 0.1 fdim 0 0.9 fpos home
+	$00528A $10101 vfil
+	blanco
+	"Municipalidad de San Cayetano - Mesa de Entradas"
+	printc
+|*** DEBUG
+|		dup "(%d)" print
+|****
+	cr cr2 ;
+
+:botonera
+|	font-vard-12-bold
+	fonta-verdana14
+	1.0 0.1 fdim 0 -0.9 fpos
+	$00528A $10101 vfil
+	0.1 dup fdim 0.9 0.9 fpos clock
+	1.0 0.1 fdim 0 -0.9 fpos
+	home cr2 blanco
+	date "%d/%d/%d    " printr
+	home cr2 ;
+
+:papel
+	font-vard-12-bold
+|	fonta-verdana14
+	0.98 0.8 fdim 0 0 fpos home blanco ;
+
+:lista
+	font-vard-12-bold
+	1.0 0.8 fdim 0 0 fpos home ;
+
+:verdesk $566700 ink ;
+:azulsk $00528A ink ;
+:cyansk $026C41 ink ;
+
+:cancelar
+	"¿ Seguro ?" dlgsino
+	1? ( exit ) drop ;
+
+|--------------fechas
+#vreload 0	| vector de salto de año
+:vreload! 'vreload ! ;
+#nday #nmes #nano
+
+:nowday
+	date 'nday ! 'nmes ! 'nano ! ;
+
+#mes 31 28 31 30 31 30 31 31 30 31 30 31
+
+:lastday | m -- ld
+	1- 2 << 'mes + @
+	| bisiesto? 1+
+	;
+
+:p.day
+	nday 1- 1? ( 'nday ! ; ) drop
+	nmes 1- 1? ( dup 'nmes ! lastday 'nday ! ; ) drop
+	-1 'nano +! 12 'nmes ! 31 'nday !
+   	vreload exec |*** reload
+	;
+
+:n.day
+	date nday =? (
+			drop nmes =? (
+				drop nano =? ( drop ; )( drop )
+				)( 2drop )
+			)( 3drop )
+
+	nday 1+ nmes lastday <=? ( 'nday ! ; ) drop
+	nmes 1+ 12 <=? ( dup 'nmes ! 1 'nday ! ; ) drop
+	1 'nano +! 1 'nmes ! 1 'nday !
+   	vreload exec |*** reload
+	;
+
+:prevday
+	p.day
+:filtro
+	nano nmes nday "%d/%d/%d" mprint 1 dbfilter ;
+
+:nextday
+	n.day filtro ;
+
+|-------------- audiencia
+#dbaudiencia
+"Nro_4_A|Fecha_10_F|Hora_10_H|Apellido y Nombre_40_T|Procedencia_40_T|Representa A_40_T|Motivo_40_T|Audiencia con_30_T|Atendido_4_S~"
+#graudiencia 0 0 $300 $901 $602 $f03 $f04 $f05 $f06 $f07 $608 0
+#fraudiencia $01 $11 $21 $20 $32 $42 $52 $62 $72 $82 0
+
+:load_audi
+	date 2drop "dbmesa/audi-%d.db" mprint 'nombreaux strcpy
+:la
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+	1 'cntaudiencias ! savenroreg
+	'dbaudiencia count 'nombreaux save 'nombreaux dbload ;
+
+:load_audix
+	nano "dbmesa/audi-%d.db" mprint 'nombreaux strcpy
+	la ;
+
+:paudiencia
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday "Registro de Audiencias - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'graudiencia dbgrillaprinter
+	docend
+	dlgprinter ;
+
+:audiinsert
+	exit
+	dbinsert
+	1 'cntaudiencias +! savenroreg
+:audiclear
+	clearreg
+	cntaudiencias "%d" mprint 0 dbset
+	date "%d/%d/%d" mprint 1 dbset
+	time "%d:%d:%d" mprint 2 dbset ;
+
+:audiencia
+	load_audi
+	audiclear
+	show clrscr titulo
+		"Audiencia" printc
+		papel cr
+    	"Reg: " print
+		'fraudiencia form
+
+		botonera
+		sp verde 'audiinsert " Agregar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+:audiencia-editar
+	cntregs 0? ( drop ; ) drop
+	graudiencia getreg cpyreg
+
+	show clrscr titulo
+		"Audiencia" printc
+		papel cr
+		"Reg: " print
+		'fraudiencia form
+
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+|------
+:laudiencia
+	load_audi
+    nowday filtro
+	0 0 'graudiencia !+ !
+
+    'load_audix vreload!
+	show clrscr titulo
+		"Audiencias" printc
+		lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+		font-vard-8
+		rows 9 - 'graudiencia dbgrilla3
+
+		botonera
+
+		sp verde [ audiencia filtro ; ] "Agregar" .btnt
+		sp cyan [ audiencia-editar filtro ; ] "Editar" .btnt
+		sp amarillo 'paudiencia "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+|-------------- libre deuda
+#dblibrede
+"Nro_4_N|Fecha_20|Procedencia_40_T|Propietario_40_T|Comprador_40_T|Deuda_10_T|Salio_10|Entro_10|Salio_10~"
+#grlibredeuda 0 0 $200 $601 $802 $803 $804 $305 $306 $307 $308 0
+#frlibredeuda $01 $11 $20 $22 $32 $42 $52 $66 $76 $86 0
+
+:load_libr
+	date 2drop "dbmesa/libr-%d.db" mprint 'nombreaux strcpy
+:ll
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+	1 'cntlibredeuda ! savenroreg
+	'dblibrede count 'nombreaux save 'nombreaux dbload ;
+
+:load_librx
+	nano "dbmesa/libr-%d.db" mprint 'nombreaux strcpy
+	ll ;
+
+:plibredeuda
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday "Certificado de Libre Deuda - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'grlibredeuda dbgrillaprinter
+	docend
+	dlgprinter ;
+
+:libred-editar
+	cntregs 0? ( drop ; ) drop
+	grlibredeuda getreg cpyreg
+	show clrscr titulo
+		"Libre Deuda" printc
+		papel cr
+		"Reg: " print
+		'frlibredeuda form
+
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:libredinsert
+	exit
+	dbinsert
+	1 'cntlibredeuda +! savenroreg
+:libredclear
+	clearreg
+	cntlibredeuda "%d" mprint 0 dbset
+	time date "%d/%d/%d %d:%d:%d" mprint 1 dbset
+	;
+
+:libredeuda
+	load_libr
+	libredclear
+	show clrscr titulo
+		"Libre Deuda" printc
+		papel cr
+		"Reg: " print
+		'frlibredeuda form
+
+		botonera
+        sp verde 'libredinsert " Agregar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:llibredeuda
+	load_libr
+    nowday filtro
+	0 0 'grlibredeuda !+ !
+	'load_librx vreload!
+	show clrscr titulo
+		"Libre Deuda" printc
+		lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+		font-vard-8
+		rows 9 - 'grlibredeuda dbgrilla3
+
+		botonera
+		sp verde [ libredeuda filtro ; ] "Agregar" .btnt
+		sp cyan [ libred-editar filtro ; ] "Editar" .btnt
+		sp amarillo 'plibredeuda "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+|-------------- Oficios
+#dboficio
+"Nro_4_N|Fecha_20|Autocaratulados_40_T|Monto_20_N|Oficina_40_T|Informe_40_T|Fecha Salida_10_T|Expediente_40_T|Fecha Entrada_10_T|Observaciones_80_T~"
+#groficios 0 0 $200 $401 $502 $303 $404 $805 $306 0
+#froficios $01 $11 $20 $22 $32 $72 $52 $66 $86 $92 0
+
+:load_ofic
+	date 2drop "dbmesa/ofic-%d.db" mprint 'nombreaux strcpy
+:lo
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+    1 'cntoficios ! savenroreg
+	'dboficio count 'nombreaux save 'nombreaux dbload ;
+
+:load_oficx
+	nano "dbmesa/ofic-%d.db" mprint 'nombreaux strcpy
+	lo ;
+
+:poficios
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday  "Oficios - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'groficios dbgrillaprinter
+	docend
+	dlgprinter ;
+
+:oficios-editar
+	cntregs 0? ( drop ; ) drop
+	groficios getreg cpyreg
+	show clrscr titulo
+		"Oficios" printc
+		papel cr
+		"Reg: " print
+
+		'froficios form
+
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+	'exit >esc<
+	;
+
+:oficiosinsert
+	exit
+	dbinsert
+	1 'cntoficios +! savenroreg
+:oficiosclear
+	clearreg
+	cntoficios "%d" mprint 0 dbset
+	time date "%d/%d/%d %d:%d:%d" mprint 1 dbset
+
+;
+
+:oficios
+	load_ofic
+	oficiosclear
+	show clrscr titulo
+		"Oficios" printc
+		papel cr
+		"Reg: " print
+		'froficios form
+
+		botonera
+		sp verde 'oficiosinsert " Agregar " .btnt
+		sp amarillo 'poficios " Imprimir " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+	'exit >esc<
+	;
+
+:loficios
+	load_ofic
+    nowday filtro
+	0 0 'groficios !+ !
+	'load_oficx vreload!
+	show clrscr titulo "Oficios" printc lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+		font-vard-8
+		rows 9 - 'groficios dbgrilla3
+		botonera
+		sp verde [ oficios filtro ; ] "Agregar" .btnt
+		sp cyan [ oficios-editar filtro ; ] "Editar" .btnt
+		sp amarillo 'poficios "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+|-------------- correo entra
+#dbcorren
+"Nro_4_N|Fecha_20_F|Remitente_40_T|Procedencia_40_T|Sintesis de la nota enviada_60_M~"
+#grentracorr 0 0 $200 $501 $802 $803 $f04 0
+
+:load_coen
+	date 2drop "dbmesa/coen-%d.db" mprint 'nombreaux strcpy
+:lc
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+	1 'cntcorreoen ! savenroreg
+	'dbcorren count 'nombreaux save 'nombreaux dbload ;
+
+:load_coenx
+	trace
+	nano "dbmesa/coen-%d.db" mprint 'nombreaux strcpy
+	lc ;
+
+:pentracorr
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday  "Entrada de Correspondencia - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'grentracorr dbgrillaprinter
+	docend
+	dlgprinter ;
+
+
+:entracinsert
+	exit
+	dbinsert
+	1 'cntcorreoen +! savenroreg
+:entracclear
+	clearreg
+	cntcorreoen "%d" mprint 0 dbset
+	time date "%d/%d/%d %d:%d:%d" mprint 1 dbset
+;
+
+:entracorr
+	load_coen
+	entracclear
+	show clrscr titulo
+		"Entrada Correo" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+
+		botonera
+		sp verde 'entracinsert " Agregar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:entracorr-editar
+	cntregs 0? ( drop ; ) drop
+	grentracorr getreg cpyreg
+	show clrscr titulo
+		"Entrada Correo" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:lentracorr
+	load_coen
+    nowday filtro
+	0 0 'grentracorr !+ !
+	'load_coenx vreload!
+	show clrscr titulo "Entrada Correo" printc
+		lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+        font-vard-8
+		rows 9 - 'grentracorr dbgrilla3
+
+		botonera
+		sp verde [ entracorr filtro ; ] "Agregar" .btnt
+		sp cyan [ entracorr-editar filtro ; ] "Editar" .btnt
+
+		sp amarillo 'pentracorr "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		| sp blanco dbdump | ** debug
+
+		cminiflecha
+		'exit >esc<
+		;
+
+|-------------- correo sale
+#dbcorrsa
+"Nro_4_N|Fecha_20|Forma Remision_20|Destinatario_40_T|Destino_40_T|Sintesis de la la nota enviada_60~"
+#grsalecorr 0 0 $200 $501 $602 $803 $804 $805 0
+
+:load_cosa
+	date 2drop "dbmesa/cosa-%d.db" mprint 'nombreaux strcpy
+:la
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+	1 'cntcorreosa ! savenroreg
+	'dbcorrsa count 'nombreaux save 'nombreaux dbload ;
+
+:load_cosax
+	nano "dbmesa/cosa-%d.db" mprint 'nombreaux strcpy
+	la ;
+
+:psalecorr
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday  "Salida de Correspondencia - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'grsalecorr dbgrillaprinter
+	docend
+	dlgprinter ;
+
+
+:salecinsert
+	exit
+	dbinsert
+	1 'cntcorreosa +! savenroreg
+:salecclear
+	clearreg
+	cntcorreosa "%d" mprint 0 dbset
+	time date "%d/%d/%d %d:%d:%d" mprint 1 dbset
+;
+
+:salecorr
+	load_cosa
+	salecclear
+	show clrscr titulo
+		"Salida Correo" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+
+		botonera
+		sp verde 'salecinsert " Agregar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:salecorr-editar
+	cntregs 0? ( drop ; ) drop
+	grsalecorr getreg cpyreg
+	show clrscr titulo
+		"Salida Correo" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:lsalecorr
+	load_cosa
+    nowday filtro
+	0 0 'grsalecorr !+ !
+	'load_cosax vreload!
+	show clrscr titulo
+		"Salida Correo" printc lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+		font-vard-8
+		rows 9 - 'grsalecorr dbgrilla3
+
+		botonera
+		sp verde [ salecorr filtro ; ] "Agregar" .btnt
+		sp cyan [ salecorr-editar filtro ; ] "Editar" .btnt
+
+		sp amarillo 'psalecorr "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+|-------------- expediente entra
+#dbexpeen
+"Nro_4_N|Fecha_20_F|Expte._20|Remitente_40_T|Procedencia_40_T|Fojas_10_T|Motivo_40_T~"
+#grentraex 0 0 $200 $501 $602 $803 $804 $205 $806 0
+
+:load_exen
+	date 2drop "dbmesa/exen-%d.db" mprint 'nombreaux strcpy
+:le
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+	1 'cntexpedien ! savenroreg
+	'dbexpeen count 'nombreaux save 'nombreaux dbload ;
+
+:load_exenx
+	nano "dbmesa/exen-%d.db" mprint 'nombreaux strcpy
+	le ;
+
+:pentraexpe
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday  "Entrada de Expedientes - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'grentraex dbgrillaprinter
+	docend
+	dlgprinter ;
+
+
+:entraeinsert
+	exit
+	dbinsert
+	1 'cntexpedien +! savenroreg
+:entraeclear
+	clearreg
+	cntexpedien "%d" mprint 0 dbset
+	time date "%d/%d/%d %d:%d:%d" mprint 1 dbset
+;
+
+:entraexpe
+	load_exen
+	entraeclear
+	show clrscr titulo
+		"Entrada Expediente" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+
+		botonera
+		sp verde 'entraeinsert " Agregar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:entraexpe-editar
+	cntregs 0? ( drop ; ) drop
+	grentraex getreg cpyreg
+	show clrscr titulo
+		"Entrada Expediente" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+:lentraexpe
+	load_exen
+    nowday filtro
+	0 0 'grentraex !+ !
+	'load_exenx  vreload!
+	show clrscr titulo
+		"Entrada Expediente" printc lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+		font-vard-8
+		rows 9 - 'grentraex dbgrilla3
+
+		botonera
+		sp verde [ entraexpe filtro ; ] "Agregar" .btnt
+		sp cyan [ entraexpe-editar filtro ; ] "Editar" .btnt
+
+		sp amarillo 'pentraexpe "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+|-------------- expediente sale
+#dbexpesa
+"Nro_4_N|Fecha_20_F|Forma Remision_20|Expte._20|Destinatario_40_T|Destino_40_T|Fojas_10_T|Motivo_40_T~"
+#grsaleex 0 0 $100 $501 $502 $303 $804 $805 $206 $907  0
+
+:load_exsa
+	date 2drop "dbmesa/exsa-%d.db" mprint 'nombreaux strcpy
+:le
+	'nombreaux dbload
+	cntflds 1? ( drop ; ) drop
+	1 'cntexpedisa ! savenroreg
+	'dbexpesa count 'nombreaux save 'nombreaux dbload ;
+
+:load_exsax
+	nano "dbmesa/exsa-%d.db" mprint 'nombreaux strcpy
+	le ;
+
+:psaleexpe
+	12 -900 "Arial" docajusta
+	docini
+	docinicia
+	doccr
+	"Municipalidad de San Cayetano - Mesa de Entradas" docprintc doccr
+	nano nmes nday  "Salida de Expedientes - %d/%d/%d" docprintc doccr
+	10 -900 "Arial" docfont
+	'grsaleex dbgrillaprinter
+	docend
+	dlgprinter ;
+
+
+:saleeinsert
+	exit
+	dbinsert
+	1 'cntexpedisa +! savenroreg
+:saleeclear
+	clearreg
+	cntexpedisa "%d" mprint 0 dbset
+	time date "%d/%d/%d %d:%d:%d" mprint 1 dbset
+	;
+
+:saleexpe
+	load_exsa
+	saleeclear
+	show clrscr titulo
+		"Salida Expediente" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+		botonera
+		sp verde 'saleeinsert " Agregar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+:saleexpe-editar
+	cntregs 0? ( drop ; ) drop
+	grsaleex getreg cpyreg
+	show clrscr titulo
+		"Salida Expediente" printc
+		papel cr
+		"Reg: " print 0
+		( 2 <? )( dup dbprint sp sp 1+ ) cr cr
+		( cntflds <? )( dup dbtitle cr dup dbedit cr cr2 1+ )
+		drop
+		botonera
+		sp verde [ dbupdate exit ; ] " Aceptar " .btnt
+		sp rojo 'exit " Cancelar " .btnt
+		cminiflecha
+		'exit >esc<
+		;
+
+:lsaleexpe
+	load_exsa
+    nowday filtro
+	0 0 'grsaleex !+ !
+	'load_exsax vreload!
+	show clrscr titulo
+		"Salida Expediente" printc lista
+		nano nmes nday "Listado al %d/%d/%d" printc
+		font-vard-8
+		rows 9 - 'grsaleex dbgrilla3
+		botonera
+		sp verde [ saleexpe filtro ; ] "Agregar" .btnt
+		sp cyan [ saleexpe-editar filtro ; ] "Editar" .btnt
+
+		sp amarillo 'psaleexpe "Imprimir" .btnt
+		sp violeta [ dblastdel filtro ; ] "Borra Ultimo" .btnt
+		sp rojo 'exit "Salir" .btnt
+		sp sp sp sp azul
+		sp 'prevday "< dia" .btnt
+		sp 'nextday "dia >" .btnt
+		cminiflecha
+	'exit >esc<
+		;
+
+|************* menu principal
+:main
+|	calcactuales
+	loadnroreg
+	show clrscr titulo
+		"Menu Principal" printc
+		papel cr |cr cr
+
+		$B2BD21 ink cyan
+		'laudiencia "Audiencia" 30 cmenu cr cr cr2
+		'llibredeuda "Libre Deuda" 30 cmenu cr cr cr2
+		'loficios "Oficios" 30 cmenu cr cr cr2
+		'lentracorr "Entra Correo" 30 cmenu cr cr cr2
+		'lsalecorr "Sale Correo" 30 cmenu cr cr cr2
+		'lentraexpe "Entra Expediente" 30 cmenu cr cr cr2
+		'lsaleexpe "Sale Expediente" 30 cmenu cr cr cr2
+
+		0 rows 2 - gotoxy
+		rojo 'exit dup >esc< " Salir del sistema " 30 cmenu
+
+		botonera
+		cminiflecha
+		;
+
+
+: 33
+0 'inkb !
+$ffffff 'inka !
+$808080 paper
+|$F3971A paper
+mark main ;

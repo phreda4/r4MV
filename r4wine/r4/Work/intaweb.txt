@@ -1,0 +1,313 @@
+^r4/lib/gui.txt
+^r4/lib/cursor.txt
+^r4/lib/trace.txt
+
+#siteinta "http://anterior.inta.gov.ar/barrow/sancayetano/met/downld02.txt"
+#siteinta2 "http://anterior.inta.gov.ar/barrow/sancayetano/met/cam.htm"
+
+#clima
+#clima2
+
+#conv
+
+#hora
+#min
+
+#cnt
+#temp
+#dectemp
+#stemp
+#sdectemp
+#humedad
+#uviento )( 32
+#vviento )( 8
+#ulluvia )( 32
+
+#pad )( 1024
+#nflds )( 1024
+#nflds. 'nflds
+
+:loadclima
+	'siteinta 0 clima openurl
+	clima =? ( drop ; )
+	0 swap !
+	;
+
+:>>13 | adr -- adr.
+	( c@+ 1? )(
+		13 =? ( drop ; ) drop
+		) drop 1- ;
+
+:trim | adr -- adr.
+	( c@+ 1? )(
+		$ff and 32 >? ( drop 1- ; ) drop
+		) drop 1- ;
+
+:nextw | adr -- adr.
+	( c@+ 1? )(
+		$ff and 33 <? ( drop ; ) drop
+		) drop 1- ;
+
+:../
+	( c@+ 1? )(
+		$2f =? ( drop ; ) drop
+		) drop 1- ;
+
+:..:
+	( c@+ 1? )(
+		$3a =? ( drop ; ) drop
+		) drop 1- ;
+
+:...
+	( c@+ 1? )(
+		$2e =? ( drop ; ) drop
+		) drop 1- ;
+
+
+:,dn | n d --
+	0 'pad !
+    mark 'pad 'here ! ,d empty
+	'pad over + 0 swap c!
+	'pad count rot swap -
+	+? ( ( 1? )( 1- ,sp ) ) drop
+	,s ;
+
+:,sn | n s --
+	dup pick2 + 0 swap c!
+	count rot swap -
+	+? ( ( 1? )( 1- ,sp ) ) drop
+	,s ;
+
+:0cut | adr -- adr
+	dup 1+ c@
+	$30 >=? ( $39 <=? ( drop ; ) ) drop
+	"0" ,s ;
+
+:,wcut | adr char --
+	swap
+	( c@+ 1? )(
+		pick2 =? ( 3drop ; ) ,c
+		) 3drop ;
+
+:,word | adr --
+	( c@+ 1? )(
+		$ff and 33 <? ( 2drop ; ) ,c
+		) 2drop ;
+
+:wcount | adr -- adr cnt
+	dup ( c@+ 1? )(
+		$ff and 33 <? ( drop over - ; ) drop
+		) drop
+	over -
+	;
+
+|-----------------------------
+:getnfields | adr n -- adr.
+	'nflds 'nflds. !
+	( 1? )( 1- swap
+		trim
+		dup nflds. !+ 'nflds. !
+		nextw
+		swap ) drop ;
+
+:shownfields
+	show clrscr
+	'nflds >r
+	32 ( 1? )( 1-
+		r@+ over "%d " print
+		8 ( 1? )( 1- swap c@+ "%k" print swap ) 2drop
+		cr
+		) drop rdrop
+
+	'exit >esc<
+
+	;
+:,fldn | n --
+	2 << 'nflds + @ ,word ;
+
+:,fldcn | c n --
+	2 << 'nflds + @
+	wcount rot swap - -? ( 0 nip )
+	( 1? )( 1- 32 ,c ) drop
+	,word ;
+
+:horapm24
+	'nflds 4+ @
+	dup str>int 'hora !
+	dup ..: str>int 'min !
+	nextw 2 - c@
+	$61 =? ( drop hora 12 =? ( 0 'hora ! ) drop ; ) |AM
+	| PM
+	drop
+	hora 12 <>? ( 12 'hora +! ) drop
+	;
+
+:,d0 | d --
+	10 <? ( "0" ,s ) ,d ;
+
+:,flddatetime
+	nflds
+	dup ../ ../
+	"20" ,s ,word
+	dup ../ "-" ,s 0cut $2f ,wcut
+	"-" ,s 0cut $2f ,wcut
+	,sp
+	horapm24
+	hora ,d0
+	":" ,s
+	min ,d0
+	":00" ,s
+	;
+
+:,flddate
+	nflds
+	dup ../ ../
+	"20" ,s ,word
+	dup ../ "-" ,s 0cut $2f ,wcut
+	"-" ,s 0cut $2f ,wcut
+	,sp ;
+
+:,,
+	$2c ,c ,sp ;
+
+|-----------------------------
+
+:linea
+	,flddatetime ,,
+	,flddatetime ,,
+	" 30,   0,   0.0, " ,s
+	5 5 ,fldcn ,,
+	6 2 ,fldcn ,,	|temperaturas
+	6 4 ,fldcn ,,
+	6 3 ,fldcn ,,
+
+	8 16 ,fldcn ,,
+	8 16 ,fldcn ,,
+	" 0.0,   0,  0.0,   0,   0, " ,s
+	4 8 ,fldcn ,,
+	"  " ,s 9 ,c
+	" 1135,   340.5,     0.0,     0.0,     0.0,     0.0,     0.0,      0.0, 0, 0, 0, 0, 0, 0, 0, 0, 000100, 1E 32 EA 00 5E 84 00 60 27 00 00 00 02 6F 04 00 ," ,s
+	,cr 10 ,c
+	;
+
+:lineaultima
+	min 30 =? ( 1 'hora +! 0 'min ! )( 30 'min +! ) drop
+
+	4 cnt ,dn ,,
+	,flddate
+	hora ,d0 ":" ,s min ,d0 ":00" ,s ,,
+	,flddate
+	hora ,d0 ":" ,s min ,d0 ":00" ,s ,,
+	" 30,   0,   0.0, " ,s
+	4 humedad ,dn ,,
+	3 temp ,dn "." ,s 1 dectemp ,dn ,,
+	3 temp ,dn "." ,s 1 dectemp ,dn ,,
+	3 stemp ,dn "." ,s 1 sdectemp ,dn ,,
+	" 1014.6,  1014.6, " ,s
+	4 'vviento ,sn ,,
+	"  0, " ,s
+	" 0.0,   0,   0, " ,s
+	3 'uviento ,sn ,,
+	"  " ,s 9 ,c
+  	" 1135,   340.5,     0.0,     0.0,     0.0,     0.0,     0.0,      0.0, 0, 0, 0, 0, 0, 0, 0, 0, 000100, 1E 32 EA 00 5E 84 00 60 27 00 00 00 02 6F 04 00 ," ,s
+	,cr 10 ,c
+
+	;
+
+:filete | "ini" "ini" mem -- adr/0
+	swap findstri
+	0? ( nip ; )
+	swap count >r findstri
+	r> + ;
+
+:filstr | dest "" ini --
+	swap c@ rot rot | "" dest ini
+	( c@+ pick3 <>? )( rot c!+ swap )
+	2drop nip
+	0 swap c! ;
+
+:a>> | str b -- str'
+	c@ swap
+	( c@+ 1? )(
+		pick2 =? ( drop nip 1- ; )
+		drop
+		) drop 1- nip ;
+
+:loadclima2
+	'siteinta2 0 clima2 openurl
+	clima2 =? ( drop ; ) 0 swap !
+	"<p class=""tabla"">" "Temperatura:" clima2 filete 0? ( drop ; )
+	trim str>nro 'temp ! 1+ str>nro 'dectemp ! drop
+	"<p class=""tabla"">" "Sensación térmica:" clima2 filete 0? ( drop ; )
+	trim str>nro 'stemp ! 1+ str>nro 'sdectemp ! drop
+
+	"<p class=""tabla"">" "Humedad:" clima2 filete 0? ( drop ; )
+	trim str>nro 'humedad ! drop
+
+	"<p class=""tabla"">" "Viento:" clima2 filete 0? ( drop ; )
+	trim 'uviento "<" rot filstr
+	'uviento "a" a>> 2 +
+	'vviento swap
+	( c@+ $26 <>? )( rot c!+ swap ) 2drop
+	0 swap c!
+
+	"<p class=""tabla"">" "Total lluvia de la tormenta:" clima2 filete 0? ( drop ; )
+	trim 'ulluvia "<" rot filstr
+	;
+
+
+:parsefile
+	loadclima
+	loadclima2
+	mark
+	clima
+	>>13 >>13 >>13 | titulo y separador
+	dup
+	1 'cnt !
+	( drop
+		33 getnfields
+
+|		shownfields
+
+		4 cnt ,dn ,,
+		linea
+		1 'cnt +!
+		trim
+	dup c@ 0? ) 2drop
+	lineaultima
+	"EasyWeather.dat" savemem
+	empty
+	;
+
+
+
+:main
+	mark
+	here 'clima !
+	$ffff 'here +!
+	here 'clima2 !
+	$ffff 'here +!
+	here $ffff + 'conv !
+
+	parsefile
+	$ffffff paper
+	show clrscr
+		azul " <" print
+		rojo "2" print
+		azul "> " print
+		verde oscuro
+		"HTH fuente INTA" print cr
+		negro
+		min 10 /mod swap hora " Registro: %d:%d%d:00 " print cr
+		dectemp temp " Temp: %d.%dºC  " print cr
+		humedad " Humedad: %d%%" print cr
+|		'vviento 'uviento " viento:%s a %s" print cr
+
+		verde oscuro
+		" --- Sistema :r4 ---" print cr
+		'exit >esc<
+		cmira
+		300 .segs .restart
+		parsefile ;
+
+: main ;

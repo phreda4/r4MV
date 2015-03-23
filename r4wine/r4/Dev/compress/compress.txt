@@ -1,0 +1,90 @@
+
+    42 #define	MATCH_BITS	6
+     43 #define	MATCH_MIN	3
+     44 #define	MATCH_MAX	((1 << MATCH_BITS) + (MATCH_MIN - 1))
+     45 #define	OFFSET_MASK	((1 << (16 - MATCH_BITS)) - 1)
+     46 #define	LEMPEL_SIZE	1024
+     47
+     48 /*ARGSUSED*/
+     49 size_t
+     50 lzjb_compress(void *s_start, void *d_start, size_t s_len, size_t d_len, int n)
+     51 {
+     52 	uchar_t *src = s_start;
+     53 	uchar_t *dst = d_start;
+     54 	uchar_t *cpy, *copymap;
+     55 	int copymask = 1 << (NBBY - 1);
+     56 	int mlen, offset, hash;
+     57 	uint16_t *hp;
+     58 	uint16_t lempel[LEMPEL_SIZE] = { 0 };
+     59
+     60 	while (src < (uchar_t *)s_start + s_len) {
+     61 		if ((copymask <<= 1) == (1 << NBBY)) {
+     62 			if (dst >= (uchar_t *)d_start + d_len - 1 - 2 * NBBY)
+     63 				return (s_len);
+     64 			copymask = 1;
+     65 			copymap = dst;
+     66 			*dst++ = 0;
+     67 		}
+     68 		if (src > (uchar_t *)s_start + s_len - MATCH_MAX) {
+     69 			*dst++ = *src++;
+     70 			continue;
+     71 		}
+     72 		hash = (src[0] << 16) + (src[1] << 8) + src[2];
+     73 		hash += hash >> 9;
+     74 		hash += hash >> 5;
+     75 		hp = &lempel[hash & (LEMPEL_SIZE - 1)];
+     76 		offset = (intptr_t)(src - *hp) & OFFSET_MASK;
+     77 		*hp = (uint16_t)(uintptr_t)src;
+     78 		cpy = src - offset;
+     79 		if (cpy >= (uchar_t *)s_start && cpy != src &&
+     80 		    src[0] == cpy[0] && src[1] == cpy[1] && src[2] == cpy[2]) {
+     81 			*copymap |= copymask;
+     82 			for (mlen = MATCH_MIN; mlen < MATCH_MAX; mlen++)
+     83 				if (src[mlen] != cpy[mlen])
+     84 					break;
+     85 			*dst++ = ((mlen - MATCH_MIN) << (NBBY - MATCH_BITS)) |
+     86 			    (offset >> NBBY);
+     87 			*dst++ = (uchar_t)offset;
+     88 			src += mlen;
+     89 		} else {
+     90 			*dst++ = *src++;
+     91 		}
+     92 	}
+     93 	return (dst - (uchar_t *)d_start);
+     94 }
+     95
+     96 /*ARGSUSED*/
+     97 int
+     98 lzjb_decompress(void *s_start, void *d_start, size_t s_len, size_t d_len, int n)
+     99 {
+    100 	uchar_t *src = s_start;
+    101 	uchar_t *dst = d_start;
+    102 	uchar_t *d_end = (uchar_t *)d_start + d_len;
+    103 	uchar_t *cpy, copymap;
+    104 	int copymask = 1 << (NBBY - 1);
+    105
+    106 	while (dst < d_end) {
+    107 		if ((copymask <<= 1) == (1 << NBBY)) {
+    108 			copymask = 1;
+    109 			copymap = *src++;
+    110 		}
+    111 		if (copymap & copymask) {
+    112 			int mlen = (src[0] >> (NBBY - MATCH_BITS)) + MATCH_MIN;
+    113 			int offset = ((src[0] << NBBY) | src[1]) & OFFSET_MASK;
+    114 			src += 2;
+    115 			if ((cpy = dst - offset) < (uchar_t *)d_start)
+    116 				return (-1);
+    117 			while (--mlen >= 0 && dst < d_end)
+    118 				*dst++ = *cpy++;
+    119 		} else {
+    120 			*dst++ = *src++;
+    121 		}
+    122 	}
+    123 	return (0);
+    124 }
+
+:descompress |
+	( over <? )(
+		c@+ | src copymap
+
+

@@ -1,0 +1,204 @@
+|----Programa RPM Clasificados
+|
+|----Listado de cliente
+|Alta de clientes
+|Cliente nuevo o de modificacion
+|Listado clientes activos
+|Listado clientes de baja
+|Busqueda de clientes por nombre, alpellido, tel, direccion.
+|
+|----Listado de clasificados
+|Alta de clasificados
+|Listado de clasificados actuales y destacados.
+|Listado de clasificados nuevos
+|Busqueda de clasificados por mes y rubro.
+|
+|---------------------------------------------
+
+^r4/lib/gui.txt
+^r4/lib/clock.txt
+^r4/lib/parse.txt
+^r4/lib/fonta.txt
+
+^r4/lib/dbtabla.txt
+^r4/lib/grid.txt
+^r4/lib/form.txt
+
+^r4/lib/trace.txt
+
+|---- titulo
+:titulo
+	clrscr
+	128 gc.top $00f gc.hfill
+	64 dup dim sw 32 - 64 pos
+	clock
+	scr fonta-Verdana14 home
+	blanco
+	" RPM Clasificados" print
+	dup "(%d)" print
+	cr cr2 ;
+
+|--Campos de clientes
+|0-Numero de cliente:4
+|1-Nombre y apellido: 32
+|2-Telefono: 32
+|3-Direccion:32
+|4-e-mail: 32
+|5-estado: 8
+|6-Comentario: 16
+|7-Fecha:12
+|8-Rubros de cliente:16
+|9-Localidad:12
+|10-Cuit:16
+|11-Precio de  publicidad:4
+
+#dbclientes2
+"N04Nro"
+"A20Nombre y apellido"
+"M10Telefono"
+"T20Direccion"
+"T20e-mail"
+"L08estado"
+"M10Comentario"
+"F0AFecha"
+"T10Rubros de cliente"
+"L10Localidad"
+"N10Cuit"
+"D10Precio de publicidad"
+0
+
+#dbclientes
+"Nro_4_A|Nombre y Apellido_32_T|Telefono_32_T|Direccion_32_T|E-mail_32_T|Estado_8_T|Comentario_16_T|Fecha Alta_12_F|Rubro del Cliente_16_T|Localidad_12_T|Cuit_16_T||Precio de publicidad_5~"
+#nmclientes "db/dbrpmclasificados/clientes.db"
+|#nmclientes "db/clientes.db"
+
+#frclientes $03 $12 $22 $32 $42 $52 $62 $72 $82 $92 $a2  0
+#grclientes 0 0 $200 $901 $602 $f03 $f04 $705 $f06 $407 0
+
+:editcliente
+|	'nro _4_A|Nombre y Apellido_32_T|Telefono_32_T|Direccion_32_T|E-mail_32_T|Estado_8_T|Comentario_16_T|Fecha Alta_12_F|Rubro del Cliente_16_T|Localidad_12_T|Cuit_16_T||Precio de publicidad_5~"
+
+:cliente.load
+	'nmclientes dbload
+	cntflds 1? ( drop ; ) drop
+	'dbclientes count 'nmclientes save
+	'nmclientes dbload ;
+
+:altacliente
+	dbinsert
+	clearreg
+	;
+
+:buscacliente
+	0 0 'grclientes !+ !
+	show titulo
+		"Clientes" printc cr cr
+		font-vard-8
+		rows 9 - 'grclientes dbgrid
+		cminiflecha
+		'exit >esc<
+		;
+
+:clientes
+	cliente.load
+	clearreg
+	cntregs 1+ "%d" mprint 0 dbset
+	show titulo
+		sp verde 'altacliente " Agregar " .btnt
+		sp cyan 'buscacliente " Buscar " .btnt
+		sp rojo 'exit dup >esc< " Salir " .btnt
+		blanco
+
+|		cr cr
+|		cntregs " Registros:%d" print cr cr
+
+		"Clientes" printc cr cr
+
+		'frclientes form2
+		cminiflecha
+		;
+
+
+|--Campos de Clasificados
+|0-Nro
+|1-Localidad:12
+|2-Fecha de Alta
+|3-Fecha de baja: 16
+|4-Rubro: 16
+|5-subRubro:16
+|6-Texto:16
+|7-Teléfono: 32
+|8-Contacto: 32
+|9-Tipo: 16
+|a-Memo(descripcion de clasificados): 60
+
+#dbclasificado
+"Nro_4_A|Localidad_12|Fecha de Alta_10_F|Fecha de Baja_10_F|Rubro_16_T|SubRubro_16_T|Texto_16_T|Teléfono_32_T|Contacto_32_T|Tipo_16_T|Descripcion_160_M~"
+#nmclasificado "db/dbrpmclasificados/clasificados.db"
+|#nmclasificado "db/clasificados.db"
+
+#frclasificado $12 $26 $36 $42 $52 $62 $72 $82 $92 $a4 0
+#grclasificado 0 0 $300 $901 $602 $f03 $f04 $f05 $f06 0
+
+:clasificado.load
+	'nmclasificado dbload
+	cntflds 1? ( drop ; ) drop
+	'dbclasificado count 'nmclasificado save
+	'nmclasificado dbload ;
+
+:altaclasificado
+	dbinsert
+	clearreg
+	;
+
+:buscaclasificado
+	0 0 'grclasificado !+ !
+	show titulo
+		"Clasificados" printc cr cr
+		font-vard-8
+		rows 9 - 'grclasificado dbgrilla3
+		cminiflecha
+		'exit >esc<
+		;
+
+:clasificados
+	clasificado.load
+	clearreg
+	cntregs 1+ "%d" mprint 0 dbset
+	show titulo
+		sp verde 'altaclasificado " Agregar " .btnt
+		sp cyan 'buscaclasificado " Buscar " .btnt
+		sp rojo 'exit dup >esc< " Salir " .btnt
+
+		"Clasificados" printc cr cr
+		blanco
+
+		'frclasificado form2
+|		cr cr cntregs " Registros:%d" print cr cr
+		cr font-vard-12-bold
+
+		cminiflecha
+		;
+
+
+:edicion
+	;
+
+|---- MAIN
+:main
+	show titulo
+		"* Menu Principal *" printc cr cr cr
+		verde
+		'clientes dup <f1>
+		"f1 - Clientes" 30 btnm cr cr cr2
+		'clasificados dup <f2>
+		"f2 - Clasificados" 30 btnm cr cr cr2
+		'edicion dup <f3>
+		"f3 - Edicion" 30 btnm
+		0 rows 2 - gotoxy
+		rojo 'exit dup >esc<
+		"Salir del sistema" 20 btnm
+		cminiflecha
+		;
+
+: $808080 paper mark 33 main ;

@@ -1,0 +1,21 @@
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+
+:main
+	show clrscr cr
+		[ $ff00 paper ; ] "BTN1" .btnt cr cr
+		[ $ff paper ; ] "BTN2" .btnt cr cr
+		gui.debug
+		'exit >esc<
+		cflecha
+		;
+
+|---
+:main2
+	show cls scr home cr
+		"hola" print cr cr
+
+		'exit >esc<
+		cflecha ;
+
+: main ;
