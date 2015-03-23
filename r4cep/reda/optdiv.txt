@@ -1,0 +1,27 @@
+| division por constantes
+|
+|----------------------------------
+
+::6/ | n -- d
+	dup 2/ over 3 >> + | n q
+	dup 4 >> + dup 8 >> + dup 16 >> + 2 >> | n q
+	swap over  | q n q
+	2* pick2 + 2* - | q n-q*6
+	2 + 3 >> + ;
+
+::6mod 
+	dup 2/ swap 3 >> + | q
+	dup 4 >> + dup 8 >> + dup 16 >> + 
+	2 >> ; | q
+
+::10/mod | a -- r m
+	dup 2/ over 2 >> + | n q
+	dup 4 >> + dup 8 >> + dup 16 >> + 3 >> | n q
+	swap over | q n q
+	dup 4 <<  over 2* + - | q r ( n-q*10)
+	swap over | r q r
+	6 + 4 >> + ;
+
+::10/ | a -- r
+	10/mod drop ;
+

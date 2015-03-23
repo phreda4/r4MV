@@ -1,0 +1,81 @@
+<HTML><HEAD><TITLE>Reda4</TITLE>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<META content="Reda [http://www.geocities.com//redaforth]" name=Author>
+<META content="reda" name=GENERATOR>
+<META content=TRUE name=MSSmartTagsPreventParsing>
+<META content="Pablo Hugo Reda, Pablo Reda, Reda4, ColorForth, Forth, Lenguaje, PocketPc" name=KeyWords>
+<META content="Lenguaje de programacion derivado del colorforth" name=Description></HEAD>
+<BODY text=#ffffff bgColor=#000000>
+
+<FONT face=Verdana color=#00ff00>
+<h1><A href="index.html">:REDa4</A></h1>
+Otro lenguaje mas para aumentar la confusion general...
+
+<FONT face=Verdana color=#ff2222>
+<h3>Como funciona</h3>
+<FONT face=Verdana color=#2222ff>
+Como el FORTH, las llamadas entre palabras son implicitas y el pasaje de parametros es a traves de una pila de datos<br>
+Las palabras definen su significado por su prefijo.<br><br>
+
+<FONT face=Verdana color=#ffffff>Tabla de prefijos<br>
+<table border=1>
+<tr><td><FONT face=Verdana color=#22ff22>reda4
+</td><td><FONT face=Verdana color=#22ff22>evalua la palabra
+<tr><td><FONT face=Verdana color=#ff2222>:reda4
+</td><td><FONT face=Verdana color=#22ff22>define palabra como la lista de palabra a acontinuacion hasta ;
+<tr><td><FONT face=Verdana color=#ff22ff>#reda4
+</td><td><FONT face=Verdana color=#22ff22>define palabra como memoria.
+<tr><td><FONT face=Verdana color=#ffff22>^reda4
+</td><td><FONT face=Verdana color=#22ff22>incluye el archivo reda4.txt en el codigo actual
+<tr><td><FONT face=Verdana color=#22ffff>'reda4
+</td><td><FONT face=Verdana color=#22ff22>apila la direccion de la palabra (ya definida)
+<tr><td><FONT face=Verdana color=#ffffff>|blablabla
+</td><td><FONT face=Verdana color=#22ff22>comentario, no hace nada.
+<tr><td><FONT face=Verdana color=#ffffff>"bla bla"
+</td><td><FONT face=Verdana color=#22ff22>texto, apila su direccion.
+</td></tr></table>
+<br>
+<FONT face=Verdana color=#2222ff>
+Las palabras MACRO corresponden a construcciones del compilador.<br><br>
+
+<table border=1>
+<tr><td><FONT face=Verdana color=#2222ff>;</td><td>fin
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>*{</td><td>ifnot.. o for 
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>}</td><td>then.. o repeat
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>{</td><td>do..
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>}*</td><td>while. o next
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>}{</td><td>else..
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>[</td><td>codigo anonimo
+</td></tr><tr><td><FONT face=Verdana color=#2222ff>]</td><td>fin codigo anonimo
+</td></tr></table>
+<br>
+<FONT face=Verdana color=#2222ff>
+:REDa4 tiene definidas las siguientes palabras.<br><br>
+
+<FONT face=Verdana color=#ffffff>Diccionario base:<br>
+<table border=1>
+<tr><td><FONT face=Verdana color=#22ff22>Evaluacion</td><td>JMP EXEC
+<tr><td><FONT face=Verdana color=#22ff22>Condicionales</td><td>0? 1? +? -?
+<tr><td><FONT face=Verdana color=#22ff22>Pila</td><td>DUP DROP OVER PICK2 PICK3 PICK4 SWAP <br>NIP ROT 2DUP 2DROP 3DROP 4DROP 2OVER
+<tr><td><FONT face=Verdana color=#22ff22>Pila de direcciones</td><td>&gt;R R&lt; R
+<tr><td><FONT face=Verdana color=#22ff22>Logicas</td><td>AND OR XOR NOT
+<tr><td><FONT face=Verdana color=#22ff22>Aritmeticas</td><td>+ - * / */ /MOD MOD <br>MAX MIN ABS NEG 1+ 1- 2/ 2* << >> <br> SINCOS <FONT face=Verdana color=#2222ff>(*)
+<tr><td><FONT face=Verdana color=#22ff22>Memoria</td><td>@ C@ W@<br>
+! C! W! +! C+! W+!
+<tr><td><FONT face=Verdana color=#22ff22>Sistema</td><td>MSEC DATE TIME RAND<br>
+&lt;ERROR SALIR REBOOT 
+<tr><td><FONT face=Verdana color=#22ff22>Bucle Principal</td><td>UPDATE REDRAW ?PEN
+<tr><td><FONT face=Verdana color=#22ff22>Color</td><td>COLORF COLOR COLOR2 ALPHA RGB
+<tr><td><FONT face=Verdana color=#22ff22>Pantalla</td><td>SW SH CLS PAGE (W) (H) (X) (Y)<br>
+PENPOS ZONE RES FTS STF
+<tr><td><FONT face=Verdana color=#22ff22>Dibujo</td><td>OP CP LINE CURVE PLINE PCURVE POLI
+<tr><td><FONT face=Verdana color=#22ff22>Formas Basicas</td><td>CHAR TEXT NRO FILL HFILL VFILL BORDE DOT FDOT 
+<tr><td><FONT face=Verdana color=#22ff22>Memoria</td><td>CLEAR MEM HERE , ,S ,N ,C
+<tr><td><FONT face=Verdana color=#22ff22>Bloques</td><td>PATH FILE LOAD SAVE NEW
+</td></tr></table>
+<br>
+<FONT face=Verdana color=#2222ff>
+(*) P.P. Posible Problema. C.C. Causa Cambio.<br><br>
+
+</BODY>
+</HTML>

@@ -1,0 +1,132 @@
+^reda4.txt
+^gui.txt
+^sprites.txt
+^r4inc/robertod.inc
+
+#x1 #y1 #vx1 #vy1
+#s1 'dibu1
+#accion
+#tacc
+#dir1
+
+:salto | 
+	y1 500 >? ( 'dibu4 )(	'dibu5 )
+	's1 ! drop
+	;
+
+:golpe
+	tacc
+	4 <? ( 'dibu6 )( 
+		8 <? ( 'dibu7 )( 
+		0 'accion ! 'dibu1
+		) ) 's1 ! 
+	1+ 'tacc ! ;
+
+:patea
+	tacc
+	4 <? ( 'dibu3 )( 
+		8 <? ( 'dibu8  )(
+		0 'accion ! 'dibu1
+		) ) 's1 ! 
+	1+ 'tacc ! ;
+
+:caida
+	tacc
+	4 <? ( 'dibua )( 
+		8 <? ( 'dibub  )(
+		0 'accion ! 'dibub
+		) ) 's1 ! 
+	1+ 'tacc ! ;
+
+:defensa
+	tacc
+	4 <? ( 'dibuc )( 
+		8 <? ( 'dibud  )(
+			12 <? ( 'dibuc )(
+			0 'accion ! 'dibu1
+		) ) ) 's1 ! 
+	1+ 'tacc ! ;
+	
+:saltando
+	;
+
+:caminando
+	;
+
+#caminar 'dibu1 'dibu2 'dibu1 'dibu3
+
+:camina
+	vx1 0? ( drop ; ) drop
+	tacc 1+ 7 >? ( 0 nip )
+	dup 'tacc !
+	1 >> 2 << 'caminar + @ 's1 !
+	;
+
+:+accion | acc --
+	accion 1? ( 2drop ; )
+	drop 'accion !
+	0 'tacc ! 	;
+
+:jugadores
+	500 dir1 +? ( drop %dim )( drop -%dim )
+	x1 y1 %pos 	s1 sprite
+
+	vx1 'x1 +!
+	vy1 'y1 +!
+	y1 700 <? ( 2 'vy1 +! salto )( 
+		700 >? ( 0 dup 'vy1 ! 'vx1 ! 700 'y1 ! 'dibu1 's1 ! )( camina )
+		) drop
+
+	x1 1000 >? ( 1000 - ) 0 <? ( 1000 + ) 'x1 !
+	;
+
+:posicioninicio
+	200 'x1 ! 700 'y1 !
+	0 dup dup 'vx1 ! 'vy1 ! 'tacc !
+	;
+
+#xl 1000 
+#yl 600 
+#vxl 6
+#vyl 4
+
+:nuevol
+	rand 200 mod  600 + 'yl !
+	;
+
+:ladrillazo
+	200 %dim
+	xl yl %pos
+	'dibue xl 2* rsprite
+	xl vxl - -? ( 1000 nip nuevol ) 'xl !	
+	2 'vyl +!
+	yl vyl +
+	900 >? ( vyl neg 'vyl ! 900 nip ) 'yl !
+	;
+
+:juego
+.page
+'exit <esc>
+[ 10 dup 'dir1 ! 'vx1 ! ; ] <der>
+[ -10 dup 'dir1 ! 'vx1 ! ; ] <izq>
+[  y1 700 =? ( 0 'vx1 ! ) drop  ; ] dup >der< >izq<
+
+[ y1 700 =? ( -40 'vy1 ! ) drop ; ] <arr>
+[ 'golpe +accion ; ] <esp>
+[ 'patea +accion  ; ] <enter>
+[ 'caida +accion ; ] <f1>
+[ 'defensa +accion ; ] <f2>
+[ 'dibu9 's1 ! ; ] <aba>
+[ 'dibu1 's1 ! ; ] >aba<
+posicioninicio
+.show cls
+	jugadores
+	accion exec 
+	ladrillazo
+	16 dup screen blanco 1 0 at
+	y1 x1 "%d %d - " print azul
+	vy1 vx1 "%d %d" print
+	dup " %d" print
+	;
+
+: 0 paper 4 juego "main.txt" run ;

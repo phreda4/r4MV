@@ -1,0 +1,235 @@
+| Nube de Pelos
+| Banner Game para ADVA
+| P.H. Reda 2008
+|----------------------
+^reda4.txt
+^gui.txt
+^graflib.txt
+^sprites.txt
+^r4inc/dibujos.inc
+
+
+#xgato #ygato #dgato
+#xpela #ypela #dpela
+
+#pelos  )( 12000 | 1000 pelos x y r
+#pelos> 'pelos
+#vpelos  )( 12000 | 1000 pelos vx vy vr
+#vpelos> 'vpelos
+#vent )( 240 | 20 ventiladores
+#vent> 'vent
+
+#nivel 0
+#puntos 0
+#implante 0
+#tiempo 0
+
+:distancia | x y x y -- x y n
+        pick2 - dup * >r pick2 - dup * r> +  ;
+
+|--- Pelos
+:+pelo | vy vx y x --		agregar pelo
+        pelos> 'pelos> >=? ( drop ; ) >r
+        8 << r!+ 8 << r!+ 0 r!+ | x y rotacion
+        r> 'pelos> ! 
+
+        vpelos> >r
+        r!+ r!+ rand 60 mod r!+ | rot
+        r> 'vpelos> ! ;
+
+:-pelo | 'pos --			quitar pelo
+        dup >r 
+        pelos> 12 - 
+        @+ r!+ @+ r!+ @+ r> ! drop | copiar x y r
+        -12 'pelos> +!
+
+        'pelos - 'vpelos + >r
+        vpelos> 12 -
+        @+ r!+ @+ r!+ @+ r> ! drop | copiar velocidades
+        -12 'vpelos> +! ;
+
+|--- Calcula viento
+#vx #vy | velocidad resultado
+
+:calcvelocidad | x y -- 
+        0 'vx ! 0 'vy !
+        'vent ( vent> <? )( >r
+                r@+ r@+ r@+ >r 
+                distancia
+                800 <? ( 800 - dup 
+                        r sin 19 *>> 'vy +!
+                        r cos 19 *>> 'vx +!
+                        )( drop )
+                rdrop r> ) 3drop ;
+
+:dibpelo | 'pos --
+        >r r@+ 8 >> r@+ 8 >> pos 'dibu7 r> @ rsprite ;
+
+:sepego | pelo --
+        -pelo 1 'implante +! ;
+        
+:movpelo | 'vel 'pos --
+        >r r@+ 8 >> r@+ 8 >>  2dup calcvelocidad
+        -8 r+
+        xpela ypela 30 + distancia  900 <? ( 4drop r> sepego ; ) drop
+        -10 <? ( 3drop r> -pelo ; ) 100 >? ( 3drop r> -pelo ; ) drop
+        -10 <? ( 2drop r> -pelo ; ) 610 >? ( 2drop r> -pelo ; ) drop
+        r> swap >r
+        dup @ vx r +! r@+ + swap !+
+        dup @ vy r +! r@+ + swap !+
+        dup @ r@+ + swap !+
+        rdrop drop ;
+
+:dibujapelos
+        10 dup dim
+        'vpelos 'pelos ( pelos> <? )(
+                dup dibpelo
+                2dup movpelo 
+                12 + swap 12 + swap
+                ) 2drop ;
+
+:dibujaimplante
+        10 dup dim
+        0 ( implante <? )( 
+                xpela ypela 30 + | posicion
+                28 pick3 7 >> +  | radio
+                pick3 3 << $3ff and $1ff + |angulo
+                ccircle pos | peinando..
+                'dibu7  over 9 * rsprite
+                4+ ) drop ;
+
+|--- Ventiladores
+:tocavent | x y -- n/0 ninguno
+        'vent ( vent> <? )( >r
+                r@+ r@+ distancia
+                800 <? ( 3drop r> 8 - ; ) drop
+                r> 4+ ) 3drop 0 ;
+
+:+vent | r y x --
+        vent> !+ !+ !+ 'vent> ! ;
+
+:dibujavent
+        40 dup dim
+        'vent ( vent> <? )(
+                >r r@+ r@+ pos
+                blink 1? ( 'dibub )( 'dibuc ) nip 
+                r@+ rsprite
+                r> ) drop ;
+
+#ventilador 0
+
+:ddraw | xyv --
+        0? ( 3drop  ; ) 
+        2 =? ( drop tocavent 'ventilador ! ; )
+        drop swap
+        ventilador 0? ( 3drop ; )
+        !+ ! ;
+
+:nivelganado
+        .page
+        'exit >esc<
+        .show cls
+                100 dup dim     300 50 pos 'dibu6 sprite
+                16 3 screen 
+                blink 1? ( verde )( blanco ) drop
+                0 0 at "Otro Cliente Satisfecho" pcenter print
+                0 1 at verde puntos nivel "Nivel %d     Puntos:%d" pcenter print
+                0 2 at azul "<ESC> para continuar" pcenter print ;
+
+:nivelperdido
+        .page
+        'exit >esc<
+        .show cls
+                100 dup dim 300 50 pos 'dibu5 sprite
+                16 3 screen 
+                blink 1? ( rojo )( negro ) drop
+                0 0 at "PERDISTE " pcenter print
+                0 1 at verde puntos "Puntaje: %d " pcenter print
+                0 2 at azul  "<ESC> para continuar" pcenter print ;
+
+:addventiladores
+        'vent 'vent> !
+        nivel 1+  ( 1? )( 1-
+                $7ff over 1+ / 20 - |rand $3f mod + | angulo
+                rand 90 mod abs 
+                rand 600 mod abs +vent 
+                ) drop  ;
+
+:resetpelos
+        'pelos 'pelos> !
+        'vpelos 'vpelos> !
+	'vent 'vent> ! ;
+
+:resetgame
+	resetpelos
+        60 'xpela ! 60 'ypela !
+        500 'xgato ! 60 'ygato !
+        0 'implante !
+        addventiladores ;
+
+:juego
+        resetgame
+        .page
+        1 1 .table 'ddraw 0 .ug 
+        'exit >esc<
+	0 'tiempo !
+        .show cls
+                60 dup dim xpela ypela pos      | dibuja pelado
+                dpela 1-
+                -8 <? ( rand $7f and nip ) | en -8 abre los ojos
+                -? ( 'dibu5 )( 'dibu4 ) sprite
+                'dpela !
+                dibujaimplante
+                xgato 20 + ygato calcvelocidad
+                vx vy + 1? ( vy vx ygato xgato 20 + +pelo ) drop 
+                dibujapelos
+                dibujavent
+                50 dup dim xgato ygato pos      | dibuja gato
+                dgato 1-
+                -64 <? ( rand $ff and nip ) |  abre los ojos
+                -? ( 'dibue )( 'dibud )  sprite
+                'dgato !
+                24 4 screen verde
+                1 0 at implante "PELOS:%d" print
+                21 0 at tiempo 60 /mod swap "%d:%d" print 
+
+		implante 999 >? ( exit ) drop
+		1 .segs .restart 1 'tiempo +! ;
+
+:jugar
+        1 'nivel !
+        0 'puntos !
+        0 ( drop  
+                juego 
+                implante 500  >=? ( dup 'puntos +! nivelganado )( nivelperdido )
+                1 'nivel +!
+                500 <? ) drop  ;
+
+|---------------- Presentacion
+#titulos "Nube de Pelos" "Banner Game" "ADVA 2008"  "<ESC> para Salir" "<ENTER> para Jugar" "Pablo Reda - www.reda4.org" 0
+#tactual
+
+:ipelos
+	resetpelos
+        'titulos 'tactual !     
+        -20 'xpela ! -20 'ypela ! ;
+
+:titulo>> | d -- nd
+        ( c@+ 1? )( drop ) drop 
+        dup c@ 0? ( 2drop 'titulos ; ) drop     ;
+
+:inicio
+        ipelos
+        $ffffff paper rerand
+        .page
+        'exit >esc<
+        [ jugar ipelos ; ] <enter>
+        .show cls 
+                rand $3f mod rand $7f mod 45 300 +pelo
+                dibujapelos
+                16 1 screen  0 255 msec 2 >> abh>rgb ink
+                tactual pcenter print |dup "%d" print
+                2 .segs .restart        | cada 2 segundos cambia de titulo
+                tactual titulo>> 'tactual ! ;
+
+: 33 inicio  ;

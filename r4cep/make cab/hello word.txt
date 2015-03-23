@@ -1,0 +1,9 @@
+^reda4.txt
+
+:main 
+	'exit <=ESC
+	show cls 
+		16 5 screen rojo
+		2 2 pat "Hello word" print ;
+
+: do ;

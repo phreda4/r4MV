@@ -1,0 +1,188 @@
+| :R4 main.txt
+| Pablo Reda 2006
+|---------------------------------------
+^reda4.txt
+^medit.txt
+^gui.txt
+
+#inicioarch 0
+#cntarch 20
+#vuelta 0
+
+#carpeta )( 1024
+#nombre	)( 256
+
+#progs "r4dibujo.txt" "redita.txt" "letras.txt" ( 0 )
+#dirgs "dibujo" "codigo" "fuentes" ( 0 )
+
+|--------------------------------
+#ifin ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iok ( -79 -14 -63 -28 -7 36 65 -76 89 -44 17 68 -11 -79 -12 0 )
+
+|---------------------------------
+:cleardibujos
+	;
+	
+:elige-archivo
+|	guiact 12 + @ 'nombre strcpy
+|	'nombre 40 "r4dibujo.nom" save
+:edidibujos
+|	load-dibu 'indice 'actual ! exit 
+	;
+
+:nuevo-archivo
+	0 'nombre !
+	.page
+	'nombre l.ini 
+	12 12 .table 
+	rojo oscuro 0 11 .at 'ifin [ exit ; ] dup =>esc .sbtn .>
+	verde oscuro 'iok [ cleardibujos exit ; ] dup dup <=enter <=f1 .sbtn .>
+	.show cls
+		16 16 screen 
+		2 2 pat verde "NOMBRE" print
+		2 4 pat 10 1 2dup verde oscuro ptofill ptowin blanco m.print					
+		;
+
+:prefijo? | "hola" "ho" -- 1/ 0
+	( c@+ 1? )( rot c@+ 0? ( nip nip nip ; ) 
+		rot - 1? ( 3drop 0 ; ) drop
+		swap ) 3drop 1 ;
+
+:1archivo
+	.page 
+	12 12 .table 
+	rojo oscuro 0 11 .at 1 1 .to 'ifin 'exit dup =>esc .sbtn .>
+	4 12 .table 1 11 .at cyan oscuro
+	"F1" "Editar" [ ; ] .fbtn .>
+	"F2" "Copiar" [ ; ] .fbtn .>
+	"F3" "Renombrar" [ ; ] .fbtn 
+	3 0 .at verde oscuro
+	"<-" "Nuevo" [ nuevo-archivo exit ; ] dup <=f1 .fbtn
+	0 1 .at azul oscuro
+	0 ( dup file 1? )( dup "." prefijo? 0? ( drop 'elige-archivo .tbtn .> )( 2drop ) 1+ ) 2drop 	
+	.show cls 
+		16 16 screen azul oscuro
+		0 0 pat |16 1 ptofill
+		32 32 screen blanco dup "debug:%n" print
+		;
+
+|----------------------------------------------
+#actual
+
+|---------- Lista de Archivos
+:fdraw | nro --
+	dup actual =? ( blanco )( gris ) ffill
+	@ 1? ( sprite )( drop ) 
+	verde oscuro 4 4 ttext 1+ "%h" print ;
+	
+:fclick | nro --
+|	indice> >? ( drop indice> )
+	'actual ! 
+	;
+
+:filemanager
+	.page 
+	16 16 .table 
+	rojo oscuro 0 15 .at 1 1 .to 'ifin 'exit dup =>esc .sbtn .>
+	4 16 .table 1 15 .at cyan oscuro
+	"F1" "Editar" [ ; ] .fbtn .>
+	"F2" "Copiar" [ ; ] .fbtn .>
+	"F3" "Renombrar" [ ; ] .fbtn 
+|	2 0 .at verde oscuro
+|	"<-" "Nuevo" [ nuevo-archivo exit ; ] dup <=f1 .fbtn
+|	0 1 .at 'fdraw 'fclick 4 10 2dup .to .dtabla
+
+|	0 1 .at azul oscuro
+|	0 ( dup file 1? )( dup "." prefijo? 0? ( drop 'elige-archivo .tbtn .> )( 2drop ) 1+ ) 2drop 	
+	.show cls 
+		16 16 screen azul oscuro
+		0 0 pat |16 1 ptofill
+		32 32 screen blanco dup "debug:%n" print
+		;
+|----------------------------------------------
+#vvuelta -6
+#cx #cy #rad
+
+:agracerca | v --
+	$1ff and $ff - abs 60 + dup dim ;
+
+:drawtext |"" --
+	vuelta >r 50 dup dim 5 'seed !
+	( c@+ 1? )( cx cy rad r ccircle  2/ sh 2/ 2/ + 
+	pos
+	r agracerca rand $131313 + ink
+	emit -25 r+ ) 
+	2drop rdrop ;
+	
+|#menu1 'dibu1 'dibu2 'dibu3 'dibu4 'dibu5 'dibu6 0
+
+:drawmenu | mem --
+	vuelta >r rad 2/ dup dim
+	( @+ 1? )( cx cy rad r | dup agracerca 
+		ccircle 2/ sh 2/ 2/ + pos
+		40 r+ r rsprite ) 2drop rdrop ;
+		
+| texto, planilla, video, sonido, fotos,da
+|------Codigo
+
+|------Dibujos
+:edita-dib
+	".\dibujos\" dir
+	1archivo 
+	"." dir 
+|	"r4dibujo.txt" run 
+	;
+	
+		
+:sescape 
+	'exit $13 2* 2* ukeymap + ! ;
+	
+:nescape
+	0 $13 2* 2* ukeymap + ! ;
+	
+:main 
+	.page
+	sw 2/ 'cx ! sh 2/ 'cy ! 
+	cx cy min 60 - 'rad !
+
+|	'sescape <=esc 'nescape =>esc
+	'exit <=esc
+	[ -1 'vvuelta +! ; ] <=izq
+	[ 1 'vvuelta +! ; ] <=der
+	12 12 .table 
+	rojo oscuro 0 11 .at 1 1 .to 'ifin 'exit .sbtn
+	1 11 .at 2 1 .to cyan oscuro
+	
+	"F1" "Dibujo" [ "r4dibujo.txt" run 
+		|edita-dib
+		] dup <=f1 .fbtn .> .> 	
+|	"F2" "R4U" [ "r4u.txt" run ] dup <=f2 .fbtn .> .> 
+	"F3" "Letras"	[ "letras.txt" run ] dup <=f3 .fbtn  .> .>
+	|"F4" "FileMan"	'filemanager  dup <=f4 .fbtn 
+|	"F4" "R4Codigo" [ "r4codigo.txt" run ] dup <=f4 .fbtn .> .> 
+	10 10 .table
+	0 0 .at 3 1 .to verde oscuro
+|	"main2" "test" [ "main2.txt" run ] .fbtn .\ 	
+|	"prueba" [ "prueba.txt" run ] .tbtn .\ 	
+|	"R4token" [ "r4token.txt" run ] .tbtn .\ 	
+	"Xenofobia" "Extraterr" [ "xe.txt" run ] .fbtn .\
+	"Carrera"	[ "carrera.txt" run ;  ] .tbtn .\
+|	"Memoria"   [ "memoria.txt" run ; ] .tbtn .\
+|	"100% Ducha"   [ "ducha100.txt" run ; ] .tbtn .\	
+|	"3dlater!"   [ "3d.txt" run ; ] .tbtn .\
+	"La Granjita"   [ "lagranjita.txt" run ; ] .tbtn .\
+|	"ReAnimator"   [ "reanimator.txt" run ; ] .tbtn .\
+|	"No Futbol" [ "futbol.txt" run ; ] .tbtn .\
+|	"Basico" [ "basico.txt" run ; ] .tbtn .\	
+	.show cls 
+		16 16 screen azul oscuro 0 15 pat 16 1 ptofill
+		|0 0 pat verde ":R4  " print azul "Menos de lo mismo" print
+		|0 8 pat "%E:%FR%64 %/%-Menos %7de %8lo %/%-%9mismo %/%-%AMas %Bde %Clo %/%-%DNecesario" print
+		32 32 screen
+		22 30 pat blanco "pabloreda@gmail.com" print
+		22 31 pat negro dup "diga %n" print
+|	    verde " *  4R: ne amargorP " drawtext | mensaje satanico
+|	    'menu1 drawmenu
+		vvuelta 'vuelta +! ;
+			
+: 0 paper 33 main ;

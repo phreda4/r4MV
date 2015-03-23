@@ -1,0 +1,29 @@
+| Editor de :R4
+| PHREDA 2007
+|---------------------------------------
+^reda4.txt
+^gui.txt
+^compila.txt
+
+#nombre )( 32
+
+:compilando
+	clear
+	mem 'nombre load 0 swap !
+	mem compila 
+	.page
+	'exit >esc<
+	.show cls 
+
+		dumpcompila 
+		"%.%.Presione ESC para continuar..." j.print ;
+		
+
+
+|----------- principal
+:main 
+	 'nombre "./r4nom/editor.nom" load drop
+	compilando
+	;
+
+: 4 main "debug.txt" run  ;

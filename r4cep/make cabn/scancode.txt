@@ -1,0 +1,17 @@
+| que scancode me esta devolviendo
+^reda4.txt
+
+#valor
+
+:ver
+	key 'valor ! ;
+	
+:do
+	.page
+   128 ( 1? )( 'ver over >key 1- ) drop
+   'exit =>esc
+   .show cls 6 6 screen 
+		blanco valor ":%n" print
+		;
+	
+: do ;

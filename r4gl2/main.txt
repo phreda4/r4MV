@@ -1,0 +1,31 @@
+| :R4 main.txt
+| PHREDA
+|---------------------------------------
+^reda4.txt
+^gui.txt
+
+:main
+	.page
+	'exit <esc>
+	.show
+	cls 
+		azul 100 100 op
+		rojo 200 200 pline
+		verde xymouse pline
+		azul 100 100 pline
+
+		violeta 110 150 op
+		amarillo 150 180 pline
+		cyan 50 180 pline 
+		violeta 110 150 pline
+		poli
+
+	8 font
+	rojo "hola" printc
+	10 font cr cr
+	verde "hola" printc
+	12 font cr cr cr cr
+	azul "hola" printc
+		;
+	
+: main ;

@@ -1,0 +1,139 @@
+* PREFIJOS *
+:nueva  	define NUEVA como la lista a continuacion hasta ;  
+#memoria  	define MEMORIA como una variable.
+^modulo.txt	incluye el archivo r.txt en el codigo actual.
+'cosa	apila la DIRECCION de la PALABRA (ya definida).
+|blabla 	comentario, ignora hasta el fin de la linea.
+"bla bla"  	texto (incluye espacios), apila su DIRECCION,
+
+* CONTROL *
+( ... )		Repetir las PALABRAS dentro de parentesis
+?? ( .V. )( .F. )	Condicion
+( .F. ?? )		Repetir HASTA condicion (pasa 1 vez al menos)
+( .. ?? )( .V. )	Repetir MIENTRAS condicion
+[ ... ]		Definir sin nombre (apilando su direccion)
+
+* CONDICIONALES *
+0?	| es 0 el tope de la pila ?
+1?	| es distinto a 0 el tope de la pila ?
++?	| es positivo el tope de la pila ?
+-?	| es negativo el tope de la pila ?
+=?	| a b -- a		si a = b ?
+<>?	| a b -- a		si a <> b ? 
+>?	| a b -- a		si a > b ?
+<?	| a b -- a		si a < b ?
+<=?	| a b -- a		si a <= b ?
+>=?	| a b -- a		si a >= b ?
+
+* VECTOR *
+EXEC  	| vector -- 	llama al codigo del vector
+
+* PILA DE DATOS *
+DUP 	| a -- a a
+DROP 	| a -- 
+OVER 	| a b -- a b a
+PICK2 	| a b c -- a b c a
+PICK3 	| a b c d -- a b c d a
+PICK4 	| a b c d e -- a b c d e a
+SWAP 	| a b -- b a
+NIP 	| a b -- b
+ROT 	| a b c -- b c a
+2DUP 	| a b -- a b a b
+2DROP	| a b -- 
+3DROP	| a b c --
+4DROP	| a b c d --
+2OVER	| a b c d -- a b c d a b 
+2SWAP	| a b c d -- c d a b
+
+* PILA DE DIRECCIONES *
+>R	| a --	R: -- a
+R<	| -- a	R: a -- 
+R	| -- a	R: a -- a
+R@	| -- a
+R!	| v -- 
+R@+	| -- v	R: a -- a+4
+R!+	| v --	R: a -- a+4
+
+
+
+  
+  
+* LOGICAS *
+AND	| a b -- c     c = a AND b
+OR	| a b -- c     c = a OR b
+XOR	| a b -- c     c = a XOR b
+NOT	| a b -- c     c = a NOT b
+
+* ARITMETICAS *
++	| a b -- c	   c = a + b
+-	| a b -- c	   c = a - b
+*	| a b -- c	   c = a * b
+/	| a b -- c	   c = a / b
+*/	| a b c -- d   d = a * b / c
+/MOD	| a b -- c d   c = a / b  d = a resto b
+MOD	| a b -- c	   c = a resto b
+NEG	| a -- b	   b = -a
+1+	| a -- b	   b = a + 1
+1-	| a -- b	   b = a - 1
+2/	| a -- b	   b = a / 2
+2*	| a -- b	   b = a * 2
+<<	| a b -- c	   c = a << b
+>>	| a b -- c	   b = a >> b (arrastra signo)
+
+* SISTEMA *
+MSEC	| -- a	milisegundos del sistema
+TIME	| -- h m s	hora minutos y segundos
+DATE	| -- d m a	dia mes y anio
+RAND	| -- a	numero aleatorio 
+END	| --	Apaga
+RUN	| d --	Corre otro codigo
+	
+* MEMORIA *
+@	| a -- b	b = mem32(a)
+C@	| a -- b	b = mem8 (a)
+W@	| a -- b	b = mem16(a)
+!	| v d --	mem32(d) = v
+C!	| v d --	mem8(d) = v
+W!	| v d --	mem16(d) = v
++!	| v d --	mem32(d) = mem32(d) + v
+C+!	| v d --	mem8(d) = mem8(d) + v
+W+!	| v d --	mem16(d) = mem16(d) + v
+@+	| d -- d+4 v
+C@+	| d -- d+1 byte(v)
+W@+	| d -- d+2 word(v)
+!+	| v d -- d+4
+C!+	| v d -- d+1
+W!+	| v d -- d+2
+MEM	| -- d	Inicio de memoria libre	
+
+* PANTALLA *
+SW	| -- w	apila ancho de pantalla
+SH 	| -- h	apila alto de pantalla
+CLS	| --	Limpia pantalla
+REDRAW	| --	Dibuja la pantalla real con la virtual
+FRAME	| -- vm	Memoria de Video
+UPDATE	| --	Refresco eventos SO.
+
+
+
+
+
+* DIBUJO *
+OP	| x y --	Punto de origen
+CP 	| x y --	Punto de control
+LINE	| x y --	Traza linea
+CURVE	| x y --	Traza curva
+PLINE	| x y --	Marca linea poli
+PCURVE	| x y --	Marca curva poli
+POLI	| --	Traza Poligono
+
+* COLOR *
+COLORF	| a --	Color de fondo
+COLOR	| a --	Color actual
+ALPHA	| a --	Alpha (0-255)
+
+* MEMORIA EXTERNA *
+DIR	| n --	Cambia PATH
+FILE	| n -- adr	Obtiene nombre
+LOAD	| adr n -- to	Carga memoria
+SAVE	| adr cnt n --	Graba memoria

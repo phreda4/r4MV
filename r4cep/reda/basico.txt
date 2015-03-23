@@ -1,0 +1,32 @@
+| :R4  basic program
+|--------------------------------
+^reda4.txt 
+^gui.txt
+^r4inc/dibujos.inc
+
+#x 0 #a 0
+
+:dibujo
+	.page
+	'exit >esc<
+	.show
+		cls
+		500 %dim
+		x 1+ sw >? ( 0 nip ) dup 'x ! 500 %pos
+		'dibu1 a 1+ dup 'a ! rsprite ;
+wewe
+:menu
+	.page					| obligatorio, guarda el estado anterior para apilar y desapilar
+	'exit >esc<			| Si suelto escape, salgo 
+	3 5 .table 
+	0 0 .at verde "Dibujo" 'dibujo .tbtn
+	2 0 .at rojo "Salir" 'exit .tbtn
+	.show					| repite a 1/30 veces por segundo, si no llega..no llega
+		cls					| Ojo, no siempre hace falta
+		8 dup screen 		| 8 lineas en la pantalla
+		dup "%d" 
+		3 3 at verde print | que hay en la pila
+		4 4 at rojo "X" print
+		;
+		
+:  0 paper 33 menu "debug.txt" run ;

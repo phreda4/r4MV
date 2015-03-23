@@ -1,0 +1,88 @@
+|--- memo edit
+^reda4.txt
+^fuente8.txt
+
+#lactual
+#lcursor 
+#lfin 
+#lpactual | comienzo de pantalla
+#lfactual | fin de pantalla
+
+:lins  | c --
+	lcursor dup 1- lfin over - 1+ cmove> 1 'lfin +!
+:lover | c -- 
+	lcursor c!+ dup 'lcursor !
+	lfin >? ( dup 'lfin ! ) drop
+:0lin | --
+	0 lfin c! ;
+
+:ddel
+	lcursor lfin >=? ( drop ; ) drop
+	1 'lcursor +!
+:del
+	lcursor lactual <=? ( drop ; )
+	dup 1- swap lfin over - 1+ cmove -1 'lfin +! -1 'lcursor +! ;
+
+:ant13 | dir -- dir'
+	( lactual >? )( dup c@ 13 =? ( drop 1+ ; ) drop 1- )  ;
+	
+:nex13 | dir -- dir'
+	( lfin <? )( dup c@ 13 =? ( drop ; ) drop 1+ ) ;
+	
+:khome
+	lcursor lactual =? ( drop ; )
+	1- ant13 'lcursor ! ;
+
+:kend
+	lcursor nex13 'lcursor ! ;
+		
+:karriba
+	lcursor dup 1- ant13 dup 2 - ant13 | act 1ro ar --
+	rot rot dup >r - + r> 1- min
+	lactual <? ( drop ; ) 'lcursor ! ;
+	
+:kabajo
+	lcursor lactual =? ( nex13 1+ 'lcursor ! ; )
+	dup 1- ant13 over nex13 1+ | act 1ro ab --
+	dup >r rot rot - + r> max
+	lfin >? ( lfin nip ) 'lcursor ! ;
+	
+#modo 'lins
+
+::m.ini | buff --
+	inikey
+	dup 'lactual ! dup 'lpactual ! dup 'lcursor !
+	( c@+ 1? )( drop ) drop 1- 'lfin !
+	[ key toasc modo exec ; ] <=visible
+	[ del ; ] <=back
+	[ ddel ; ] <=del
+	[ modo 'lins =? ( 'lover )( 'lins ) 'modo ! drop ; ] <=ins
+	[ khome ; ] <=home
+	[ kend ; ] <=end
+	[ 13 lins ; ] <=enter
+	[ lcursor lfin <? ( 1 'lcursor +! ) drop ; ] <=der
+	[ lcursor lactual >? ( -1 'lcursor +! ) drop ; ] <=izq
+	[ karriba ; ] <=arr
+	[ kabajo ; ] <=aba
+	[ 10 ( 1? )( 1- karriba ) drop ; ] <=pgup
+	[ 10 ( 1? )( 1- kabajo ) drop ; ] <=pgdn
+	0lin ;
+
+::m.clear
+	lactual dup 'lcursor ! 'lfin ! 0lin ;
+
+:scrollup | lactual -- lactual
+	1- ant13 2 - ant13 dup 'lpactual ! ;
+
+:scrolldw	
+	lpactual nex13 1+ 'lpactual ! ;
+	
+::m.print | --
+	blink 1? ( modo 'lins =? ( verde )( rojo ) drop )( negro ) drop
+	lcursor lpactual over >? ( scrollup )
+	drawcursor 0? ( scrolldw drop lcursor lpactual drawcursor ) drop
+	blanco lpactual printx ;
+	
+::m.cur! | a --
+	'lcursor ! ;
+	

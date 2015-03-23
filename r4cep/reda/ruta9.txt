@@ -1,0 +1,303 @@
+| Ruta 9 -  PHReda
+| Juego para Banner Game ADVA 2008
+| r4.ini -> "600 90 0"
+|------------------------------------------
+^reda4.txt
+^gui.txt
+^sprites.txt
+^r4inc/ruta9.inc
+
+#nubes  )( 1200 | 100 nubes x y r
+#nubes> 'nubes
+#vnubes  )( 1200 | 100 nubes vx vy vr
+#vnubes> 'vnubes
+
+:+nube | vy vx y x --	
+        nubes> 'nubes> >=? ( drop 4drop ; ) >r
+        8 << r!+ 8 << r!+ 0 r!+ | x y rotacion
+        r> 'nubes> ! 
+        vnubes> >r
+        r!+ 	r!+ rand $3f and $1f - r!+ | rot
+        r> 'vnubes> ! ;
+
+:-nube | 'pos --
+        dup >r 
+        nubes> 12 - 
+        @+ r!+ @+ r!+ @+ r> ! drop | copiar x y r
+        -12 'nubes> +!
+        'nubes - 'vnubes + >r
+        vnubes> 12 -
+        @+ r!+ @+ r!+ @+ r> ! drop | copiar velocidades
+        -12 'vnubes> +! ;
+    
+:movnube | 'vel 'pos --
+        >r r@+ 8 >> r@+ 8 >> 2dup pos 'dibu3 r@+ rsprite 
+	-12 r+
+        10 <? ( 3drop r> -nube ; ) 80 >? ( 3drop r> -nube ; ) drop
+        50 <? ( 2drop r> -nube ; ) 550 >? ( 2drop r> -nube ; ) drop
+        r> swap >r
+        dup @ r@+ + swap !+
+        dup @ r@+ + swap !+
+        dup @ r@+ + swap !+
+        rdrop drop ;
+
+:dibujanube
+	50 alpha
+	80 dup dim
+        'vnubes 'nubes ( nubes> <? )(
+                2dup movnube
+                12 + swap 12 + swap
+                ) 2drop 
+	255 alpha ;
+
+:niebla 
+	rand $7f mod rand $1ff mod 45 rand $ff and 172 + +nube ;
+
+:ininiebla
+	'nubes 'nubes> !
+	'vnubes 'vnubes> ! ;
+	
+|------------- Pantallas de juego
+#x 170
+#vx 0
+#angvol 0
+#sang 0
+
+#sau1 'dibu6
+#xau1 6		
+#yau1 1
+#vau1 7
+#sau2 'dibu5
+#xau2 -6	
+#yau2 1
+#vau2 7
+#scar1 0
+#xcar1 100
+#ycar1 0
+#scar2 0
+#xcar2 -100
+#ycar2 0
+
+#tiempo
+#velocidad
+#acelera
+#detenido 
+
+#svidrio
+#sarranque
+#sbocina
+#schoque
+#scronica
+#sfrenada
+#spaso
+#smotor
+#rota
+
+:choque
+	.page
+	schoque splay
+	svidrio splay
+	.show cls
+		1200 200 dim x 45 pos 'dibu2 rota rsprite
+		niebla dibujanube
+		600 100 dim
+		300 45 rand 3 >> $7 and + pos 
+		'dibu1 sprite
+		80 dup dim 200 84 pos 'dibu4 angvol rsprite
+		sang 'angvol +!
+		$3f  'rota +!
+		2 .segs exit ;	
+
+:vuelco
+	choque
+	0 splay scronica splay
+	$ff0000 paper
+	.page
+	'exit >esc<
+	.show cls
+		24 2 screen blanco
+		0 0 at "Vuelco en Ruta 9" pcenter print
+		0 1 at tiempo "Duro %d segundos" pcenter print
+		22 .segs exit ;
+
+:choque1
+	choque
+	0 splay scronica splay
+	$ff0000 paper
+	.page
+	'exit >esc<
+	.show cls
+		24 2 screen blanco
+		0 0 at "Choque en Ruta 9" pcenter print
+		0 1 at tiempo "Duro %d segundos" pcenter print
+		22 .segs exit ;
+
+:choque2
+	choque
+	0 splay scronica splay
+	$ff0000 paper
+	.page
+	'exit >esc<
+	.show cls
+		24 2 screen blanco
+		0 0 at "Choque frontal en ruta 9" pcenter print
+		0 1 at tiempo "Duro %d segundos" pcenter print
+		22 .segs exit ;
+
+|------------- Juego
+:dibauto | sprite x y --
+	|dup >r 
+	2 << dup 2* dup dim 
+	swap -? ( swap neg swap ) | x y
+	x + + 40 |r> - 
+	pos 	sprite ;
+
+:dibcartel | sprite x y --
+	2 << dup  dup dim 
+	2 << swap -? ( swap neg swap ) 2/ | x y 
+	x + + 40  pos 
+	sprite ;
+
+#carteles 'dibu7 'dibu8 'dibu9 'dibub 'dibu10 'dibu10 'dibu10 'dibu10
+#cartelesa 'dibue 'dibuf 'dibu10 'dibu10 'dibu10 'dibu10 'dibu10 'dibu10 
+
+:randcartel
+	rand 6 >> $1c and + @ ;
+
+:cartelesyautos
+	scar1 0? ( drop
+		'carteles randcartel 'scar1 !
+		0 'ycar1 !
+	)(
+		xcar1 ycar1 6 >> dibcartel | carteles
+		ycar1 velocidad +
+		1800 >? ( 0 'scar1 ! ) 
+		'ycar1 !
+		)
+	scar2 0? ( drop 
+		'cartelesa randcartel 'scar2 !
+		0 'ycar2 !
+	)(
+		xcar2 ycar2 6 >> dibcartel
+		ycar2 velocidad +
+		1800 >? ( 0 'scar2 ! ) 
+		'ycar2 !
+		)
+	sau1 0? ( drop )(
+		xau1 yau1 6 >> dibauto | autos
+		yau1 velocidad + vau1 -
+		0 <? ( 0 nip ) 2800 >? ( 0 'sau1 ! spaso splay ) 
+		'yau1 !
+		yau1 2500 >? ( x 175 <? ( 2drop choque1 exit ; ) drop ) drop
+		)
+	sau2 0? ( drop )(
+		xau2 yau2 6 >> dibauto
+		yau2 velocidad + vau2 +
+		0 <? ( 0 nip ) 2800 >? ( 0 'sau2 ! spaso splay ) 
+		'yau2 !
+		yau2 2500 >? ( x 165 >? ( 2drop choque2 exit ;  ) drop ) drop
+		)
+	;
+
+#autos1 'dibu6 'dibud
+#autos2 'dibu5 'dibuc
+
+:randauto 
+	rand 4 and + @ ;
+
+:nuevosautos
+	rand 6 >> $3f and  $1f >? ( drop ; ) drop
+	sau1 0? ( 
+		'autos1 randauto 'sau1 ! 
+		0 'yau1 !
+		rand 8 >> $1f and 1+ 'vau1 !
+		) drop
+	rand 6 >> $3f and  $1f >? ( drop ; ) drop
+	sau2 0? (  
+		'autos2 randauto 'sau2 ! 
+		0 'yau2 !
+		rand 8 >> $1f and 1+ 'vau2 !
+		) drop 
+	;
+
+:resetjuego
+	0 'vx ! 160 'x !
+	0 dup 'tiempo ! dup 'velocidad ! 'acelera !
+	0 dup 'sau1 ! dup 'sau2 ! dup 'scar1 ! 'scar2 !
+	0 'detenido !
+	ininiebla ;
+
+:jugar
+	0 splay sarranque splay
+	$0 paper
+	resetjuego
+	.page
+	'exit  >esc<
+	[ -5 'vx ! 4 'sang ! ; ]  <der>
+	[ 5 'vx ! -4 'sang !  ; ] <izq>
+	[ 0 'vx ! 0 dup 'sang !  'angvol ! ; ] dup >der< >izq<
+	[ 1 'acelera ! ; ]  <arr>
+	[ -4 'acelera ! sfrenada splay ; ]  <aba>
+	[ -1 'acelera ! ; ] dup >arr< >aba<
+	.show cls
+		1200 200 dim x 45 pos 'dibu2 sprite
+		cartelesyautos
+		niebla dibujanube
+		600 100 dim
+		300 45 rand 3 >> $1 and + pos 
+		'dibu1 sprite
+		80 dup dim 200 84 pos 'dibu4 angvol rsprite
+		sang 'angvol +!
+		x 
+		0 <? ( drop vuelco exit ; ) 550 >? ( drop vuelco exit ; )
+		vx + 'x !
+		velocidad acelera + 
+		0 <? ( 0 nip ) 50 >? ( 50 nip )
+		'velocidad !
+		1 .segs 1 'tiempo +! .restart
+		velocidad 0? ( detenido 1+ )( 0 ) nip 
+		4 =? ( sbocina splay )
+		5 =? ( sfrenada splay )
+		5 >? ( drop choque1 exit ; )
+		'detenido !
+		smotor splay
+		nuevosautos ;
+
+#titulos "RUTA 9" "Banner Game" "ADVA 2008"  "<ESC> para Salir" "<ENTER> para Jugar" "Pablo Reda - www.reda4.org" 0
+#tactual
+
+:titulo>> | d -- nd
+        ( c@+ 1? )( drop ) drop 
+        dup c@ 0? ( 2drop 'titulos ; ) drop     ;
+
+:iniciop
+	0 splay
+	'titulos 'tactual ! 
+	$ff00 paper
+	ininiebla ;
+
+:inicio
+	iniciop
+	.page
+	'exit <esc>
+	[ jugar iniciop  ; ] <enter>
+	.show cls
+		niebla dibujanube
+		16 1 screen blanco
+                tactual pcenter print |dup "%d" print
+		0 255 msec 3 >> abh>rgb paper
+                2 .segs .restart        | cada 2 segundos cambia de titulo
+                tactual titulo>> 'tactual ! ;
+
+:cargasonidos
+	"sonido/vidrios.mp3" sload 'svidrio !
+	"sonido/arranque.mp3" sload 'sarranque !
+	"sonido/motor.mp3" sload 'smotor !
+	"sonido/bocina.mp3" sload 'sbocina !
+	"sonido/choque.mp3" sload 'schoque !
+	"sonido/Cronica_TV.mp3" sload 'scronica !
+	"sonido/frenada.mp3" sload 'sfrenada !
+	"sonido/pasoauto.mp3" sload 'spaso !
+	;
+
+: 33 cargasonidos inicio 0 splay ;

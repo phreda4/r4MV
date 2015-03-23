@@ -1,0 +1,53 @@
+#HLSMAX 240
+#RGBMAX 255 
+#UNDEFINED [ HLSMAX *2 3 / ]
+
+:RGB_to_HSL |(int r,int g,int b,int *h,int *s,int *l)
+int cMax, cMin;
+int Rdelta,Gdelta,Bdelta;
+
+cMax=MAX(r,MAX(g,b));
+cMin=MIN(r,MAX(g,b));
+*l=(((cMax+cMin)*HLSMAX)+RGBMAX)/(2*RGBMAX);
+if (cMax==cMin) //r=g=b --> achromatic case
+(  *s=0;*h=UNDEFINED;  )(
+	if (*l<=(HLSMAX/2))
+		*s=(((cMax-cMin)*HLSMAX)+((cMax+cMin)/2))/(cMax+cMin);
+	else
+		*s=(((cMax-cMin)*HLSMAX)+((2*RGBMAX-cMax-cMin)/2))/(2*RGBMAX-cMax-cMin);
+    Rdelta=(((cMax-r)*(HLSMAX/6))+((cMax-cMin)/2))/(cMax-cMin);
+    Gdelta=(((cMax-g)*(HLSMAX/6))+((cMax-cMin)/2))/(cMax-cMin);
+    Bdelta=(((cMax-b)*(HLSMAX/6))+((cMax-cMin)/2))/(cMax-cMin);
+    if (r==cMax)		*h=Bdelta-Gdelta;
+    else if (g==cMax)	*h=(HLSMAX/3)+Rdelta-Bdelta;
+    else				*h=((2*HLSMAX)/3)+Gdelta-Rdelta;
+    *h=*h%HLSMAX;
+    if (*h<0) *h+=HLSMAX;
+    ) ;
+
+:HueToRGB | n1 n2 hue --- int
+	hue=hue%HLSMAX;
+	//hue=hue&0xff;
+	if (hue<0) hue+=HLSMAX;
+	if (hue<(HLSMAX/6))
+		return (n1+(((n2-n1)*hue+(HLSMAX/12))/(HLSMAX/6)));
+	else if (hue<(HLSMAX/2))
+		return n2;
+	else if (hue<((HLSMAX*2)/3))
+		return (n1+(((n2-n1)*(((HLSMAX*2)/3)-hue)+(HLSMAX/12))/(HLSMAX/6)));
+	else
+		return n1;
+	;
+
+:HSL_to_RGB |(int h,int s,int l,int *r,int *g,int *b)
+int m1,m2;
+0? ( *b=*g=*r=(l*RGBMAX)/HLSMAX; )(
+	if (l<=(HLSMAX/2))
+		m2=(l*(HLSMAX+s)+(HLSMAX/2))/HLSMAX;
+	else
+		m2=l+s-((l*s)+(HLSMAX/2))/HLSMAX;
+	m1=2*l-m2;
+	*r=(HueToRGB(m1,m2,h+(HLSMAX/3))*RGBMAX+(HLSMAX/2))/HLSMAX;
+    *g=(HueToRGB(m1,m2,h)           *RGBMAX+(HLSMAX/2))/HLSMAX;
+    *b=(HueToRGB(m1,m2,h-(HLSMAX/3))*RGBMAX+(HLSMAX/2))/HLSMAX;
+    ) ;

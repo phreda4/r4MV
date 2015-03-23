@@ -1,0 +1,199 @@
+| Fuentes unificadas
+| :r4 libreria de sistema - Fuente de letras
+|---------------------------------------------
+^reda4.txt	
+^graflib.txt
+
+#:inverso	| texto inverso
+
+|------------------------------ print a buffer
+#mbuffer )( 4096 | 4kb linea
+#mbuffer> 'mbuffer
+
+:m, mbuffer> !+ 'mbuffer> ! ;
+:m,c mbuffer> c!+ 'mbuffer> ! ;
+:m,w mbuffer> w!+ 'mbuffer> ! ;
+
+:c0	| 'p
+	;
+:c1	| a,q
+	;
+:c2	| b,r		(%b) binario
+	0 rot
+	( dup $1 and $30 + swap 2/ $7fffffff and 0? ) drop
+	( m,c 0? ) drop ;
+:c3	| c,s		(%s) string
+	swap 0? ( drop ; )
+	( c@+ 1? )( m,c ) 2drop ;
+:c4	| d,t		(%d) decimal
+	swap
+	-? ( $2d m,c neg ) 
+	0 swap ( 10 /mod $30 + swap 0? ) drop 
+	( m,c 0? ) drop ;
+:c5	| e,u,%		(%%) caracter %
+	$25 m,c ;
+
+:c6	| f,v		(%f) punto fijo
+	over 16 >> -? ( 1+ 0? ( $2d m,c ) ) swap 
+	c4 
+	$2e m,c | .
+	swap 
+|:dec  | v --
+	-? ( not ) $ffff and 
+	100 $ff00 */ 100 +	| solo dos decimales *** ojo falta investigar
+	0 swap ( 10 /mod $30 + swap 0? ) drop 
+	drop ( m,c 0? ) drop 
+	;
+:c7	| ..w		(%w) palabra
+	swap 0? ( drop ; )
+	( c@+ 32 >? )( m,c ) 2drop ;
+:c8	| h..			(%h) hexa
+	0 rot
+	( dup $f and $30 + swap 4 >> $fffffff and 0? ) drop 
+	( $39 >? ( 7 + ) m,c 0? ) drop ;
+:c9	| i,y			(%i) parte entera fixed
+	swap 16 >> c4 ;
+:ca	| j,z			(%j) parte decimal fixel
+	swap $ffff and c4 ; | <--- NO ES
+:cb	| k,
+	;
+:cc	| l,			(%l) linea
+	swap 0? ( drop ; )
+	( c@+ 1? )( 13 =? ( 2drop ; ) m,c ) 2drop ;
+:cd	| m,}
+	;
+:ce	| .	| cr		(%.) finlinea
+	13 m,c ;
+:cf	| o,			(%o) octal
+	0 rot
+	( dup $7 and $30 + swap 3 >> $1fffffff and 0? ) drop
+	( m,c 0? ) drop ;
+
+#control c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf
+
+:m,emit | c --
+	$25 <>? ( m,c ; ) drop c@+ 
+	$f and 2 << 'control + @ exec ;
+
+::mprint | .. a b c adr -- addr
+	'mbuffer 'mbuffer> !
+	( c@+ 1? )( m,emit ) 2drop 0 m,c 
+	'mbuffer ;
+
+|------------------- ventana de texto
+
+|-------------------------- palabras de dibujo de fuentes (reemplazables)
+#charsize 0 #charo 0
+
+::setfont | 'char 'size --
+	'charsize !+ ! ;
+
+|-------------------------------------
+:sizeprint | "" -- "" x
+	0 >r dup ( c@+ 1? )( charsize exec r+ ) 2drop r> ;
+
+|------------------------------------------------------
+::ptofill | xy --
+	h * swap w * swap xc yc h 2/ - vfill ;
+
+::ptowin | xy --
+	yc h 2/ - 'wy1 ! xc 'wx1 ! h * wy1 + 'wy2 ! w * wx1 + 'wx2 ! ;
+
+|------------------------------------------------------
+::cr	
+	h 'yc +! wx1 'xc ! ;
+
+:dtab
+	xc 5 >> 1+ 5 <<
+	wx2 >? ( drop cr ; ) 
+	'xc ! ;
+
+|--- numeros
+::emit | c --
+	9 =? ( drop dtab ; ) 
+|	10 =? ( drop ; )
+	13 =? ( drop cr ; )
+	dup charsize exec
+	dup 2* xc + wx2 >? ( cr ) drop 
+	dup 'xc +! swap 
+	charo exec 'xc +! ;
+
+::gemit | c --		| ghost emit para calcular tamanios
+	9 =? ( drop dtab ; )
+|	10 =? ( drop ; )
+	13 =? ( drop cr ; )
+	dup charsize exec
+	2* dup xc + wx2 >? ( cr ) drop
+	'xc +! ;
+
+::emitout? | -- f
+	yc wy2 >?  ( 1 )( 0 ) nip ;
+
+|--------------------------------------------------------------------------
+::fontd
+	h 2/ 'h ! w 2/ 'w ! 	;
+
+::fonta
+	h 2* 'h ! w 2* 'w ! ;
+
+|----- cursor
+:ibox | xl -- 
+	>r xc yc h 2/ - 2dup op 2dup h + 2dup swap r> 2* + swap 2dup h - pline pline pline pline ;
+
+::printcur | adr -- adr
+	dup c@ 9 =? ( drop xc 5 >> 1+ 5 << xc - 2/ )( charsize exec ) 
+	ibox poli ;
+
+
+::atcenter | "" -- ""
+	sizeprint neg 'xc +! ;
+
+::vidi
+	inverso 0? ( $ff )( 0 ) nip 'inverso ! ;
+
+::allscreen
+	sh sw 0 dup 'wx1 !+ !+ !+ ! ;
+
+::linesize | lines --
+	wy2 wy1 - swap / dup 'h !
+	|fasp 16 *>> 
+	'w ! ;
+|	wy2 wy1 - over / dup 'h !
+|	wy2 wy1 - swap / dup 'w ! ;
+::fixsize | w h --
+	'h ! 'w ! 
+	wy2 wy1 - h / 'th !
+	wx2 wx1 - w / 'tw !
+	;
+
+|::screen | fil col --
+|	sh sw 0 dup 'wx1 !+ !+ !+ ! 	
+::ttext | fil col --
+	wy2 wy1 - swap / 'h ! wx2 wx1 - swap / 'w !
+::home	
+	0 0 
+::at | x y --
+	h * h 2/ + wy1 + 'yc ! 
+	w * wx1 + 'xc ! ;
+
+::wtext | lin --		; texto en ventana de cursor 
+	xc w 2/ - dup 'wx1 ! w + 'wx2 !
+	yc h 2/ - dup 'wy1 ! h + 'wy2 !
+	wy2 wy1 - swap / dup 'h ! 'w !
+|	wy2 wy1 - over / 'h !
+|	wx2 wx1 - swap / 'w !
+	home ;
+
+|///////////////////////////////////////////////////////////////////////////
+
+::print | "" --	
+	mprint 
+::printx | "" --
+	( c@+ 1? )( emit ) 2drop ;
+
+::printc | "" --	; en centro de la ventana
+	mprint
+	sizeprint wx2 wx1 + 2/ swap - 'xc ! 
+	printx ;
+
+	

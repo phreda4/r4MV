@@ -1,0 +1,57 @@
+| Carrera de autos
+| Pablo Reda 2006
+|----------------------------
+^reda4.txt
+^c.d.txt
+
+
+:inicio
+	[ "main.txt" run ; ] =>esc
+	'exit =>esp
+	0 paper
+	.show cls
+		6 2 screen
+		rojo 0 0 pat "Carreras" pcenter print
+		16 8 screen
+		blanco 0 3 pat "No choques el auto !!" pcenter print
+		1 .segs
+		verde 0 7 pat "[ESC] Salir  [ESPACIO] Comenzar" pcenter print 
+		2 .segs .restart ;
+
+#xt #yt
+#xp #yp 
+#xv #yv
+#veloc 
+#acel
+#vang #ang
+
+#lx1 #ly1 
+
+:juego
+sw 2/ 'lx1 ! sh 2/ 'ly1 !
+
+[ "main.txt" run  ] =>esc
+[ -1 'veloc +! ; ] =>arr
+[ 1 'veloc +! ; ] =>aba
+
+[ 4 'vang ! ; ] <=der [ -4 'vang ! ; ] <=izq
+[ 0 'vang ! ; ] dup =>der =>izq
+
+0 'xt ! 0 'yt !
+0 'xp ! 0 'yp !
+show cls 
+	sw 2* 2* 2* 2* dup dim xt yt pos 'dibu16 sprite
+		
+	xp yp getpixel $222222 <>? ( veloc neg 'veloc ! ) drop
+	
+	xp yp pos sw 2/ 2/ dup dim 'dibu17 ang rsprite
+	64 32 screen azul ang veloc yp xp "%n:%n v:%n d:%n" print
+	
+	vang 'ang +!
+	ang sincos veloc * 14 >> 'yp +! veloc * 14 >> neg 'xp +!
+	
+	xp lx1 <>? ( dup lx1 - neg dup 'xp +! 'xt +! ) drop
+	yp ly1 <>? ( dup ly1 - neg dup 'yp +! 'yt +! ) drop
+	;
+
+: inicio 33 juego ;

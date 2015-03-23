@@ -1,0 +1,43 @@
+| matriz de calculo
+
+|--- 2D
+|#m2d a b c d tx ty
+:m2clear | 'mat --
+	$10000 over ! 4+ 0 over ! 4+
+	0 over ! 4+ $10000 over ! 4+
+	0 over ! 4+ 0 swap ! ;
+	
+:m2tanslate | x y 'mat -- 
+	$10000 over ! 4+ 0 over ! 4+
+	0 over ! 4+ $10000 over ! 4+
+	rot 16 << over ! 4+ swap 16 << ! ;
+	
+:m2scale | x y 'mat --
+	rot over ! 4+ 0 over ! 4+
+	0 ver ! 4 + swap over ! 4+
+	0 over ! 4+ 0 swap ! ;
+	
+:m2rotate | ang 'mat --
+	>r dup sin swap cos
+	dup r!+ over neg r!+
+	swap r!+ r!+ 0 r!+ 0 r! rdrop ;
+	
+:m2mult | 'm1 'm2 -- \\ m1 = m1 * m2
+	
+	;
+	
+:m2inv | 'm1 'm2 -- \\ m2 = inv m1
+
+	;
+
+:m2trans | x y 'mat -- 'x 'y
+	>r over r@+ * over r@+ * + 16 >>
+	rot r@+ * rot r@+ * + 16 >> 
+	swap r@+ + swap r@ + rdrop ;
+	
+|--- 3D	
+|#m3d a b c d e f tx ty tz
+:m3clear | 'mat --
+
+	;
+	

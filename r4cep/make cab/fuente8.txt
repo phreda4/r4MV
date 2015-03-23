@@ -1,0 +1,261 @@
+| fuente 8
+^romfuente.txt
+
+|--- Fuente en 8 bits
+#xc #yc #w #h
+#wx1 #wy1 #wx2 #wy2
+#xtab
+#xo #yo #xa #ya
+#xx #yy #fc 
+#arcoiris $000000 $808080 $c0c0c0 $ffffff $0000c0 $0000ff $c000c0 $ff00ff 
+		  $00c000 $00ff00 $00c0c0 $00ffff $c00000 $ff0000 $c0c000 $ffff00
+
+::,negro 16 ,c ;
+::,blanco 19 ,c ;
+::,rojo 29 ,c ;
+::,verde 25 ,c ;
+::,azul 21 ,c ;
+
+::whin | x y -- 1/0
+	yc - h 2/ + -? ( 2drop 0 ; ) h - +? ( 2drop 0 ; ) drop
+	xc - w 2/ + -? ( 0 nip ; ) w - +? ( 0 )( 1 ) nip ;
+
+|---- ubicacion y desplazamiento
+::pos	| xy --
+	'yc ! 'xc ! ;
+::+pos	| xy --
+	'yc +! 'xc +! ;
+::dim | wh --
+	'h ! 'w ! ;
+::+dim | wh --
+	'h +! 'w +! ;
+
+|---- texto->cuadro
+::>win 
+	'wx1 !+ !+ !+ ! wx2 wx1 - 6 / 'xtab !
+::full	
+	wx2 wx1 2dup - 'w ! + 2/ 'xc ! wy2 wy1 2dup - 'h ! + 2/ 'yc ! ;
+	
+::screen | fil col --
+	sh sw 0 dup 'wx1 !+ !+ !+ ! 	
+	wx2 wx1 - 6 / 'xtab !
+::ttext | fil col --
+	wy2 wy1 - swap / 'h ! wx2 wx1 - swap / 'w !
+::home	
+	0 0 
+::pat | x y --
+	h * h 2/ + wy1 + 'yc ! w * wx1 + 'xc ! ;
+	
+::hsplit | cc --
+	wx2 wx1 - swap / 'w ! wx1 w 2/ + 'xc ! ;
+::xnext
+	w 'xc +! ;
+
+::ptofill | xy --
+	h * swap w * swap xc yc h 2/ - vfill ;
+
+::ptowin | xy --
+	yc h 2/ - 'wy1 ! xc 'wx1 ! h * wy1 + 'wy2 ! w * wx1 + 'wx2 ! ;
+	
+::ffill
+	w xc over 2/ - h yc over 2/ - rot swap vfill ;
+
+::rcaja
+	w h min 2/ 2/ >r xc w 2/ - yc h 2/ - r + 2dup 2dup op
+	r - 2dup cp swap r + swap 2dup pcurve swap r 2* - w + swap 2dup pline
+	swap r + swap 2dup cp r + 2dup pcurve r 2* - h + 2dup pline
+	r + 2dup cp swap r - swap 2dup pcurve swap r 2* + w - swap 2dup pline
+	swap r - swap 2dup cp r> - pcurve pline poli ;
+
+|--- fuente de letra | 00000 00 0 | valor op x/y
+:tox w * 5 >> xc + ;
+:toy h * 5 >> yc + ;
+
+:completo xa xo =? ( ya yo =? ( 2drop ; ) )( ya ) op xo yo pline ;
+:p1 completo xx yy 2dup 'yo ! 'xo ! op ;
+:p2 xx yy pline ; 
+:p3 fc 0? ( xx yy cp )( xx yy pcurve ) not 'fc ! ;
+#fpolij 0 p1 p2 p3 
+
+::rpoli | addr --
+| w 6 >> 'xc +! h 6 >> 'yc +!
+	0 'fc ! 0 tox dup 'xo ! 'xx ! 0 toy dup 'yo ! 'yy !
+	( c@+ 1? )(
+		dup 3 >> over $1 and 
+		1? ( xx 'xa ! drop tox 'xx )( yy 'ya ! drop toy 'yy ) !
+		$6 and 2* 'fpolij + @ exec ) 2drop 
+		xx 'xa ! yy 'ya ! completo 
+		poli ;
+| *** 0 bug !!!
+	
+|--- fuente
+::charsize | c -- cnt
+	33 <? ( drop 6 w * 5 >> ; )	33 - 'sfnt1 + c@ w * 5 >> ;
+
+:sizeprint | "" -- "" x
+	0 >r dup ( c@+ 1? )( charsize r+ ) 2drop r> ;
+
+:charout | c --
+	33 <? ( drop ; ) 33 - 2 << 'fnt1 + @ rpoli ;
+
+:ibox | xl -- 
+	>r xc yc h 2/ - 2dup op
+	2dup h + 2dup swap r> 2* + swap 2dup h -
+	pline pline pline pline ;
+
+|--- numeros
+:emitin | c --
+	dup charsize
+	dup 2* xc + wx2 >? ( 
+		h 'yc +! yc wy2 >? ( 4drop ; ) drop
+		wx1 'xc ! ) drop
+	dup 'xc +! swap charout 'xc +! ;
+	
+::printn | n --
+	-? ( $2d emitin neg ) | - pone menos
+	0 swap ( dup 10 mod $30 + swap 10 / 0? ) drop 
+	( emitin 0? ) drop ;
+
+::printh | hex --
+	0 swap ( dup $f and $30 + swap 2/ 2/ 2/ 2/ $fffffff and 0? ) drop 
+	( $39 >? ( 7 + ) emitin 0? ) drop ;
+
+::printb | bin --
+	0 swap ( dup $1 and $30 + swap 2/ 0? ) drop
+	( emitin 0? ) drop ;
+
+|--- print
+::emit | c --
+	dup charsize
+	dup 2* xc + wx2 >? ( 
+		yc h + wy2 >? ( 4drop drop 'arcoiris ; ) 'yc !
+		wx1 'xc ! ) drop
+	dup 'xc +! swap charout 'xc +! ;
+
+::prints | "" --
+	( c@+ 1? )( emit ) 2drop ;
+
+::pcr	yc h + wy2 >? ( 2drop 'arcoiris ; ) 'yc ! wx1 'xc ! ;			
+:dtab	xc wx1 - xtab / 1+ xtab * wx1 +
+		wx2 >? ( drop pcr ; ) 
+		'xc ! ;
+:dback	-12 'xc +! ;
+
+#controld 0 0 0 0 0 0 0 0 'dback 'dtab 0 0 0 'pcr 0 0 
+
+:emitf | adr c -- adr  // %n %s %h %b 
+	$25 =? ( drop c@+
+		$73 =? ( drop swap prints ; ) | s
+		$6e =? ( drop swap printn ; ) | n
+		$68 =? ( drop swap printh ; ) | h
+		$62 =? ( drop swap printb ; ) | b
+		$3e =? ( drop dtab ; ) 	|%> =tab
+		$2f =? ( drop pcr ; ) 		|%/=enter
+		) emit ;
+
+::print | "" --	
+	( c@+ 1? )( 			|0 <? ( $7f and dup charsize ibox ) | video inverso
+		31 >? ( emitf )(	| poli 
+		15 >? ( 16 - 2 << 'arcoiris + @ ink )( $f and 2 << 'controld + @ exec ) ) 
+		) 2drop ;
+
+::printx | "" --	
+	( c@+ 1? )( 			|0 <? ( $7f and dup charsize ibox ) | video inverso
+		31 >? ( emit )(	| poli 
+		15 >? ( 16 - 2 << 'arcoiris + @ ink )( $f and 2 << 'controld + @ exec ) ) 
+		) 2drop ;
+		
+::dump | addr cnt --		
+	( 1? )( 1- swap
+		c@+ 32 <? ( 32 nip ) emitf 
+		swap ) 2drop ;
+
+::hdump | addr cnt --		
+	( 1? )( 1- swap
+		@+ printh 32 emit
+		swap ) 2drop ;
+
+|----- posicion y cursor
+:spacecr
+	yc h + wy2 >? ( 2drop 0 ; ) 'yc ! wx1 'xc ! ;
+	
+:spacec | addr c -- addr / addr->0 cuando corta
+	charsize 2* xc +
+	wx2 >? ( yc h + wy2 >? ( 3drop 0 ; ) 'yc ! wx1 nip ) 'xc ! ;
+	
+:printpos | cursor inicio -- cursor
+	( over <? )( c@+ 13 =? ( drop spacecr )( spacec ) 0? ( nip ; ) ) drop ;
+	
+::drawcursor | cursor inicio -- 1/0 
+	xc yc 2swap printpos 0? ( drop 'yc ! 'xc ! 0 ; )
+	c@ charsize ibox poli 'yc ! 'xc ! 1 ;
+
+::pcenter | "" -- ""
+	sizeprint wx2 wx1 + 2/ swap - 'xc ! ;	
+	
+|--- Fuente en 32 bits
+| fuente vectorial en 32bits | 14 - 14 - 4
+| 0000 0000 0000 00 00 0000 0000 0000 0000
+| x			        y			      control
+::>xy | v -- x y
+	dup  18 >> w * 14 >> xc + swap 14 << 18 >> h * 14 >> yc + ;
+::xy> | x y -- v
+	yc - 14 << h / $3fff and 4 << swap xc - 14 << w / $3fff and 18 << or ;
+
+::dxy |v1 v2 -- dx dy
+	over 14 << 18 >> over  14 << 18 >> - >r
+	18 >> swap 18 >> swap - r> ;
+	
+::d>xy | v -- x y
+	dup 18 >> swap 14 << 18 >> ;
+::xy>d | xy -- v
+	4 << $3fff0 and swap 18 << $fffc0000 and or ;
+|------------------------
+:o0 drop ; 
+:o1 4 >> ink poli ;
+:o2 >xy op ;	:o3 >xy cp ; 
+:o4 >xy line ;  :o5 >xy curve ;
+:o6 >xy pline ; :o7 >xy pcurve ; 
+
+#controlh o0 o1 o2 o3 o4 o5 o6 o7 
+
+::dibujo | adr --
+	( @+ 1? )( dup $7 and 2 << 'controlh + @ exec ) 2drop ;
+	
+|--------sprite
+:c0 drop ; | control
+	
+:c1 >xy op ; 
+:c2 >xy line ; 
+:c3 >xy fc 0? ( >r cp )( >r curve ) r> not 'fc ! ;
+:pcomp 
+	xa xo =? ( ya yo =? ( 2drop ; ) )( ya ) op xo yo 
+	fc 0? ( drop pline )( drop pcurve ) ;
+:fdib	pcomp poli 
+:cdib	0 'fc ! xo 'xa ! yo 'ya ! ;
+:c4 fdib 4 >> ink ;	
+:c5 pcomp >xy 2dup 'yo ! 'xo ! op ;
+:c6 >xy 2dup pline 'ya ! 'xa ! ; 
+:c7 >xy fc 0? ( >r 2dup cp )( >r 2dup pcurve ) 'ya ! 'xa ! r> not 'fc ! ;
+
+#comand c0 c1 c2 c3 c4 c5 c6 c7
+::sprite | adr --
+	cdib ( @+ 1? )( dup $7 and 2 << 'comand + @ exec ) 2drop fdib ;
+
+#cosa #sina | para rotar
+:r>xy 
+	d>xy over sina * over cosa * + 16 >> h * 14 >> yc + >r
+	swap cosa * swap sina * - 16 >> w * 14 >> xc + r> ;
+
+:rc1 r>xy op ; 
+:rc2 r>xy line ; 
+:rc3 r>xy fc 0? ( >r cp )( >r curve ) r> not 'fc ! ;
+:rc5 pcomp r>xy 2dup 'yo ! 'xo ! op ;
+:rc6 r>xy 2dup pline 'ya ! 'xa ! ; 
+:rc7 r>xy fc 0? ( >r 2dup cp )( >r 2dup pcurve ) 'ya ! 'xa ! r> not 'fc ! ;
+	
+#rcomand c0 rc1 rc2 rc3 c4 rc5 rc6 rc7
+::rsprite | adr ang --	
+	dup cos 'cosa ! sin 'sina !
+	cdib ( @+ 1? )( dup $7 and 2 << 'rcomand + @ exec ) 2drop fdib ;
+	

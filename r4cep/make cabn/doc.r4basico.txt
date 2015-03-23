@@ -1,0 +1,159 @@
+Prefijos
+^modulo.txt	incluye el archivo modulo.txt
+:nueva	define nueva como la lista hasta el ;
+::nuevag	define y exporta esta definición
+#memoria	define memoria como una variable
+#:memoriag	define y exporta una variable
+'hola	apila la dirección de hola (ya definida)
+|blabla...	comentario, ignora hasta el fin de la línea
+"bla bla"	texto (incluye espacios), apila dirección
+Control
+( ... )		Repetir las PALABRAS dentro de paréntesis
+?? ( .v. )( .f. )	Condición
+( .f. ?? )			Repetición hasta condición (pasa 1 vez al menos)
+( .. ?? )( .v. )	Repetición mientras condición
+[ ... ]				Definición anónima (apilando su dirección)
+EXEC        | d --	Llama a la direccion en pila 
+Condicionales ??
+0? 	| --		1? 	| --		Es 0/distinto de 0 el tope de la pila?
++? 	| --    	-?  | --		Es positivo/negativo  el tope de la pila ?
+=?	| ab – a	<>? | ab – a	a = b ?  a <> b ? 
+>?  | ab – a    <?  | ab – a	a > b ?  a < b ?
+<=? | ab – a	>=? | ab – a	a <= b ?  a >= b ?
+Pila de Datos
+DUP 	| a -- aa
+DROP 	| a -- 
+OVER 	| ab -- aba
+PICK2 	| abc -- abca
+PICK3 	| abcd -- abcda
+PICK4 	| abcde - abcdea
+SWAP 	| ab -- ba
+NIP 	| ab – b	
+ROT 	| abc -- bca2
+DUP 	| ab -- abab2
+DROP   	| ab -- 
+3DROP   | abc --
+4DROP   | abcd --
+2OVER   | abcd -- abcdab 
+2SWAP	| abcd -- cdab
+Lógicas
+AND 	| ab -- c   c = a AND b
+OR		| ab -- c   c = a OR b	
+XOR 	| ab -- c     c = a XOR b
+NOT  	| ab -- c     c = a NOT b
+Aritméticas 
++ 	| ab -- c	c=a+b
+- 	| ab -- c	c=a-b
+* 	| ab -- c	c=a*b
+/ 	| ab -- c 	c=a/b
+*/ 	| abc -- d	d=a*b/c
+/MOD 	| ab -- c d	c=a/b 
+MOD 	| ab – d	d=a resto b	
+NEG		| a -- b		b= -a
+1+ 		| a -- b		b=a+1
+1- 		| a -- b		b=a-1
+2/ 		| a -- b		b=a/2
+2* 		| a -- b		b=a*2
+<< 		| ab -- c	c=a<<b
+>> 		| ab -- c	b=a>>b
+Memoria 
+@ 	| a – b		b=32(a)
+C@ 	| a -- b	b=8 (a)
+W@	| a -- b	b=16(a)
+!	| vd --		32(d) =v
+C!	| vd --		8(d) =v
+W! 	| vd --		16(d)=v
++! 	| vd --		32(d)=32(d) + v
+C+! | vd --		8(d)=8(d) + v	
+@+	| d – d+4 v
+C@+	| d -- d+1 byte(v)
+W@+	| d -- d+2 word(v)
+!+	| vd -- d+4
+C!+	| vd -- d+1
+W!+	| vd -- d+2
+W+! | vd --	16(d)=16(d) + v
+MEM	| -- d	memoria libre
+Pila de Direcciones 
+>R 		| a --		R: --a
+R@		| -- a
+R@+		| -- v		R:a--a+4
+R		| -- a		R:a--a	
+R< 		| -- a		R:a --
+R!		| v -- 
+R!+		| v --		R:a -- a+4
+RDROP   | --                 R:a --
+Sistema 
+MSEC 	| -- a
+TIME 	| -- h m s
+DATE 	| -- d m a
+RESET 	| --	
+RUN  	| d --	
+Pantalla
+SW 		| -- w
+SH 		| -- h
+CLS 	| --
+REDRAW  | --
+FRAMEV	| -- a
+UPDATE	| --	Apila ancho de pantallaApila alto de pantallaLimpia pantallaDibuja la pantalla real con la virtualApila direccion de inicio de la pantalla virtualActualiza los eventos internos del SO
+Dibujo 
+OP 		| xy --
+CP 		| xy --
+LINE 		| xy --	
+CURVE 	| xy --	
+PLINE 	| xy --	
+PCURVE 	| xy --	
+POLI    	| --		Punto de origenPunto de control para curvaTraza líneaTraza curvaMarca línea polígonoMarca curva polígonoTraza polígono
+Color 
+PAPER  	| a --
+INK   	           | a --
+INK@            | -- a	
+ALPHA 	| a --	Pone color de fondoPone color actualApila color actualpone alpha (0-255)
+Almacenamiento externo
+DIR	| “” --
+FILE	| n -- “”
+LOAD	| a“” -- b
+SAVE	| ac“” --	Cambia la carpeta actualObtiene el nombre dado el numeroCarga un archivo en memoriaGraba una porción de memoria
+ 
+Vocabularios en desarrollo
+^reda4.txt | todo el sistema
+here	| -- d 	
+clear	| --
+,	| v --	
+,c	| v --	
+,w	| v --	
+,s	| d --	
+,n	| v --	
+,h	| v --	
+,b	| v --	
+cmove   | de sr cnt --
+cmove> | de sr cnt --
+move     | de sr cnt --
+move>   | de sr cnt --
+rand  | -- v
+blink | -- 0/1	
+max  | ab -- c
+min   | ab – c
+exit
+show   | *Repite Pantalla
+oshow | *Repite Pantalla
+getpixel | x y -- c
+pixel | c x y --
+vfill | ancho alto x y
+bmnoise |ancho alto x y -- 
+hline | x y x --
+vline | x y y --
+box | x y r --
+fbox | xc yc r --
+circle | xc yc r --
+fcircle | xc yc r --
+^fuente8.txt | Letras y Dibujos
+pos	 | xy --	
++pos	 | xy --
+dim	 | wh --	
++dim	 | wh --
+rpoli	 | addr --
+sprite	  | adr --	
+rsprite  | adr ang --	
+screen | fil col --pat       | x y --ttext     | fil col --home	ptofill	| xy --ptowin	| xy --ffillrcajaemit	| c --pcrprint	| "" --	printx	| "" --	dump	 | addr cnt --		drawcursor | crs ini -- 1/0 pcenter        | "" -- ""
+^gui.txt  | Interaccion
+.show  | *Repite Pantalla.segs   | seg –.restart.table | cf -- .at | xy --.to | xy --.> .< .\  ./ hlinea | x --vlinea | y --mcursor | x y --caja .ug   | cd --.ug1 | acd -- .ug2 | bacd --	.ug3 | cbacd --		.cond | vnc -- | variable valor cantidad.sbtn | 'sprite 'click --.tbtn | "hola" 'click --	.8btn | "hola" 'click --	.4btn | "hola" 'click --	.2btn | "hola" 'click --	.gbtn | "hola" 'click --	.xbtn | 'vec 'click --.hsli | max var --  | slide de 0..max.vsli | max var --  | slide de 0..max.btabla | draw click f c --.htool | botonera var cnt --rgrilla

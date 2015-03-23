@@ -1,0 +1,184 @@
+| :R4 main.txt
+| PHreda 2006-2007
+|---------------------------------------
+^reda4.txt
+^medit.txt
+^gui.txt
+^sprites.txt
+^render.txt
+^r4inc/main.inc
+
+#inicioarch 0
+#cntarch 20
+#vuelta 0
+
+#cant 0
+#iniprog 0
+#hayarr 0
+#hayaba 0
+
+#indice	)( 2048
+
+#juegos  'dibu2 "Juegos" 
+"pong" "memoria" "slimeatlet" "carucha"   
+|"nubedep"  "ruta9" 
+"carrera" "xe"  "uvaman" "cartonman" "chispita" 
+"sraceituna"  "ducha100" "moscaysapo" 0
+
+#mcornes 'dibu3 "Manuel Cornes" 
+"clock" "tetris" "clickotron" 0
+
+#demos 'dibu4 "Demos" 
+"lagranjita" "3d" "3dlatr" "capbeto" "funciones" 0
+
+#dev 'dibu6 "Dev"  
+"crayon" "leebmp" |"leepng"
+"bitmapscale" "dbapp" "pizarra"  "adentro" |"rmation2" 
+"rmation"
+"bolsa"
+"world3d" "personaje" 
+"test-atan" "test-arit"   "rendertest" 0
+
+#sistema 'dibu1 "Sistema" 
+"setup" "garabator" "debug" 
+"font8vedit" "fontvedit"
+"scancode" "scancode-c" 0
+
+#dominios  'juegos 'mcornes 'demos 'dev 'sistema 0
+#actuald 'dominios
+
+#iizq ( 17 -30 -76 -90 7 -87 -12 -103 6 -87 22 1 100 23 86 36 85 103 22 -12 -26 87 21 0 )
+#ider ( -94 89 -12 105 6 89 22 1 100 -9 86 36 -75 -89 22 -12 -26 -73 -11 -76 -90 7 0 )
+#iarr ( -94 -95 4 -27 100 37 4 101 1 -92 0 )
+#iaba ( 98 -95 4 -27 -92 37 4 101 -7 100 0 )
+
+:calbotons
+	iniprog 0 >? ( 1 )( 0 ) nip 'hayarr !
+	iniprog 4 3 * + cant <? ( 1 )( 0 ) nip 'hayaba ! ;
+
+:nextpag
+	iniprog  4 3 * +  cant >=? ( drop ; )
+	'iniprog ! calbotons ;
+:prevpag
+	iniprog 4 3 * - 0 <? ( drop ; ) 
+	'iniprog ! calbotons ; 
+
+:haceindice |'lista --
+	'indice swap 
+	0 'cant !
+	( c@+ 1? )( drop 
+		dup 1-  rot !+ swap
+		1 'cant +!
+		( c@+ 1? )( drop ) drop
+		) drop
+	swap !  ;
+
+:nextdom | --
+	actuald 4+ 
+:hacedom
+	dup @ 0? ( 2drop 'dominios dup @ )
+	4+ ( c@+ 1? )( drop ) drop haceindice
+	'actuald ! 
+	iniprog (  cant >? )( 4 3 * - ) 'iniprog !
+	calbotons ;
+
+:grabadom
+	".//" dir
+	'actuald 4 ".//r4nom//main.dom" save  ;
+
+:testdominio | --
+	'dominios ( actuald =? ( drop ; ) @+ 1? )( drop ) 2drop
+	'dominios 'actuald ! ;
+
+:restauradom
+	".//" dir 
+	'actuald ".//r4nom//main.dom" load drop 
+	testdominio
+	actuald hacedom ;
+
+:dibudom | dir --
+	dup @ @ sprite 
+	ttwin 6 4 ttext 0 3 at
+	@ 4+ blanco prints  ;
+	
+|--------------------------------------------------------------------------------------------
+#actual 0
+#fileact 0
+#compnombre )( 128
+#nombre )( 32 
+
+:compone | "ext" n -- "n.ext"
+	2 << 'indice + @ 'compnombre swap
+	( c@+ 1? )( rot c!+ swap )  2drop
+	swap
+	( c@+ 1? )( rot c!+ swap ) rot c! 
+	drop 'compnombre 
+	; 
+
+:runactual
+	grabadom
+	".txt" actual compone run ;
+
+|---------- Lista de Botones
+:fdraw | nro --
+	iniprog + cant >=? ( drop ; ) 
+	-8 dup +dim	cyan
+	actual =? ( claro ababoton blanco )(  oscuro arrboton verde ) 
+	5 3 ttext cr |ttwin 
+	2 << 'indice + @ 0? ( drop "S/N" ) 
+	pcenter print ;
+
+:fclick | v nro --
+	iniprog +
+	cant >=? ( 2drop ; )
+	'actual !  
+	0? ( drop runactual  ) 
+	drop  ;
+
+|----------  Main
+:main 
+	.page
+	11 dup .table
+	cyan
+	'hayarr 1 1 .cond 0 5 .at 'iizq 'nextpag .sbtn | next
+	'hayaba 1 1 .cond 10 5 .at 'ider 'prevpag .sbtn | prev
+	0 1 .at 'fdraw 'fclick 11 8 .to 4 3 .ttabla
+	7 7 .table 0 6 .at
+	rojo		
+	"ESC" 'ifin [ grabadom exit ; ] dup <esc> .fsbtn .>
+	verde
+	"F1" "Dibujos" [ "garabator.txt"run ; ] dup <f1> .fbtn .>
+	"F2" "Debug" [ "" 1 "debug.err" save "debug.txt"run ; ] dup <f2> .fbtn .>
+	">>" 'nextdom dup <esp>
+ .2btn
+|	"F3" "RunTime" [ "runtime.txt" run ; ] dup <f3> .fbtn .>
+|	"F3" "font8vedit" [ "font8vedit.txt"run ; ] dup <f3> .fbtn .>
+|	"F4" "Bmp" [ "leebmp.txt"run ; ] dup <f4> .fbtn .>
+	calbotons
+|	0 0 .at  cyan
+|	[ dup " :r%d" verde print actuald @ 4+ "%s" blanco print ; ] .label
+	[ actual cant 1- <? ( 1+ ) 'actual ! ; ] <der>
+	[ actual 1? ( 1- ) 'actual ! ; ] <izq> 
+	[ actual 4+ cant 1- min  'actual ! ; ] <aba>
+	[ actual 4 - 0 max 'actual ! ; ] <arr> 
+	'prevpag <pgup>
+	'nextpag <pgdn>
+	'runactual <enter>
+	.show cls 
+		|renderback
+		16 8 screen
+		2 0 at dup " :r%d" verde print 
+		actuald @ 4+ "%s" rojo print 
+		sw 3 >> sh 3 >> 2dup dim 2/ swap  2/ swap pos
+		actuald @ @ sprite 
+|		todo
+|		actuald dibudom		
+|		'dominios ( @+ 1? )( dibudom ) drop
+		;
+
+
+|****** BOOT ******
+:	$ffffff paper 
+	restauradom
+	4 main 
+	;

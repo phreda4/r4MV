@@ -1,0 +1,9 @@
+^reda4.txt
+
+:pant
+[ "r4color.txt" run ; ] =>esc
+show cls 
+32 32 screen blanco
+2 2 pat dup "%n" print  ;
+
+: 33  pant ;

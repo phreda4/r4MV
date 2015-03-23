@@ -1,0 +1,44 @@
+// Redamation Main Menu
+
+: BLANCO | 
+0xffffffff COLOR ;
+
+: NEGRO | 
+0 COLOR ;
+
+: VERDE | 
+0x00ff00ff COLOR ;
+	
+: BOTON ...| 
+[DOWN> (10,10) EXPANDE] 
+POP LCIRCULO POP POP CARACTER ;
+
+: GUI | 
+RESET 
+(12,20) TABLA 
+(12,0) EN 
+[X] NEGRO ROJO BOTON [CLICK> SALIR]
+EDITA?
+	(0,0) EN 
+	[@] NEGRO VERDE BOTON [CLICK> NUEVO]
+SHOW ;
+
+//-------------------------------------------------------	
+// colores	
+	
+: BLANCO
+: NEGRO
+: VERDE
+
+// boton
+: BOTON
+
+// pantalla basica inicial
+: GUI	
+
+: DIBUJO
+BLANCO PAGINA
+(12,20) TABLA
+(11,0) EN
+BSALIR? IF (2,2) EXPANDE;
+1 NEGRO ROJO BOTON [CLICK>SALIR]

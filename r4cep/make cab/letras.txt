@@ -1,0 +1,315 @@
+| Editor de fuente 8 :REDa4
+|---------------------------------
+^reda4.txt 
+^gui.txt
+
+#dibmem )( 8192 |--- en 32bits
+#dibmem> 'dibmem
+#cursor 'dibmem
+#xc #yc #cc
+#aux )( 1024
+#hojas )( 8192	|--- en 8
+#hojas> 'hojas
+#indcnt )( 512 
+#indice )( 512  |--- 128 chars
+#actual 'indice
+
+#dibcom 0 | valor para contar
+
+|------------- Conversion 32-8-32
+#xx #yy #fc
+#equiv8 ( 0 0 1 3 2 3 2 3 0 0 0 0 0 0 0 0 )
+
+:32to8xy | v -- t x y 
+	dup $f and 'equiv8 + c@ 2*
+	over 27 >> 3 <<
+	rot 14 << 27 >> 3 << ;
+
+:graba8 | v -- 
+	32to8xy | t x y 
+	yy =? ( drop xx =? ( 2drop ; ) dup 'xx ! or 1 or ,c ; ) 
+	swap xx =? ( drop dup 'yy ! or ,c ; ) 
+	dup 'xx ! 1 or ,c dup 'yy ! or ,c ;
+
+::d32->8 | 'desde32 'en8 --
+	'here !  0 'xx ! 0 'yy !
+	( @+ 1? )( graba8 ) ,c drop ;
+
+| xxxxx - xxxxx100000000
+:8to32xy | v -- t v | de 5 bits a 14 bits
+	dup 3 >> 9 << $100 + ;
+
+:v0 drop ; :v1 2 or , ; :v2 4 or , ;
+:v3 fc 0? ( 3 )( 5 ) swap not 'fc ! or , ;
+#vord 'v0 'v1 'v2 'v3
+	
+:graba32 | v --
+	8to32xy |t v
+	over 1 and 0? ( 'yy )( 'xx ) nip !
+	xx 18 << yy 4 << $3fff0 and or swap
+	6 and 2* 'vord + @ exec	;
+	
+::d8->32 | 'desde8 'en32 --
+	'here ! 0 'fc ! 0 'xx ! 0 'yy !
+	( c@+ 1? )( graba32 ) , drop ;
+
+|--- Trazo
+#trazo )( 8192	
+#trazo> 'trazo 
+
+:qs	| paxy axy -- qs
+	>xy rot >xy rot - dup * >r - dup * r> + ;
+
+#s1 #s2 
+	
+:reduce | pxy --
+	trazo> 8 - 'dibmem <? ( drop ; )
+	dup 4+ @ swap @ rot | p4 p8 pac
+	2dup qs dup 's1 ! dup * 's2 ! | 8-a
+ 	rot 2dup qs dup 's1 +! dup * 's2 +! | p8 pac p4   | a-4
+	rot qs dup 's1 +! dup * 's2 +! | pac p4 p8 | 4-8
+	s1 dup * s2 2* - abs 
+	$1fff <? ( -4 'trazo> +! ) drop ;
+	
+:+trazo | pxy --
+	reduce 
+:++trazo	
+	trazo> ! 4 'trazo> +! 0 trazo> ! ;
+
+:cltrazo |
+	'trazo 'trazo> ! 0 trazo> ! ;
+
+:cptrazo | adr -- adr'	\\ copia hasta 0
+	>r 'trazo dup @ 0? ( 2drop r> ; ) drop
+	( @+ 1? )( r!+ ) r!+ drop r> ;
+	
+|----------- botones
+:erase-draw  | nro --
+	0 'dibmem dup 4+ 'dibmem> ! ! 'dibmem 'cursor ! ;
+
+:load-car | --
+	actual @ 0? ( erase-draw ; )
+	'dibmem d8->32 here 'dibmem> !
+	'dibmem 'cursor ! ;
+
+:save-last
+	hojas> actual !
+	'dibmem hojas> d32->8 here dup hojas> - actual 512 - ! 'hojas> ! ;
+	
+:save-car | --
+	actual @ 0? ( drop save-last ; )
+	'dibmem actual @ 0? ( drop hojas> dup actual ! ) 
+	d32->8 'hojas> ! ;	
+
+:load-car1 | --
+	actual @ 0? ( erase-draw ; )
+	'dibmem d8->32 here 'dibmem> !
+	'dibmem 'cursor ! ;
+
+:save-car1 | --
+|	'dibmem 'aux d32->8 here 'aux - | tamanio nuevo
+|	swap -
+|	1? ( +? ( over + swap hojas> over - cmove>	| agrandar texto
+|			)(  over + swap hojas> over - cmove		| achicar texto
+|			) ; ) drop 
+;
+	
+
+:save-newcode  | nro --
+	'dibmem 'aux d32->8 clear 
+	"#trazo (" ,s 
+	'aux ( c@+ 1? )( " " ,s ,n
+|	dup 1 and 0? ( "y" )( "x" ) ,s drop
+|	dup 6 and 2/ ,n ":" ,s
+|	3 >> ,n
+	 ) " " ,s ,n drop
+	" )" ,s ,cr
+	mem here mem - "icono8r.txt" save ;
+	
+:desplaza | key --
+	'indice dup 4 - 127 move> |me olvide la Y
+	;
+		
+
+|--------------------- Editar
+:get-nodo 
+	cursor @ dup $f and 'cc ! >xy 'yc ! 'xc ! ;
+
+:cam-nodo | tipo -- 
+	dup cursor @ $fffffff0 and or cursor ! 'cc ! ;
+	
+:alfin	|  -- cnt
+	dibmem> cursor - 2 >> ;
+	
+|---botones	
+:ins-nodo | nro --
+	cursor dup 4 - alfin 1+ move> 4 'cursor +! 4 'dibmem> +! ;	
+
+:del-nodo | nro --
+	'dibmem @ 1? ( cursor dup 4+ alfin move -4 'cursor +! -4 'dibmem> +! ) drop ;
+
+:point-nodo | nro --
+	cursor 'dibmem <=? ( drop ; ) drop
+	cc 3 - 2 cam-nodo 1? ( drop ; ) drop
+	4 'cursor +! 4 cam-nodo -4 'cursor +! ;
+	
+:line-nodo | nro --
+	cursor 'dibmem <=? ( drop ; ) drop
+	cc 3 - 4 cam-nodo 1? ( drop ; ) drop
+	4 'cursor +! 4 cam-nodo -4 'cursor +! ;
+	
+:curve-nodo | nro --
+	cursor 'dibmem <=? ( drop ; ) drop
+	3 cam-nodo 4 'cursor +! 5 cam-nodo -4 'cursor +! ;
+
+:load-font
+	clear 
+	'hojas "fuente.bin" load 'hojas> !	
+	'hojas 'indice 128 ( 1? )( 1- >r
+		2dup ! swap ( c@+ 1? )( drop ) drop swap 4+ r> ) 3drop
+	'indice 128 ( 1? )( 1- >r 
+		@+ 0 swap ( c@+ 1? )( drop swap 1+ swap ) 2drop 
+		over 512 - 4 - !
+		r> ) 2drop ;
+
+:save-font
+	clear 
+	'indice 128 ( 1? )( 1- >r 
+		@+ 1? ( ( c@+ 1? )( ,c ) ,c drop )( ,c ) 
+		r> ) 2drop
+	mem here over - "fuente.bin" save ;
+
+
+#fancho #falto
+
+:clearbox
+	0 'fancho ! 0 'falto ! ;
+	
+:addbox | v --
+	dup 1 and 0? ( 'falto )( 'fancho ) nip
+	swap 3 >> abs over @ >? ( swap ! )( 2drop )	;
+	
+:save-codigo
+	clear 0
+	'indice 128 ( 1? )( 1- >r
+		@+ "#car" ,s rot dup ,n 1+ rot rot " ( " ,s 
+		( c@+ 1? )( ,n " " ,s ) ,n 
+		" )" ,s 10 ,c 
+		|13 ,c 
+		drop 
+		r> ) 3drop
+	"#todos" ,s 0 128 
+	( 1? )( 1- swap dup " 'car" ,s ,n 1+ swap ) 2drop
+	10 ,c 13 ,c 
+|	"#sizes (" ,s 
+|	'indice ( @+ 1? )(
+|		clearbox 
+|		( c@+ 1? )( addbox ) 2drop
+|		" " ,s fancho ,n 
+|		) 2drop
+	mem here over - "fuente.txt" save ;
+
+|---- BOTONES
+#isalir ( -15 -86 21 4 -11 -47 -86 -39 -52 -65 6 54 7 79 6 -50 47 49 -84 
+111 6 86 7 -97 6 -82 -41 0 )
+#ilapiz ( -111 -6 -15 -60 17 -12 -87 44 -111 -4 -79 50 25 -4 65 20 -39 76 -79 
+52 1 -70 89 -76 113 -74 113 -50 81 12 9 -10 1 -66 17 -62 81 -68 73 -42 97 -42 
+73 -4 25 -18 17 -58 -119 2 -119 70 -55 78 -103 62 -119 6 0 )
+#imano ( -15 -102 -25 -82 20 -39 -10 -57 -89 22 -55 14 -47 62 94 -9 37 71 62 
+-12 49 -50 33 -10 17 -50 1 -10 -84 -98 -9 0 )
+#iherra ( -111 -94 -71 -36 109 -52 65 -108 -107 -92 -55 -62 -27 -39 -76 45 49 
+-60 77 57 -92 -67 -111 -70 52 -71 108 109 -12 -67 0 )
+#imas ( 17 -70 -11 -12 -67 20 -11 76 21 20 77 -12 21 0 )	
+#imenos ( -71 -14 20 77 -12 0 )
+#ilinea ( 89 -102 -103 84 -95 100 97 -84 0 )
+#icurva ( 89 -102 -63 -82 -103 86 -95 100 -55 -66 97 -82 0 )
+#ipunto ( -15 -14 20 21 -12 0 )
+|--------------------- Dibujo
+:dr.draw	
+	azul 'aux rpoli
+	gris rgrilla
+	negro 'dibmem dibujo
+	azul 'trazo dibujo ;
+	
+:dr.calc | x y ev
+  0? (	3drop dibmem> 4 - cptrazo 'dibmem> ! cltrazo ; )
+  1- 0? ( drop xy> $4 or +trazo ; ) drop
+  cltrazo xy> $2 or ++trazo ;
+  
+|-- interaccion
+:indot | x y x y --
+	rot - dup * swap rot - dup * + | dx2+dy2
+	48 <=? ( drop 1 )( drop 0 ) ;
+
+:cadanodo | adr --
+	( @+ 1? )( dup $f and 
+		swap >xy rojo rot box
+		) 2drop ;
+
+:ed.draw	
+	gris rgrilla
+	get-nodo verde xc yc 2dup mcursor 
+	rojo msec 6 >> $3 and 2 + box
+	negro 'dibmem dibujo 
+	rojo 'dibmem cadanodo ;
+
+:ed.calc | x y v --
+	0? ( 3drop ; )
+	1- 0? ( drop xy> cursor @ $f and or cursor ! ; ) drop 
+	'dibmem >r ( r@+ 1? )( 
+		>xy 2over indot 1? ( r 4 - 'cursor ! ) drop ) 
+	3drop rdrop ;
+
+|--------------------- Hojas
+:hdraw | n-- 
+	2 << 'indice + actual =? ( rojo rcaja ) @ 0? ( drop ; ) 
+	negro rpoli ;
+
+:hclik | n --
+	2 << 'indice + 'actual ! load-car ;
+
+#pestado 0
+
+:main 
+	inikey 
+	'exit <=ESC
+	16 16 .table 0 0 .at 
+	rojo 'isalir 'exit .sbtn .>
+	verde
+	'ilapiz [ 0 'pestado ! ; ] .sbtn .>
+	'imano  [ 1 'pestado ! ; ] .sbtn .>
+	'iherra [ 2 'pestado ! save-last ; ] .sbtn .>
+	azul
+	'pestado 0 1 .cond | lapiz
+		|4 0 .at |	'inuevo 'nuevo-dib *f4
+		1 1 .at 14 14 .to 'dr.calc 'dr.draw .ug
+	'pestado 1 6 .cond | mano
+		1 1 .at 14 14 .to 'ed.calc 'ed.draw .ug
+		4 0 .at 
+		'imas   'ins-nodo .sbtn .>
+		'imenos 'del-nodo .sbtn .>
+		'ilinea 'line-nodo .sbtn .>
+		'icurva 'curve-nodo .sbtn .>
+		'ipunto 'point-nodo .sbtn
+	'pestado 2 2 .cond | herra
+		4 0 .at 'imenos 'erase-draw .sbtn 
+		18 10 .table 1 1 .at 16 8 .to
+		'hdraw 'hclik 8 16 .btabla
+	.show cls 32 32 screen 0 30 pat
+		dup hojas> 'hojas - "%n Bytes%/Editor de Signos %n" azul print
+		|8192 dibmem> 'dibmem - - 100 * 8192 / . "%% tinta"  
+		|cursor 'dibmem - "Cursor:" 				
+		;
+
+:do 
+	$ffffff paper 
+	erase-draw
+	load-font
+	'indice 'actual ! load-car
+	33 main 
+	save-font
+	save-codigo
+	0 paper 
+	"main.txt" run ;
+
+: do ;

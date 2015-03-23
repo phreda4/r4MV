@@ -1,0 +1,54 @@
+| x86
+
+#:EAX 0
+#:ECX 1
+#:EDX 2
+#:EBX 3
+#:ESP 4
+#:EBP 5
+#:ESI 6
+#:EDI 7
+
+#:LIT	8
+#:MEM	9
+#:MEM+	10
+#:MEM+*	11
+#:MEM*+	12
+
+::push
+	;
+::pop
+	;
+::mov
+	;
+::jmp
+	;
+::jz
+	;
+::jnz
+	;
+::js
+	;
+::jns
+	;
+::cmp
+	;
+::call
+	;
+::ret
+	;
+
+::shl
+	;
+::shr
+	;
+::add
+	;
+::sub
+	;
+::mul
+	;
+::div
+	;
+
+

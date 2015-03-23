@@ -1,0 +1,124 @@
+| :R4 main.txt
+| Pablo Reda 2006
+|---------------------------------------
+^reda4.txt
+
+#exe "r4"
+#dibujos "d."
+#codigo "c."
+#grupos "g."
+
+:prefijo? | "hola" "ho" -- 1/ 0
+	( c@+ 1? )( rot c@+ 0? ( nip nip nip ; ) 
+		rot - 1? ( 3drop 0 ; ) drop
+		swap ) 3drop 1 ;
+
+#sel )( 512
+#sel> 'sel
+
+:,sel | "" --
+	sel> !+ 'sel> ! ;
+	
+:distingue | "" --
+	'sel 'sel> !
+	0 ( dup file 1? )( 
+		dup pick3 prefijo? 1? ( drop ,sel )( 2drop )
+		1+ ) ,sel 2drop ;
+	
+:copyfile | "mdiego.txt" "m.act" --
+	clear
+	here dup load over - swap save 
+	;
+	
+#inicioarch 0
+#cntarch 20
+#vuelta 0
+#vvuelta -6
+#cx #cy #rad
+
+
+:agracerca
+	$1ff and $ff - abs 60 + dup dim ;
+
+:drawtext |"" --
+	vuelta >r 50 dup dim 5 'seed !
+	( c@+ 1? )( cx cy rad r ccircle  |2/ sh 2/ 2/ + 
+	pos
+	r agracerca rand $101010 + ink
+	emit -25 r+ ) 
+	2drop rdrop ;
+	
+|#menu1 'dibu1 'dibu2 'dibu3 0
+
+:drawmenu | mem --
+	vuelta >r 
+	( @+ 1? )( cx cy rad r dup agracerca circle pos 
+		28 r+ sprite ) 2drop rdrop ;
+
+#ifin ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#imas ( 17 -70 -11 -12 -67 20 -11 76 21 20 77 -12 21 0 )	
+#imenos ( -71 -14 20 77 -12 0 )
+#ilinea ( 89 -102 -103 84 -95 100 97 -84 0 )
+	
+:elijearch | prefijo --	
+	16 16 .table 
+	rojo claro	0 0 .at 'ifin 'exit .sbtn 
+	1 0 .at 6 1 .to azul oscuro
+	'sel ( @+ 1? )( [ ; ] .8btn .\ ) 2drop
+	.show cls
+		16 16 screen azul oscuro
+		0 0 pat 1 16 ptofill
+|		0 0 pat blanco ":R4" print
+		32 32 screen
+		22 0 pat blanco "pabloreda@gmail.com" print
+		22 1 pat negro dup "diga %n" print
+	    verde "?? ovihcrA" drawtext | mensaje satanico
+		vvuelta 'vuelta +! ;
+		
+|"c." distingue elijearch
+|"d." distingue elijearch
+		
+:sescape 
+	'exit $13 2* 2* ukeymap + ! ;
+	
+:nescape
+	0 $13 2* 2* ukeymap + ! ;
+	
+:main inikey
+	sw 2/ 'cx ! sh 2/ 'cy ! 
+	cx cy min 60 - 'rad !
+
+	|'grupos "g." load 0 swap !
+		
+	'sescape <=esc 'nescape =>esc
+	[ -1 'vvuelta +! ; ] <=izq
+	[ 1 'vvuelta +! ; ] <=der
+	16 16 .table | rojo oscuro 0 15 .at 'ifin 'exit .sbtn
+	0 15 .at 3 1 .to azul oscuro
+	"F1-Codigos" [ "r4color.txt" run ] dup <=f1 .tbtn .> .> .>
+	"F2-Dibujos" [ "r4mation.txt" run ] dup <=f2 .tbtn .> .> .>
+	"F3-Simulador" [ "r4comp.txt" run ] dup <=f3 .tbtn .> .> .>
+	"F4-Letras"	[ "letras.txt" run ] dup <=f4 .tbtn 
+	
+	0 1 .at 3 1 .to rojo oscuro
+	"Pong"			[ "pong.txt" run ] .tbtn .\ 	
+	"XE"			[ "xe.txt" run ] .tbtn .\
+	"100%%Ducha"	[ "ducha100.txt" run ] .tbtn .\
+	"RA"	[ "ra.txt" run ] .tbtn .\
+	"Carrera"	[ "carrera.txt" run ;  ] .tbtn .\
+	"3dlater!"   [ "3d.txt" run ; ] .tbtn .\
+
+	"r4" distingue
+	4 1 .at 3 1 .to azul oscuro
+	'sel ( @+ 1? )( [ elijearch ; ] .8btn .\ ) 2drop
+	.show cls 
+		16 16 screen azul oscuro
+		0 0 pat 16 1 ptofill
+		0 0 pat verde ":R4  " print azul "Menos de lo mismo" print
+		32 32 screen
+		22 0 pat blanco "pabloreda@gmail.com" print
+		22 1 pat negro dup "diga %n" print
+	    |verde " *  4R: ne amargorP " drawtext | mensaje satanico
+		vvuelta 'vuelta +! ;
+			
+: 0 paper 33 main ;

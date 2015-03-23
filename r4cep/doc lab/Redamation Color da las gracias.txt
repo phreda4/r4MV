@@ -1,0 +1,89 @@
+Redamation Color te da la bienvenida
+
+Que es ?
+
+Es un compilador-editor-interprete de:
+colorForth(cuasi),
+graficos vectoriales,
+tablas,
+bitmaps,
+...y veremos que.
+
+
+Pantalla inicial
+
+----------------------------------------
+Un boton para salir arriba a la derecha. X
+Un boton para nuevo arriba a la izquierda. @
+
+Una lista de carpetas de hojas.
+Conjuntos de dominios nombrados con nombre unico
+
+Archivos de configuracion y fuente (si hay)
+--------------------------------------------
+
+
+
+
+estructura de carpetas:
+
+path=definido en rcolor.ini= raiz /
+
+
+/rcolor.exe
+/rcolor.ini
+/rcolor.src
+
+/nombrecarpetas../
+/nombrecarpetas../
+/nombrecarpetas../
+/nombrecarpetas../
+
+Cada carpeta tiene hojas // (o tablas) o Dibujos o pantallas o programas
+
+nombre de carpeta
+cantidad de hojas
+hojas de sistema
+
+Se construye la interface en el main, 
+luego se sube de nivel conviertiendo eso en una palabra.
+
+// El main de la edicion de hojas
+
+UNDO REDO NUEVO
+
+por cada hoja
+TABLA HORI VERT  123 abc DIBUJO BITMAP SONIDO =(f)
+
+// Propiedades de cada hoja
+nro
+nombre
+
+Toda tabla es un arreglo de punteros a posiciones de memoria que vienen a continuacion hasta la cantidad indicada al principio
+
+propiedades de cada tabla:
+
+cantidad de cada tipo; (hoja incluidas)
+largo total
+
+Cada direccion ocupada puede ser, 
+
+// Propiedades de cada celda
+
+un arreglo de hojas, cnt
+un arreglo de Tablas, cnt
+un arreglo de string, cnt
+un arreglo de numeros,  cnt
+un arreglo de dibujo, cnt
+un arreglo de codigo colorForth:(Interprete) cnt
+/*
+Marca de Visible (puede haber varias)
+estado en visible prendido (activado o on)
+
+entonces debe definir estas palabras para cada estado de la vista
+*/
+// las palabras definen la vista
+
+
+
+

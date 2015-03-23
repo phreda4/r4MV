@@ -1,0 +1,72 @@
+| Consola Jupiter
+^reda4.txt
+^jupitercon.txt
+^gui.txt
+
+#ifin ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iok ( -79 -14 -63 -28 -7 36 65 -76 89 -44 17 68 -11 -79 -12 0 )
+
+#x1 200 #y1 200
+
+#lastime
+#paso
+
+#c1 "nada"
+#c2 "moviendo"
+#c3 "boton"
+#c4 "fin"
+
+#cartel 'c1
+
+:mov 'c2 'cartel ! ;
+:bot 'c3 'cartel ! ;
+:lev 'c4 'cartel ! ;
+
+:main1 
+'exit <=esc
+[ 4 'y1 +! ; ] <=aba
+[ -4 'y1 +! ; ] <=arr
+[ 4 'x1 +! ; ] <=der
+[ -4 'x1 +! ; ] <=izq
+'bot start!
+'mov motion!
+'lev end!
+oshow cls 
+	rojo
+	200 200 dim x1 y1 pos
+	'ifin rpoli
+	16 16 screen azul 1 2 pat
+	dup cartel "%s DexOS %n" print
+	verde
+	sw 2/ sh 2/ op x1 y1 line
+|40 40 op 190 74 cp 200 320 curve
+|rand $f and 7 - 'x1 +! 
+|rand $f and 7 - 'y1 +! 
+	msec dup lastime - 'paso ! 'lastime !
+	32 18 screen blanco
+	1000 paso / "%n  fps" print
+	;
+	
+:prueba
+	.page
+	'exit =>esp
+	'prueba <=f1
+	.show cls blanco
+		16 dup screen
+		dup "%n" print ;
+		
+:main2
+	.page
+	'exit <=esc
+    16 16 .table
+    4 9 .at 8 2 .to 
+    verde "JUGAR" 'main1 .tbtn .\ .\
+    azul "prueba" 'prueba .tbtn .\ .\
+    rojo "SALIR" 'exit .tbtn 
+	.show cls
+		24 24 screen azul dup "Hola %n" print
+		0 2 pat verde
+		xymouse bmouse "%n %n,%n" print
+		;
+
+: 33 main2 ;

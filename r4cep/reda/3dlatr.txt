@@ -1,0 +1,117 @@
+| Uso de matriz 3d
+| PHREDA
+|-----------------------------------
+^reda4.txt
+^gui.txt
+^mat3d.txt
+^models3d.txt
+|^r4inc/pablo.inc
+|^r4inc/3dlata.inc
+
+#xm 0
+
+#3dstar 0
+#torus 0
+#3dcubo 0
+#3dsharp 0
+
+:main
+	.page
+	mem 
+	dup 'torus ! initorus
+	dup '3dsharp ! inisharp |inipelota |
+	dup '3dcubo ! inicubo 
+	dup '3dstar ! inistar 
+	drop
+	8 dup .table rojo
+	"x" 'exit dup <esc> .2btn
+	512 setview
+	.show cls 
+		matini | camara
+		xm mrotx
+		$1ff  mrotz
+|		xm mrotz
+		0 0 2000 mtrans
+|		200 200 dim 300 300 pos
+|		'dibu3 3dsprite
+		matpush violeta
+			0.5 0.5 0.5 mscalei
+			xm mrotyi
+			torus alambroso
+			matpop
+		matpush rojo | tronco
+			3.0 2.0 1.0 mscalei
+			3dcubo alambroso
+			matpop
+		azul
+		matpush	| cabeza
+			500 0 0 mtransi
+			0.4 dup dup mscalei
+			3dsharp alambroso
+			matpop
+		verde
+		matpush	| brazo1
+			200 300 0 mtransi
+			xm mrotyi
+			1.0 0.5 dup mscalei
+			3dcubo alambroso
+			matpush
+				-250 0 0 mtransi
+				3dcubo alambroso
+				matpush
+					-200 0 0 mtransi
+					0.5 1.0 dup mscalei
+					3dcubo alambroso
+					matpop
+				matpop
+			matpop
+		matpush	| brazo2
+			200 -300 0 mtransi
+			1.0 0.5 dup mscalei
+			3dcubo alambroso
+			matpush
+				-250 0 0 mtransi
+				3dcubo alambroso
+				matpush
+					-200 0 0 mtransi
+					0.5 1.0 dup mscalei
+					3dcubo alambroso
+					matpop
+				matpop
+			matpop
+		matpush | pata 1
+			-500 -100 0 mtransi
+			1.0 0.75 dup mscalei
+			3dcubo alambroso
+			matpush
+				-250 0 0 mtransi
+				3dcubo alambroso
+				matpush
+					-200 0 -50 mtransi
+					0.5 1.0 1.75 mscalei
+					3dcubo alambroso
+					matpop
+				matpop
+			matpop
+		matpush | pata 2
+			-500 100 0 mtransi
+			1.0 0.75 dup mscalei
+			3dcubo alambroso
+			matpush
+				-250 0 0 mtransi
+				3dcubo alambroso
+				matpush
+					-200 0 -50 mtransi
+					0.5 1.0 1.75 mscalei
+					3dcubo alambroso
+					matpop
+				matpop
+			matpop
+
+		4 'xm +!
+
+		32 dup screen 
+		 "3DLat" verde print ":4r virtual robot" rojo print
+		;
+
+: 0 paper 33 main "main.txt" run ;

@@ -1,0 +1,14 @@
+^reda4.txt
+^gui.txt
+
+:hola
+ |.page
+|8 dup .table 0 dup .at
+|Rojo
+|"SALIR" 'exit .tbtn 
+|.show cls ;
+Show cls 12 8 screen azul "hola" print ;
+
+:ho 5 drop ;
+
+: 0 paper hola ;

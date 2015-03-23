@@ -1,0 +1,86 @@
+| :R4 main.txt
+| PHREDA
+|---------------------------------------
+^reda4.txt
+^gui.txt
+
+#var1
+#var2
+
+#yce 20 #xce 20
+#yte 5 #xte 5
+#tipo 0
+#fondo 0
+
+#set 'yce
+
+:main
+	.page
+	'exit <esc>
+	[ 'yce 'set ! ; ] <f1>
+	[ 'yte 'set ! ; ] <f2>
+	[ tipo not 'tipo ! ; ] <f3>
+	[ fondo not 'fondo ! ; ] <f4>
+	1 8 .table
+|	verde
+|	0 0 .at $7ff 'var1 .hsli
+|	0 1 .at	255 'var2 .hsli
+
+	.show
+	cls
+
+	xce yce xte pick2 - yte pick2 -
+	2dup distfast 0? ( 1 nip ) >r
+	atan2 $200 - sincos r / swap r> /
+	fmat fcen
+	$00 $ffff fcol
+
+	tipo 0? ( rfill )( lfill ) drop
+	fondo 0? ( 0 0 op 0 sh pline sw 0 op sw sh pline  poli ) drop
+	sfill
+
+	xymouse set !+ !
+
+	negro
+	xce yce op
+	xte yte line
+
+	cyan
+	300 103 op 303 103 line 303 100 line
+
+	azul
+	300 100 op
+	300 103 pline
+	303 103 pline
+	303 100 pline poli
+
+	azul
+	100 100 op
+	150 200 pline
+	xymouse pline
+	50 200 pline
+	100 100 pline
+	poli
+	rojo
+	100 100 op
+	150 200 line
+	50 200 line
+	100 100 line
+	8 font
+
+	lfill
+$ff0000 $ffffff fcol
+	"hola" printc
+	10 font cr cr
+$ff00 $ffffff fcol
+	"hola" printc
+	12 font cr cr cr cr
+$ff $ffffff fcol
+	"hola" printc
+	sfill
+		0 0 setxy
+		0 ( sw <? )( 1+
+			dup px!+ ) drop
+		;
+
+: main "personaje.txt" run ;

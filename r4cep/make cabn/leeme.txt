@@ -1,0 +1,43 @@
+Hola
+
+R4 es un lenguaje para Humanos y Computadoras, si estas leyendo esto, estas en el primer grupo.
+
+R4 es la maquina que lee el codigo y lo hace.
+
+El codigo es un archivo .txt
+Un archivo es un trozo de memoria.
+El codigo son palabras, hay 6 prefijos y un diccionario basico de 109 palabras.
+
+El prefijo ^ agrega al codigo el archivo con nombre
+El prefijo : Define accion, :: exporta la accion a quien agrega el archivo
+El prefijo # Define dato, #: exporta el dato
+El prefijo " Define texto como dato
+El prefijo ' Significa Direccion
+El prefijo | Significa Comentario hasta el fin de la linea
+
+--------------------[ codigo ]-----------------------------
+^reda4.txt | incluye palabras de fuente vectorial, dibujos multicolores, gui... en desarrollo
+
+:basico
+	.page			|  obligatorio, guarda el estado anterior para apilar y desapilar
+	'exit =>esc 	| Si aprieto escape, salgo 
+	.show			|  repite a 1/30 veces por segundo, si no llega..no llega
+		cls 		| Ojo, no siempre hace falta
+		8 8 screen	| 8 lineas en la pantalla
+		dup "%n" print
+		; 			| La palabra ; significa fin de palabra.
+		
+| : solo significa lugar de comienzo, por aqui empieza el codigo, llama a la palabra anterior.
+
+: 33 basico ;	
+------------------------------------------------------------		
+Aparece un 33 en la pantalla ?, mmm ojala que si.
+
+fijate siempre en el 33, si cambia quiere decir que la pila no esta estable, hay un error.		
+
+entre .page y .show se crea la interaccion necesaria, solo es una caja con un cursor.
+
+.table Hace tablas, .at ubica y .to ocupa varias filas/columnas
+
+
+

@@ -1,0 +1,204 @@
+|--- inkes
+::negro $000000 ink ;		
+::azul $0000ff ink ;		::azull $0000cc ink ;
+::verde $00ff00 ink ;		::verdel $00cc00 ink ;
+::rojo $ff0000 ink ;		::rojol $cc0000 ink ;
+::violeta $ff00ff ink ;	::cyan $00ffff ink ;
+::cyanl $00cccc ink ;		::amarillo $ffff00 ink ;
+::amarillol $cccc00 ink ;	::blanco $ffffff ink ;
+::gris $999999 ink ;		::naranja $ff8888 ink ;
+::celeste $8888ff ink ;	::verdor $88ff88 ink ;
+
+::oscuro
+	ink@ 2/ $7f7f7f and ink ;
+	
+::claro
+	ink@ 2* $010101 or ink ;
+	
+|--- Teclado
+#kplano "  1234567890-=  qwertyuiop[]  asdfghjkl;'` \zxcvbnm,./     "
+#Kplshi "  !@#$%^&*()_+  QWERTYUIOP{}  ASDFGHJKL:""~ |ZXCVBNM<>?      "
+#modos 'kplano 'Kplshi 
+#modoe $00
+
+|--- Eventos del teclado
+::>ukey 2 << ukeymap + ! ;
+::>key 2 << keymap + ! ;
+:n>key | 'adr cnt des --
+	2* 2* keymap + >r ( 1? )( 1- over r!+ ) 2drop rdrop ;
+
+::toasc 
+	modoe $1 and | <--
+	2* 2* 'modos + @ + c@ ;
+
+::inikey 	
+	0 254 0 n>key 
+	[ modoe $1 or 'modoe ! ; ] dup $2a >key $36 >key | teclas shift
+	[ modoe $2 and 'modoe ! ; ] dup $2a >ukey $36 >ukey | levanta shift
+	;
+
+::<=todas | vec --
+	254 0 n>key ;
+	
+::<=visible | vec --
+	>r 'kplano ( c@+ 1? )( 32 >? ( over 1- 'kplano - r swap >key ) drop ) 2drop 
+	r> $39 >key ; | y espacio
+
+::<=esc 1 >key ;	::=>esc 1 >ukey ;	
+::<=esp $39 >key ;	::=>esp $39 >ukey ;
+::<=f1 $3b >ukey ; 	::<=f2 $3c >ukey ; 
+::<=f3 $3d >ukey ; 	::<=f4 $3e >ukey ; 
+::<=f5 $3f >ukey ; 	::<=f6 $40 >ukey ; 
+::<=f7 $41 >ukey ; 	::<=f8 $42 >ukey ; 
+::<=f9 $43 >ukey ; 	::<=f10 $44 >ukey ; 
+::<=back $e >key ;
+::<=tab $f >key ;	::<=enter $1c >key ;
+::<=home $47 >key ;	::<=end $4f >key ;
+::<=arr $48 >key ;	::<=aba $50 >key ;
+::<=der $4d >key ;	::<=izq $4b >key ;
+::<=ins $52 >key ;	::<=del $53 >key ;
+::<=pgup $49 >key ; ::<=pgdn $51 >key ;
+
+::=>home $47 >ukey ; ::=>end $4f >ukey ;
+::=>arr $48 >ukey ;	::=>aba $50 >ukey ;
+::=>der $4d >ukey ;	::=>izq $4b >ukey ;
+::=>ins $52 >ukey ;	::=>del $53 >ukey ;
+::=>pgup $49 >key ; ::=>pgdn $51 >key ;
+
+|--- Memoria
+::cmove | de sr cnt --
+	( 1? )( 1- >r c@+ rot c!+ swap r> ) 3drop ;	
+	
+::cmove> | de sr cnt --
+	rot over + rot pick2 + rot 
+	( 1? )( 1- >r 2dup c@ swap c! 1- swap 1- swap r> ) 3drop ;
+
+::zcopy | destino fuente -- destino'
+	( @+ 1? )( rot !+ swap ) 2drop ;
+
+::zcopy0 | destino fuente -- destino' con 0
+	( @+ 1? )( rot !+ swap ) rot !+ nip ;
+
+::move | de sr cnt --
+	( 1? )( 1- >r @+ rot !+ swap r> ) 3drop ;	|// !+ | vd -- d'
+|	( 1? )( 1- >r @!+ r> ) 3drop ;					|// @!+ | ds -- d's'
+
+::move> | de sr cnt --
+	rot over 2 << + rot pick2 2 << + rot 1+
+	( 1? )( 1- >r dup @ pick2 ! 4 - swap 4 - swap r> ) 3drop ;
+	
+::strcpy | src des --
+	( swap c@+ 1? )( rot c!+ ) rot c! ;
+	
+::toupp | c -- C
+	$60 >? ( $7b <? ( $20 - ) ) ;
+
+::=word= | s1 s2 -- 0 \ s2' 1
+	( swap c@+ 1? )( rot c@+ toupp rot - 
+		1? ( 3drop 0 ; ) drop ) 2drop
+	dup c@ 33 <? ( drop 1 )( 2drop 0 ) ;
+	
+::strcmp | s1 s2 -- 1/0
+	( swap c@+ 1? )( toupp rot c@+ toupp rot - 
+		1? ( 3drop 0 ; ) drop ) 2drop
+	c@ 33 <? ( 1 )( 0 ) nip ;
+
+|--- Memoria libre
+#:here
+::clear mem 'here ! ;
+::, here !+ 'here ! ;
+::,c here c!+ 'here ! ;
+::,w here w!+ 'here ! ;
+::,s ( dup c@ 1? )( ,c 1+ ) 2drop ;
+::,n | dec --
+	-? ( "-" ,s neg ) 0 swap ( dup 10 mod $30 + swap 10 / 0? ) drop 
+	( ,c 0? ) drop ;
+::,h | hex --
+	0 swap ( dup $f and $30 + swap 4 >> $fffffff and 0? ) drop 
+	( $39 >? ( 7 + ) ,c 0? ) drop ;
+::,b | bin --
+	0 swap ( dup $1 and $30 + swap 2/ 0? ) drop
+	( ,c 0? ) drop ;
+::,ln ,s	
+::,cr 13 ,c ;
+::,eol 0 ,c ;
+
+|--- Numero aleatorios
+#:seed -1 
+::rand | -- v
+	seed 2* -? ( 495090497 xor ) dup 'seed ! ;
+	
+::min over <? ( nip )( drop ) ; 
+::max over >? ( nip )( drop ) ;
+
+::blink | -- 0/1
+	msec $100 and ;
+
+|--- pantalla&interaccion
+#:.exit	
+#lastime	
+
+::exit 1 '.exit ! ;
+::show
+	msec 'lastime ! 0 '.exit !
+	( .exit 0? )( drop update 
+		msec lastime >? ( 34 + 'lastime ! r exec redraw )( drop )
+		) drop 0 '.exit ! ;
+|::show 0 '.exit ! ( .exit 0? )( drop update r exec ) drop 0 '.exit ! ;
+
+::oshow
+	msec 'lastime ! 0 '.exit !
+	( .exit 0? )( drop update r exec redraw )
+	drop 0 '.exit ! ;
+	
+|--- mem video	
+:vmem | x y -- addr
+	sw * +  sw sh * >=? ( drop rdrop ; ) -? ( drop rdrop ; ) |--- chiken code
+	2* 2* framev + ;
+
+::getpixel | x y -- c
+	vmem @ ;
+	
+::pixel | c x y --
+	vmem ! ;
+	
+::vfill | ancho alto x y
+	2swap >r >r
+	2dup op over r> + over 2dup pline r + pline
+	2dup r> + pline pline poli ;
+	
+::bmnoise |ancho alto x y 
+	vmem >r
+	sw pick2 - 2 << swap			| ancho dif alto
+	( 1? )( 1- 
+		pick2 ( 1? )( 1- rand r!+ ) drop
+		over r+ ) 
+	3drop rdrop ;
+	
+	
+::hline | x y x --
+	over op line ;
+::vline | x y y --
+	r> over r> op line ;
+	
+::box | x y r --
+	>r r - swap r - swap 2dup 2dup op r 2* + 2dup line
+	swap r 2* + swap 2dup line r> 2* - line line ;
+
+::fbox | xc yc r --
+	>r r - swap r - swap 2dup 2dup op r 2* + 2dup pline
+	swap r 2* + swap 2dup pline r> 2* - pline pline poli ;
+	
+::circle | xc yc r --
+	>r r - 2dup 2dup op	swap r - swap 2dup cp
+	r + 2dup curve	r + 2dup cp	swap r + swap 2dup curve
+	swap r + swap 2dup cp r - 2dup curve r> - cp curve ;
+
+::fcircle | xc yc r --
+	>r r - 2dup 2dup op swap r - swap 2dup cp
+	r + 2dup pcurve	r + 2dup cp	swap r + swap 2dup pcurve
+	swap r + swap 2dup cp r - 2dup pcurve r> - cp pcurve poli ;
+		
+^sincos.txt
+^fuente8.txt
+^gui.txt

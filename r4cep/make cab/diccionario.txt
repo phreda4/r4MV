@@ -1,0 +1,133 @@
+| manejo de diccionarios
+|----------------------------
+^reda4.txt
+
+#primitivas 0
+#pactual 0 
+#pactuall 0
+
+|--- Indice de palabras
+#indice  )( 2048 		| puntero a nombre
+#indice>  'indice 		| ultima palabra
+#nombres )( 2048 		| espacio para guardar nombres
+#nombres> 'nombres
+#info 		)( 2048		| tipo de cada palabra (byte)
+#direccion	)( 2048		| direccion de cada palabra
+
+|--- Indice de palabras locales
+#indicel )( 2048
+#indicel> 'indicel
+#nombresl )( 2048
+#nombresl> 'nombresl
+#infol		)( 2048
+#direccionl )( 2048
+	
+:clearall
+	0 'primitivas !
+	'indice 'indice> ! 0 indice> !
+	'nombres 'nombres> !
+:clearlocal	
+	'indicel 'indicel> ! 0 indicel> ! 
+	'nombresl 'nombresl> ! ;
+
+:copyn | src buf -- src' buf'
+    swap ( c@+ 32 >? )( toupp rot c!+ swap ) drop 0 rot c!+ ;
+
+|---- Agrega palabra al diccionario
+::definep | "" i --
+	indice> 'indice - 'info + !
+	indice> !+ 'indice> ! 
+	1 'primitivas +! ;
+	
+:defineex | d f i -- f'
+	indice> 'indice - >r 
+	r 'info + !
+	nombres> indice> !+ 'indice> !
+	nombres> copyn 'nombres> ! 
+	swap r> 'direccion + ! ;
+	
+:definelo | d f i -- f' 
+	indicel> 'indicel - >r 
+	r 'infol + !
+	nombresl> indicel> !+ 'indicel> !
+	nombresl> copyn 'nombresl> ! 
+	swap r> 'direccionl + ! ;
+	
+::definev | add f -- f'
+	dup c@ $3a =? ( drop 1+ 0 defineex )( drop 0 definelo ) ;
+
+::definew | add f -- f'
+	dup c@ $3a =? ( drop 1+ 1 defineex )( drop 1 definelo ) ;
+
+:base | str -- str base
+	dup c@ | str c 
+	$24 =? ( drop 1+ 16 ; )	| $ hexa $24
+	$25 =? ( drop 1+ 2 ; ) 	| % bin  $25
+	drop 10 ;
+
+:signo | str -- str signo
+	dup c@ 
+	$2b =? ( drop 1+ 1 ; )	| + $2b
+	$2d =? ( drop 1+ -1 ; )	| - $2d
+	drop 1 ;
+
+:digito | str c --  dig / -1
+	$3A <? ( $30 - ; )			| 0..9
+	$60 >? ( $57 - ; )			| a
+	$40 >? ( $37 - ; )			| A
+	drop -1 ;
+
+::?numero | ( str -- str' nro 1 / 0 )
+	signo swap base swap 							| -1 10 str
+	dup c@ 33 <? ( 4drop 0 ; ) drop
+	0 ( over c@ 32 >? )( 
+		digito -? ( drop 4drop 0 ; )				| -1 10 str 0 dig
+		pick3 1- >? ( drop 4drop 0 ; )				| -1 10 str 0 dig
+		swap pick3 * +								| -1 10 str dig+0*10
+		swap 1+ swap )
+	drop rot drop rot * 1 ;	
+
+|--- Busqueda de palabras	
+:=word= | s1 s2 -- 0 \ s2' 1
+	( swap c@+ 1? )( rot c@+ toupp rot - 
+		1? ( 3drop 0 ; ) drop ) 2drop
+	dup c@ 33 <? ( drop 1 )( 2drop 0 ) ;
+
+:?palabra | str -- str' nro 1 / str 0
+	'indice ( @+ 1? )( 			| str w pal
+		pick2 =word= 	   			| str maindic 0 
+		0? ( drop )(				| str maindic dir 1
+			drop rot drop swap 		| dir maindic
+			'indice - 2/ 2/ 1 ; )
+		) 3drop 0 ;					| str md+4 pal'
+
+:?palabral | str -- str' nro 1 / str 0
+	'indicel ( @+ 1? )( 			| str w pal
+		pick2 =word= 	   			| str maindic 0 
+		0? ( drop )(				| str maindic dir 1
+			drop rot drop swap 		| dir maindic
+			'indicel - 2/ 2/ 1 ; )
+		) 3drop 0 ;					| str md+4 pal'
+		
+::palabra | str -- str' tipo \finOk-0/com/cad/def/var/inc/dir/num/pal/error
+	( dup c@ 33 <? )( 0? ( ; ) drop 1+ ) | quitar espacios
+	$7c =? ( drop 1 ; )				| $7c |	 Comentario
+	$22 =? ( drop 2 ; )				| $22 "	 Cadena
+	$3A =? ( drop 3 ; )				| $3a :  Definicion  
+	$23 =? ( drop 4 ; )				| $23 #  Variable
+	$5e =? ( drop 5 ; )				| $5e ^  Include
+	$27 =? ( drop 1+ 				| $27 ' Direccion  -- adr nro 6
+		dup ?palabra 1? ( drop rot drop 6 ; ) drop 
+		dup ?palabral 1? ( drop rot drop 6 ; ) drop 9 ; )		
+	drop dup ?numero  1? ( drop rot drop 7 ; )	| Numero  -- adr nro 7
+	drop dup ?palabra 1? ( drop rot drop 8 ; )	| Palabra -- adr nro 8
+	drop dup ?palabral 1? ( drop rot drop 8 ; )	| Palabra -- adr nro 8
+	drop 9 ;									| error
+	
+|--- 
+::imprimedicc |
+	'indice ( indice> <? )( 
+		dup 'indice - 'info + @ >r @+ r> "%n %s %>" print ) drop 
+	'indicel ( indicel> <? )( 
+		dup 'indicel - 'infol + @ >r @+ r> "%n %s %>" print ) drop ;
+		

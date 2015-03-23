@@ -1,0 +1,26 @@
+| fasm4dex
+
+#inicio
+";---; Application Header ;---;
+use32
+org 0x200000
+jmp gotomain
+db 'DEX1'
+"
+
+#final
+";---; Code Section ;---;
+include 'DexFunctions.inc'
+"
+
+#sec-data
+";---; Initialised Data ;---;
+str1 db 'prueba',0
+var1 dd 0
+"
+
+#sec-udata
+";---; Uninitialised Data ;---;
+ubuf2: times 4096 db ?
+uvar1 dd ?
+"

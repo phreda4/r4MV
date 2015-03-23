@@ -1,0 +1,67 @@
+| debug/Editor de :R4
+| PHREDA 2007
+|---------------------------------------
+^reda4.txt
+^gui.txt
+^parse.txt
+^files.txt
+^compilanada.txt
+
+#nombre "N/D" )( 64
+#pilar "0" )( 1024
+
+#rtrace )( 1024
+#rtrace> 'rtrace
+
+:cargatrace | addr --
+	'rtrace 'rtrace> !
+	trim dup c@ $2a =? ( drop 1+ )
+	( trim ?numero 1? ( drop rtrace> !+ 'rtrace> ! )
+		0? ) 
+	drop ;
+
+:buscaerror
+	"" 'pilar ! 
+	mem "runtime2.err" load mem 4+ <? ( drop  ; ) 0 swap !
+	mem 
+	'nombre swap ( c@+ 13 <>? )( 0? ( 3drop ; ) rot c!+ swap ) drop 0 rot c! 
+	cargatrace
+|	1+ 'pilar swap ( c@+ 1? )( rot c!+ swap ) rot c! drop
+	;
+
+#msge
+:pantalla
+	clear
+	mem 'nombre load 0 swap !
+	mem bytecodecomp 'msge !
+|	savelog
+|	interpreta 'error !
+	.page
+	16 16 .table 0 15 .at
+	rojo oscuro "ESC" 'ifin  'exit  dup >esc< .fsbtn .>
+	.show 
+		cls 
+		72 58 screen
+|		0 0 at 41 1 azul oscuro ptofill 
+|		dup "Runtime Error :R%d " verde print blanco cr
+|		'nombre print cr
+|		'pilar print cr
+		blanco
+		'rtrace ( rtrace> <? )( @+ 
+			dup "%d " print
+			drop
+|			buscapal "%s " print 
+			) drop cr
+		imprimepals
+|	printcode
+		;
+
+
+|----------- principal
+:main 
+	buscaerror
+	pantalla 
+	;
+
+: 0 paper 4 main "main.txt" run  ;
+

@@ -1,0 +1,57 @@
+| Consola Jupiter
+^reda4.txt
+^jupitercon.txt
+^gui.txt
+
+#lineas )( 512
+#lineas> 'lineas
+
+:qs	| paxy axy -- qs
+	>xy rot >xy rot - dup * >r - dup * r> + ;
+
+:reduce3 | pxy --
+	lineas> 8 - 'lineas <? ( drop ; ) 
+	dup 4+ @ dup $3 and 1 =? ( 3drop ; ) drop
+	swap @ dup $3 and 1 =? ( 3drop ; ) drop
+	
+	rot 2dup qs >r rot 2dup qs >r rot qs 		| pact q3    r: q1 q2
+	dup dup * r> swap over dup * + r> swap over dup * + >r
+	+ + dup * r> 2* - abs 	|$fffff | para d>xy
+	;
+	
+:angle | xy xy -- a
+	>xy rot >xy rot - | x x y
+	0? ( nip nip ; )
+	>r - 16 << r> / ;
+	
+:reduce | pxy
+	lineas> 4 - dup @ swap
+	8 - |'lineas <? ( drop ; )  | pxy d-2
+	dup 4+ @ |dup $3 and 1 =? ( 3drop ; ) drop | pxy d2 d1@
+	swap @ |dup $3 and 1 =? ( 3drop ; ) drop 	| pxy d1@ d2@
+	pick2 angle >r swap angle r> 					|
+	;
+	
+:trazo.cal | x y ev --  | 0=up 1=move 2=down
+	0? ( 3drop ; ) | up
+	1- 0? ( drop xy> lineas> 4 - ! ; )   | move
+	drop xy> lineas> !+ 'lineas> ! ; | down
+	
+:trazo.draw	
+	blanco
+	'lineas @+ >xy op 
+	( lineas> <? )( @+ >xy line ) drop ;
+
+:main 
+	.page
+	'exit =>esc
+	10 10 .table 1 1 .at 8 8 .to
+	'trazo.cal 'trazo.draw .ug
+	.show cls
+		32 32 screen
+		azul 0 0 pat
+		dup reduce "%n %n %n" print
+		;
+		
+		
+: 33 main ;

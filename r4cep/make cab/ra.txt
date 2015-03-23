@@ -1,0 +1,66 @@
+| rutas argentinas - el juego
+| p/manual de :R4
+
+^reda4.txt
+^c.d.txt
+
+#camion $FFFE004 $A002984 $FB73AC45 $93D3B0D6 $94348926 $64908DB6 $6433D256 $36DBAF46 $261B0DC6
+ $FBD30DC6 $202004 $55730D5 $557AF46 $29E7AF46 $1F9F3566 0
+#rueda $600014 $B3D010C5 $B3D150C7 $36D50C7 $536D50C7 $536C10C7 $536ED0D7 $36ED0D7 $B3D2D0D7
+ $B3D010C7 $FFFEFE4 $D43410C5 $D434CF37 $36CCF37 $32A8CF37 $32A810C7 $32AB5257 $36F5257
+ $D4375257 $D43410C7 $A8A8A84 $E4340AA5 $FD581E77 $2A88617 $8001E77 $21840AA7 $73FFB77
+ $2AB8F47 $FDBBFB77 $E4340AA7 0
+#austral $FFFB004 $D3100F35 $D310D0C7 $36CD0C7 $3430D0C7 $34300F37 $34334F47 $36F4F47 $D3134F47
+ $D3100F37 $AFAD014 $1E7A625 $4900616 $FA4FFE86 $FAAF7565 $F18BC936 $E1EBC936 $DEDFE936
+ $EFA3E7A6 $EC340DB6 $DEDC0AA6 $DCF42C36 $ECF42DB6 $E2AC6496 $F2AC6616 $F7A036D6 $6783866
+ $8606DB6 $18C06DB6 $143039E6 $236C3556 $23CC1B66 $136C0C36 $130FFB76 $2127F6E6 $1F9FD9F6
+ $11E7D3D6 $AAB7B76 0
+
+:celeste $8888ff ink ;
+
+:inicio
+	[ "main.txt" run ; ] =>esc
+	'exit =>esp
+	0 paper
+	.show cls
+		12 4 screen
+		celeste 0 1 pat	"RUTAS ARGENTINAS" pcenter print
+		2 .segs
+		16 8 screen
+		blanco 0 4 pat "Junta Australes y Esquiva pozos" pcenter print
+		3 .segs
+		celeste 0 7 pat "[ESC] Salir  [ESPACIO] Comenzar" pcenter print 
+		6 .segs .restart ;
+
+#monedas
+#xcamion #ycamion
+#xpozo #xroca
+#xmon #ymon
+#tcamion #tmoneda #tpozo
+#truedas 
+#giro 
+
+:juego
+	'exit =>esc 0 =>esp
+	$8888ff paper
+	0 'monedas !
+	200 'xcamion !
+	400 'ycamion !
+	show cls
+		tcamion dup dim 
+		xcamion ycamion pos 'camion sprite
+		truedas dup dim
+		xcamion 50 - ycamion truedas 2/ + pos 'rueda giro rsprite
+		xcamion 50 + ycamion truedas 2/ + pos 'rueda giro 30 + rsprite
+		300 200 pos 40 40 dim 'austral sprite
+		300 200 pos 80 80 dim 'dibu15 sprite
+		10 'giro +! ;
+
+:ajustav
+	sw 4 / 'tcamion !
+	sw 10 / 'truedas !
+	;
+	
+:ini ajustav ( inicio juego ) ;
+
+: ini ;

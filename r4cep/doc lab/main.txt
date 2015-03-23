@@ -1,0 +1,73 @@
+^colores
+^numeros
+^teclado
+^dibujos
+
+#x #y #sx 10 #sy 20
+#xc #yc
+#vectort
+#shsalir { 1 -80 -100 1 0 -20 1 80 -100 1 100 -80 1 20 0 1 100 80 
+			1 80 100 1 0 20 1 -80 100 1 -100 80 1 -20 0 6 -100 -80 0 }
+#shoctog { 1 -70 -100 1 70 -100 1 100 -70 1 100 70 1 70 100 1 -70 100 1 -100 70 6 -100 -70 0 }
+
+| #forma2 { 1 [ 1000 1000 ] 2 [ 1400 1400 ] } | cuadrado en -10000..10000
+
+:pasobola 
+	sx 'x +! sy 'y +! 
+	x dup 900 - -? *{ -5 'sx ! } drop +? *{ 5 'sx ! } drop
+	y dup 900 - -? *{ -10 'sy ! } drop +? *{ 10 'sy ! } drop ;
+	
+|:bot1 'teclanro 'vectort ! ;
+|:bot2 'teclaalfa 'vectort ! ;
+
+:btngrabar "\reda\grabar.txt" serdib ;
+
+:btn 92 zoom down? +? *{ 6 dup rmove } drop 'shoctog shape ;
+:draw0 
+	page  cls
+	negro 
+	6 16 table 0 0 at vectort nro |	x nro 1 0 at y nro 2 0 at sx nro 3 0 at sy nro
+	|80 80 frame xc yc move negro box
+
+	900 300 frame 50 700 move teclado
+	900 50 frame 50 600 move negro 'entrada text
+	
+	1000 dup frame
+	12 16 table 
+	
+	128 alpha
+	azul 4 4 at 4 4 to x 2 / zoom y 5 * 'dig1 shaper
+	violeta 4 4 at 4 4 to y 2 / zoom x 8 * 'dig0 shaper
+	negro 10 10 frame x y move "O" text
+	255 alpha
+	
+	vectort exec |--- vectorizada
+
+	|833 625 frame 83 100 move
+	1000 dup frame 
+	|rojo box
+	negro drawdib |--- export dibujos
+
+	1000 dup frame
+	12 16 table 
+	9 0 at 0 zona verde btn negro 12 char
+	10 0 at 'btngrabar zona azul btn negro "G" text
+	11 0 at 0 zona rojo btn negro 80 zoom 'shsalir shape | salir
+	|5 5 at zonat
+	azul | color del cursor
+	;
+
+:cursor0 1000 dup frame agregadib ; |--- export dibujos| penxy 'yc ! 'xc ! ;
+
+:inicio 
+	500 'x ! 500 'y !
+	1 mpen
+	|bot1
+	$ffffff colorf 
+	inidib |--- export dibujos
+	;
+|--------------- main
+inicio 
+'draw0 <page
+'pasobola <time 
+'cursor0 <cursor 

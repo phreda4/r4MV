@@ -1,0 +1,148 @@
+| Simulador y compilador de :reda4
+|---------------------------------------
+^reda4.txt
+^compilanada.txt
+^medit.txt
+^gui.txt
+
+#mensaje 
+#fuente )( 16384 | 16k de fuente editable
+#nombrearch )( 16 | nombre del archivo
+
+#sel )( 512
+#sel> 'sel
+
+#isalir ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iplay ( -63 -62 65 4 -63 68 0 )
+#icolor ( -95 -30 -41 -31 6 -15 -74 103 1 -26 -31 70 -47 -2 -95 -26 0 )
+
+:prefijo? | "hola" "ho" -- 1/ 0
+	( c@+ 1? )( rot c@+ 0? ( nip nip nip ; ) 
+		rot - 1? ( 3drop 0 ; ) drop
+		swap ) 3drop 1 ;
+
+:,sel | "" --
+	sel> !+ 'sel> ! ;
+	
+:distingue | "" --
+	'sel 'sel> !
+	0 ( dup file 1? )( 
+		dup pick3 prefijo? 1? ( drop ,sel )( 2drop )
+		1+ ) ,sel 2drop ;
+	
+:copyfile | "mdiego.txt" "m.act" --
+	clear
+	here dup load over - swap save 
+	;
+
+:loadtxt | -- cargar texto
+	clear
+	mem "SACTUAL.TXT" load 0 swap c!
+	'fuente mem ( c@+ 1? )( 13 <? ( drop )( rot c!+ swap ) ) nip swap c! 
+	;
+
+:savetxt 
+	clear
+	'fuente ( c@+ 1? )( 13 <? ( drop )( 13 =? ( ,c 10 ,c )( ,c ) ) ) 2drop
+	mem here over - "sactual.txt" save ;
+
+:fullplay
+	savetxt	
+	"sactual.txt" run ;
+		
+:play | --
+	savetxt
+	'fuente colorea 
+	dup c@ 0? ( "sactual.txt" run ; ) drop
+	m.cur! 
+	"mmm" 'mensaje ! 	| copia error a mensaje
+|	mem here over - "dumpmem.txt" save 
+	;
+	
+:solocolorea
+	savetxt
+	'fuente colorea dup c@ 0? ( 2drop ; ) drop
+	m.cur! ;
+
+
+#p0 #p1 #p2 #p3 #p4
+#pp 'p0
+
+#mcnt 0	
+#minicio
+
+:marq
+	mcnt 1+ 29 >? ( drop over pp !+ 'pp ! 0 ) 'mcnt ! ;
+	
+:ayuda1
+	16 16 .table 0 15 .at
+	rojo oscuro 'isalir 'exit .sbtn .>
+	azul oscuro
+	"1" [ p0 'minicio ! ; ] .2btn .>
+	"2" [ p1 'minicio ! ; ] .2btn .>
+	"3" [ p2 'minicio ! ; ] .2btn .>
+	"4" [ p3 'minicio ! ; ] .2btn .>
+	"5" [ p4 'minicio ! ; ] .2btn .>
+	clear
+	mem "doc.r4qf.txt" load 0 swap !
+	0 'mcnt ! 'p0 'pp ! 
+	mem dup 'minicio ! pp !+ 'pp !
+	mem ( c@+ 1? )( 13 =? ( marq ) drop ) 2drop	
+	.show cls 
+		32 32 screen
+		blanco minicio printx ;
+
+:ayuda2
+	16 16 .table 0 15 .at
+	rojo 'isalir 'exit .sbtn .>
+	clear
+	mem "doc.r4basico.txt" load 0 swap !
+	.show cls 
+		32 32 screen
+		blanco mem printx ;
+		
+:compilado 
+	16 16 .table 0 15 .at
+	rojo oscuro 'isalir 'exit  dup =>esc .sbtn .>
+|	azul oscuro 'iplay [ play ; ]  dup <=f1 .sbtn .>
+|	verde oscuro 'icolor [ solocolorea ; ] dup <=f2 .sbtn .>
+|	'indexinc ( indexinc> <? )( @+ [ ; ] .tbtn .> ) drop
+	":R4Color" 'mensaje !
+	.show cls 
+		|16 16 screen azull
+		|0 0 pat 16 1 ptofill 4 0 pat blanco "INFO" print
+		64 dup 2/ screen |8 0 pat amarillo dup "s:%n" print
+		blanco dumpwords ;
+
+:pantalla
+	16 16 .table 0 15 .at
+	rojo oscuro 'isalir 'exit dup =>esc .sbtn .>
+	azul oscuro 'iplay [ play ; ] dup <=f1 .sbtn .>
+	verde oscuro 'icolor [ solocolorea compilado ; ] dup <=f2 .sbtn .>
+	"Ref" [ ayuda1 ; ] dup <=f3 .4btn .>
+	"Man" [ ayuda2 ; ] dup <=f4 .4btn .>
+	.show cls 
+		16 16 screen azull
+		0 0 pat 16 1 ptofill
+		0 0 pat blanco dup mensaje "%s  (%n) " print
+		32 32 screen
+		0 2 pat 32 28 2dup azul ptofill ptowin m.print			
+		;
+
+:archivo
+	"c." distingue
+	4 1 .at 3 1 .to azul oscuro
+	'sel ( @+ 1? )( [ ; ] .8btn .\ ) 2drop
+	.show cls
+		16 16 screen azul dup "%n " print ;
+		
+|----------- principal
+:main inikey
+	|archivo
+	loadtxt 'fuente m.ini
+	":R4Color" 'mensaje !
+	pantalla 
+	savetxt
+	"main.txt" run	;
+
+: 0 paper 33 main   ;

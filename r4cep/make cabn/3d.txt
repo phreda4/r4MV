@@ -1,0 +1,155 @@
+| 3D engine
+^reda4.txt
+^gui.txt
+
+| 3D graphics words
+#xa  #ya  #za      | Rotation angles  
+#tx  #ty  #tz      | First translation  
+#dx  #dy  #dz      | Second translation  
+#cx  #sx  #cy  #sy #cz  #sz | precalculados
+#x1  #y1  #z1      | Work variables  
+#x2  #y2  #z2 
+
+#zPull 1024         | Constants for 2D plane projection  
+#magic 256
+#xCenter #yCenter 
+
+:rotate | xAng yAng zAng --    | set the rotation angles  
+  dup dup cos 'cz ! sin 'sz ! 'za !  
+  dup dup cos 'cy ! sin 'sy ! 'ya !  
+  dup dup cos 'cx ! sin 'sx ! 'xa ! ; 
+
+:translate | x y z --          |  set first translation  antes rot 
+  'tz !  'ty !  'tx ! ; 
+
+:move3d | x y z --            | despues rot?
+  'dz !  'dy !  'dx ! ; 
+
+:project | x y z -- x' y' 
+	tz + >R ty + >R tx + dup									|** Add in the first translation 
+	cz * R> dup >R sz * - 16 >> 'x1 ! sz * R> cz * + 16 >> 'y1 ! |** Rotate Z axis 
+	R> dup cy * x1 sy * - 16 >> 'z1 ! sy * x1 cy * + 16 >> 'x2 ! |** Rotate Y axis  
+	y1 cx * z1 sx * - 16 >> 'y2 ! y1 sx * z1 cx * + 16 >> 'z2 !	 |** Rotate X axis  
+	dx 'x2 +! dy 'y2 +! dz 'z2 +!		|** Add in the second translation 
+	z2 zPull - neg dup >R >R 			|** Now to the perspective 2D projection
+	x2 magic R> */ xCenter + y2 magic R> */ yCenter + ; 
+|	x2 R> * 8 >> xCenter + y2 R> * 8 >> yCenter + ; 
+
+|--- Pantalla
+:>uv $ffff and 16 << swap $ffff and or ; | u v -- uv
+:>u 16 << 
+:>v 16 >> ;
+
+|-- buffer de dibujo
+#aux )( 8192 | 2000 puntos
+
+|-----------------------------
+| 10 bits 10 bits 10 bits 2bit
+| x		  y		  z       control 
+| 0
+| ..01 color
+| ..11 poligono..cantidad
+| 0
+
+:>z	20 << 22 >> ; 
+:>y 10 << 
+:>x 22 >> ;
+
+:xyz> | v -- x y z
+	dup >z >r dup >y >r >x r> r> ;
+
+:3d> | x y z -- v
+	2 << $ffc and >r 12 << $3ff000 and r> or swap 22 << $ffc00000 and or 3 or ;
+
+:poli> | n .. 1 cnt --
+	2 << $2 or ;
+	
+:color>
+	;
+	
+:3d+ | v1 v2 - v
+	over >z over >z + >r over >y over >y + >r >x swap >x + r> r> 3d> ; 
+
+|------------------------------------------
+:->pnt | nro -- xy
+	2* 2* 'aux + @ dup >u swap >v ;
+	
+:al00 drop ;
+:al01 2 >> ink ; | color
+:al10 2 >> 1- swap	| poligono
+	@+ dup ->pnt op swap rot
+	( 1? )( 1- swap @+ ->pnt line swap ) drop swap
+	->pnt line |poli
+	;
+:al11 drop ; | esfera?
+
+#alcmd 'al00 'al01 'al10 'al11
+
+:alambroso | addr ---
+	'aux swap
+	( @+ 1? )( xyz> project >uv rot !+ swap ) 
+	drop nip
+	( @+ 1? )( dup $3 and 2* 2* 'alcmd + @ exec ) 
+	2drop ;
+	
+|------------------------------------------
+#cubo )( 1024
+#cubos )( 1024
+#vcubos )( 1024
+#cntcu 40
+#lastime #paso
+
+:inicubs
+	'cubos cntcu ( 1? )( 1- rand rot !+ swap ) 2drop ;
+
+:inive
+	'vcubos cntcu ( 1? )( 1- 
+		rand $3 and 1- rand $3 and 1- rand $3 and 1- 3d>
+		rot !+ swap ) 2drop ;
+	
+:sumcubs
+	'vcubos >r 
+	'cubos cntcu ( 1? )( 1- swap dup @ r@+ 3d+ swap !+ swap ) 2drop rdrop ;
+
+	
+:cubolandia
+	'cubo >r
+	-100 -100 -100 3d> r!+
+	100 -100 -100 3d> r!+
+	100 100 -100 3d> r!+
+	-100 100 -100 3d> r!+
+	-100 -100 100 3d> r!+
+	100 -100 100 3d> r!+
+	100 100 100 3d> r!+
+	-100 100 100 3d> r!+
+	0 r!+
+	4 poli> r!+	0 r!+ 1 r!+ 2 r!+ 3 r!+   
+	4 poli>	r!+	1 r!+ 5 r!+	6 r!+ 2 r!+
+	4 poli> r!+	5 r!+ 4 r!+ 7 r!+ 6 r!+
+	4 poli> r!+	4 r!+ 0 r!+ 3 r!+ 7 r!+
+	4 poli> r!+	4 r!+ 5 r!+ 1 r!+ 0 r!+
+	4 poli> r!+	3 r!+ 2 r!+ 6 r!+ 7 r!+
+	0 r!+ rdrop
+	sh 2/ 'yCenter ! sw 2/ 'xCenter ! 
+	[ rdrop ; ]  1 >key
+	[ 1 'cntcu +! inicubs inive ; ] =>arr
+	[ -1 'cntcu +! inicubs inive  ; ] =>aba
+	msec 'lastime !
+	inicubs inive
+	0 0 0 rotate
+	oshow cls verde
+		'cubos cntcu ( 1? )( 1- swap @+ | rand ink
+			dup xyz> move3d	xyz> rotate 
+			'cubo alambroso	
+			swap ) 2drop 
+		sumcubs	
+		|rojo 0 0 0 move3d 10 20 30 rotate 'cubo alambroso
+		msec dup lastime - 'paso ! 'lastime !
+		32 18 screen blanco	|'cubos 16 hdump 
+		0 17 pat 1000 paso / cntcu "3DLater! %n cubos %n fps" print
+		;
+			
+
+:do 33 cubolandia "main.txt" run ;
+
+: do ;

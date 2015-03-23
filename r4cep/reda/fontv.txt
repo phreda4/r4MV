@@ -1,0 +1,79 @@
+^reda4.txt
+^graflib.txt
+
+#xo #yo #xa #ya #fc 
+
+|----- de 5 bits a cursor
+:tox w 5 *>> xc + ;
+:toy h 5 *>> yc + ;
+
+|-------------------------- dibujo en 8
+:p1 xa ya gop ;
+:p2 xa ya gline ; 
+:p3 fc 0? ( xa ya gcp )( xa ya gcurve ) not 'fc ! ;
+#fpolij 0 p1 p2 p3 
+::vdraw8 | addr gro --
+	dup gg gg
+	0 dup tox 'xa ! dup toy 'ya ! 'fc ! 
+	( c@+ 1? )(
+		dup $1 and? ( 3 >> tox 'xa )( 3 >> toy 'ya ) !
+		$6 and 2* 'fpolij + @ exec ) 2drop ;
+
+|----------------------- Lineas en 8
+:l1 xa ya op ;
+:l2 xa ya line ; 
+:l3 fc 0? ( xa ya cp )( xa ya curve ) not 'fc ! ;
+#lpolij 0 l1 l2 l3
+::vline8 | adr --
+	0 dup tox 'xa ! dup toy 'ya ! 'fc ! 
+	( c@+ 1? )(
+		dup $1 and? ( 3 >> tox 'xa )( 3 >> toy 'ya ) !
+		$6 and 2* 'lpolij + @ exec ) 2drop ;
+
+|----------------------------------- dibujo en 32
+:a0 drop ;
+:a1	>xy gop ;
+:a2	>xy gline ;
+:a3  >xy fc 0? ( >r gcp )( >r gcurve ) r> not 'fc ! ;
+#acclin  a0 a1 a2 a3
+::vdraw32 | adr gro --
+	dup gg gg
+	( @+ 1? )( 
+		dup $3 and 2 << 'acclin + @ exec 
+		) 2drop ;
+	
+|------------- Conversion 32->8
+#xx #yy #fc
+
+:32to8xy | v -- t x y 
+	dup $3 and 2*
+	over 27 >> 3 <<
+	rot 14 << 27 >> 3 << ;
+
+:graba8 | v -- 
+	32to8xy | t x y 
+	yy =? ( drop xx =? ( 2drop ; ) dup 'xx ! or 1 or ,c ; ) 
+	swap xx =? ( drop dup 'yy ! or ,c ; ) 
+	dup 'xx ! 1 or ,c dup 'yy ! or ,c ;
+
+::fv32>8 | 'desde32 'en8 --
+	'here !  0 'xx ! 0 'yy !
+	( @+ 1? )( graba8 ) ,c drop ;
+
+|------------- Conversion 8->32
+| xxxxx - xxxxx100000000
+:8to32xy | v -- t v | de 5 bits a 14 bits
+	dup 3 >> 9 << ;
+
+:v0 drop ; :v1 1 or , ; :v2 2 or , ;
+:v3 fc 0? ( 3 )( 3 ) swap not 'fc ! or , ;
+#vord 'v0 'v1 'v2 'v3
+:graba32 | v --
+	8to32xy |t v
+	over 1 and 0? ( 'yy )( 'xx ) nip !
+	xx 18 << yy 4 << $3fff0 and or swap
+	6 and 2* 'vord + @ exec	;
+	
+::fv8>32 | 'desde8 'en32 --
+	'here ! 0 'fc ! 0 'xx ! 0 'yy !
+	( c@+ 1? )( graba32 ) , drop ;

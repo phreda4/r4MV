@@ -1,0 +1,28 @@
+-----------------
+:R4 Manual Basico
+-----------------
+
+^ incluye diccionario (en archivo)
+^reda4.txt
+
+| comentario hasta el fin de linea
+el ESPACIO separa palabras
+prefijo # define dato 
+prefijo : define accion
+
+#x 200	| entero 32bits
+#lugar )( 1024 | 1024 bytes
+:avanza 4 'x +! ; | suma 4 al dato x
+
+' direccion de..
+
+'avanza | direccion del codigo de la accion
+'x | direccion del lugar donde se guarda 200
+x | 200 en pila
+
+$ numero hexa ($f)	% numero bin (%1111)
+" cadena de caracteres (espacio no corta cadenas)
+"hola mundo" print
+
+Las palabras se separan en modulos (archivos) 
+Los modulos son vocabularios que encapsulan comportamiento

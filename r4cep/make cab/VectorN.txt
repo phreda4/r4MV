@@ -1,0 +1,83 @@
+:transform |MatrixN mat --
+      double f;
+      for (int i = 0 ; i < size() ; i++) {
+	 f = 0.;
+         for (int j = 0 ; j < size() ; j++) f += mat.get(i,j) * get(j);
+         tmp.set(i, f);
+      }
+   
+:distance | VectorN vec -- double
+      double x, y, d = 0;
+      for (int i = 0 ; i < size() ; i++) {
+	 x = vec.get(0) - get(0);
+	 y = vec.get(1) - get(1);
+	 d += x * x + y * y;
+      }
+      return Math.sqrt(d);
+
+| matriz   
+:identity 
+      for (int j = 0 ; j < size() ; j++)
+      for (int i = 0 ; i < size() ; i++) set(i, j, (i == j ? 1 : 0));
+   
+:preMultiply | (MatrixN mat) {     // mat X this
+      MatrixN tmp = new MatrixN(size());
+      double f;
+      for (int j = 0 ; j < size() ; j++)
+      for (int i = 0 ; i < size() ; i++) {
+	 f = 0.;
+         for (int k = 0 ; k < size() ; k++) f += mat.get(i,k) * get(k,j);
+	 tmp.set(i, j, f);
+      }
+      set(tmp);
+   }
+   
+:postMultiply | (MatrixN mat) {    // this X mat
+      MatrixN tmp = new MatrixN(size());
+      double f;
+      for (int j = 0 ; j < size() ; j++)
+      for (int i = 0 ; i < size() ; i++) {
+	 f = 0.;
+         for (int k = 0 ; k < size() ; k++) f += get(i,k) * mat.get(k,j);
+	 tmp.set(i, j, f);
+      }
+      set(tmp);
+   
+   
+|class Vector3D extends VectorN { // Homogeneous vectors in three dimensions
+|   Vector3D() { super(4); }
+|   void set(double x,double y,double z,double w){set(0,x);set(1,y);set(2,z);set(3,w);}
+|   void set(double x, double y, double z) { set(x, y, z, 1); }
+
+|class Matrix3D extends MatrixN { // Homogeneous matrices in three dimensions
+
+|Matrix3D() { super(4); identity(); }
+:rotateX  |(double theta) { rotate(0, theta); }
+:rotateY  |(double theta) { rotate(1, theta); }
+:rotateZ  |(double theta) { rotate(2, theta); }
+:rotate  |(int axis, double theta) {
+      int i = (axis+1)%3;
+      int j = (axis+2)%3;
+      Matrix3D tmp = new Matrix3D();
+      double c = Math.cos(theta * Math.PI / 180);
+      double s = Math.sin(theta * Math.PI / 180);
+      tmp.set(i,i, c); tmp.set(i,j, s);
+      tmp.set(j,i,-s); tmp.set(j,j, c);
+      postMultiply(tmp);
+
+   
+:translate  |(double a, double b, double c) { // translate
+      Matrix3D tmp = new Matrix3D();
+      tmp.set(0,3, a);
+      tmp.set(1,3, b);
+      tmp.set(2,3, c);
+      postMultiply(tmp);
+   
+:scale  | (double s) { scale(s, s, s); }
+
+:scale  | (double x, double y, double z) { // scale non-uniformly
+      Matrix3D tmp = new Matrix3D();
+      tmp.set(0,0,x);
+      tmp.set(1,1,y);
+      tmp.set(2,2,z);
+      postMultiply(tmp);

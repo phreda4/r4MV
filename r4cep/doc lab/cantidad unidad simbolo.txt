@@ -1,0 +1,34 @@
+Longitud,metro,m
+Masa,kilogramo,kg
+Tiempo,segundo,s
+Corriente electrica,amperio,A
+Temperatura termodinamica,kelvin,K
+Intensidad luminosa,candela,cd
+Cantidad de sustancia,mol,mol
+Angulo plano,radian,rad
+Angulo solido,steradian,st
+Frecuencia,hertz,Hz
+Fuerza,newton,N
+Presion,pascal,Pa
+Eneriga,joule,J
+Potencia,watt,W
+Temperatura,grado Celsius,'c
+Carga electria,coulomb,C
+Diferencia de potencial,volt,V
+Resistencia electrica,ohm,(omega)
+Conductancia electrica,siemens,S
+Capacitancia electrica,farad,F
+Inductancia,henry,H
+Flujo magnetico,weber,Wb
+Densidad de flujo magnetico,tesla,T
+Flujo luminoso,lumen,lm
+Iluminacion,lux,lx
+Radiactividad,becquerel,Bq
+Dosis de radiacion absorbida,gray,Gy
+Area,metro cuadrado,m2
+Volumnen,metro cubico,m3
+Velocidad,metros por segundo,m/s
+Aceleracion,metros por segundos2,m/s2
+Densidad,kilogramo por metro cubico,kg m3
+Masa de flujo,kilogramo por segundo,kg/s
+Volumen de flujo,metros cubicos por segundo,m3/s

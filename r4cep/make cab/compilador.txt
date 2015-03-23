@@ -1,0 +1,333 @@
+^bitmap.txt
+^teclado.txt
+^diccionario.txt
+^consola-jupiter.txt
+
+#nuevas 0
+
+#source 
+#asm
+#salto 0
+#lastcall
+
+|----- Pila de datos
+#pilad )( 1024
+#pilad>
+
+|----- pila de compilador
+#pilac )( 1024
+#pilac. 'pilac
+
+:>pilac pilac. ! 4 'pilac. +! ;
+:pilac> -4 'pilac. +! pilac. @ ;
+
+#etiqueta	0
+:+etiqueta	| -- nueva   // y agrega a pila
+	etiqueta 1+ dup 'etiqueta ! dup >pilac ;
+	
+|----- caracteres prohibidos para fasm
+#prohibidas "+-*/=<>()[]{}:,‘""!@#$%^&|~"
+
+:cplegal	| str --  // copia un string sin caracters prohibidos
+	;
+		
+:finaliza  | termina definicion	| 
+	pilac. 'pilac - 2 >> ,n
+	" ret" ,ln ; | falta cambiar call por jmp
+|	lastcall
+|	ultima =? ( "jmp" )( "call" ) 
+|	poner etiqueta
+
+:label	"l" ,s ,h ;
+:jmp,	"jmp " ,s label ,cr ;
+:dup,	"lea esi, esi-4" ,ln "mov [esi], eax" ,ln ;
+:drop,	"lodsd" ,ln ;
+:nip,	"lea esi, esi+4" ,ln ;
+
+|----------------------------
+:palcompila
+";"		[ pilac. 'pilac >? ( "ret" ,ln )( "ret" ,ln ) drop ; ] >defm 
+"("		[ +etiqueta salto 1? ( swap label ,cr 1 )( swap label ":" ,ln 2 ) >pilac drop ; ] >defm 
+")("	[ pilac> salto 0? ( drop 
+			1 =? ( pilac> +etiqueta jmp, label ":" ,ln 1 >pilac drop ; )
+			)( drop 
+			2 =? ( pilac> +etiqueta label ,cr >pilac 3 >pilac drop ; ) ) drop
+		"**)( error **" ,s ; ] >defm 
+")"		[ pilac> salto 0? ( drop 
+			1 =? ( pilac> label ":" ,ln drop ; ) 
+			2 =? ( pilac> jmp, drop ; ) 
+			3 =? ( pilac> jmp, pilac> label ":" ,ln drop ; )
+		)( drop	
+			2 =? ( pilac> label ,cr drop ; ) ) drop
+		"**) error **" ,s ; ] >defm 
+"[" 	[ dup, +etiqueta "mov eax," label +etiqueta jmp, label pilac> label ":" ,ln ; ] >defm 
+"]" 	[ pilac> label ":" ,ln ; ] >defm
+
+"0?" 	[ "jnz " ,s ; ] >defm 
+"+?" 	[ "jns " ,s ; ] >defm 
+"-?"	[ "js " ,s ; ] >defm 
+"1?"	[ "jz " ,s ; ] >defm
+"=?"	[ "cmp eax, [esi]" ,ln nip, "jnz " ,s ; ] >defm 
+"<?"	[ "cmp eax, [esi]" ,ln nip, "js " ,s ; ] >defm 
+">?"	[ "cmp eax, [esi]" ,ln nip, "jns " ,s ; ] >defm 
+"<=?"	[ "cmp eax, [esi]" ,ln nip, "js " ,s ; ] >defm 
+">=?"	[ "cmp eax, [esi]" ,ln nip, "jns " ,s ; ] >defm 
+"<>?"	[ "cmp eax, [esi]" ,ln nip, "jz " ,s ; ] >defm
+
+"EXEC"	[ "mov ecx,eax" ,ln drop, "jmp ecx" ,ln  ; ]  >defm 
+
+"DUP"	[ dup, ; ]  >defm 
+"OVER"	[ dup, "mov eax,[esi+4]" ,ln ; ]   >defm
+"PICK2" [ dup, "mov eax,[esi+4*2]" ,ln ; ] >defm 
+"PICK3" [ dup, "mov eax,[esi+4*3]" ,ln ; ] >defm 
+
+"SWAP"	[ "mov edx,eax" ,ln "mov eax,[esi]" ,ln "mov [esi],edx" ,ln ; ]  >defm 
+"ROT"	[ "mov edx,[esi+4*2]" ,ln "mov [esi+4*2],eax" ,ln "mov eax,edx" ,ln ; ]  >defm 
+"2DUP"	[ ; ]  >defm 
+"2OVER" [ ; ]  >defm 
+"2SWAP" [ ; ]  >defm
+"DROP"	[ drop, ; ]  >defm 
+"NIP"	[ nip, ; ]  >defm 
+
+">R"	[ "push eax" ,ln drop, ; ]  >defm 
+"R>"	[ dup, "pop eax" ,ln ; ]  >defm 
+"R"		[ dup, "mov eax, esp" ,ln ; ]  >defm
+"R!+"	[ "mov [esp], eax" ,ln "lea esp, esp+4" ,ln drop, ; ] >defm
+"R@+"	[ dup, "mov eax,[esp]" ,ln "lea esp, esp+4" ,ln ; ] >defm
+"RDROP" [ "pop edx" ,ln ; ] >defm
+
+"AND"	[ "and eax, [esi]" ,ln nip, ; ]  >defm 
+"OR" 	[ "or eax, [esi]" ,ln nip, ; ]  >defm 
+"XOR"	[ "xor eax, [esi]" ,ln nip, ; ]  >defm 
+"NOT"	[ "not eax" ,s ; ]  >defm
+"+"		[ "add eax, [esi]" ,ln nip, ; ] >defm 
+"-"		[ "sub eax, [esi]" ,ln nip, ; ]  >defm 
+"*"		[ "cdq" ,ln "imul eax, [esi]" ,ln nip, ; ]  >defm 
+"/"		[ "cdq" ,ln "idiv eax, [esi]" ,ln nip, ; ]  >defm
+"*/"	[ "cdq" ,ln "mov ecx,eax" ,ln "lodsd" ,ln "imul [esi]" ,ln "idiv [ecx]" ,ln nip, ; ]  >defm 
+"/MOD"	[ "cdq" ,ln "idiv eax, [esi]" ,ln "mov [esi],eax" ,ln "mov eax,edx" ,ln ; ]  >defm 
+"MOD"	[ "cdq" ,ln "idiv eax, [esi]" ,ln "mov eax,edx" ,ln nip, ; ]  >defm 
+"NEG"	[ "neg eax" ,ln ; ]  >defm 
+"1+"	[ "inc eax" ,ln ; ]  >defm 
+"1-"	[ "dec eax" ,ln ; ]  >defm 
+"2/"	[ "shr eax,1" ,ln ; ]  >defm 
+"2*"	[ "shl eax,1" ,ln ; ]  >defm 
+"<<"	[ "sal eax, [esi]" ,ln nip, ; ]  >defm 
+">>"	[ "sar eax, [esi]" ,ln nip, ; ]  >defm
+
+"@"		[ "mov eax, [eax]" ,ln ; ] >defm 
+"C@"	[ "movsx al, [eax]" ,ln ; ]  >defm 
+"W@"	[ "movsx ax, [eax]" ,ln ; ]  >defm
+"!" 	[ "mov ecx,[esi]" ,ln "mov [eax],ecx" ,ln nip, drop, ; ]  >defm 
+"C!"	[ "movsx ecx,byte [esi]" ,ln "mov [eax],ecx" ,ln nip, drop, ; ]  >defm 
+"W!"	[ "movsx ecx,word [esi]" ,ln "mov [eax],ecx" ,ln nip, drop, ; ]  >defm
+"+!"	[ "mov ecx,[esi]" ,ln "mov [eax],ecx" ,ln "lea esi,esi+4" ,ln nip, drop, ; ]  >defm 
+"C+!"	[ "movsx ecx,byte [esi]" ,ln "mov [eax],ecx" ,ln "lea esi,esi+4" ,ln nip, drop, ; ]  >defm 
+"W+!"	[ "movsx ecx,word [esi]" ,ln "mov [eax],ecx" ,ln "lea esi,esi+4" ,ln nip, drop, ; ]  >defm
+
+"MSEC"  [ "call MSEC" ,ln ; ]  >defm 
+"TIME"  [ "call TIME" ,ln ; ]  >defm  
+"DATE"  [ "call DATE" ,ln ; ]  >defm
+"RUN"	[ "call RUN" ,ln ; ]  >defm
+
+"DIR"	[ "call DIR" ,ln ; ]  >defm 
+"FILE"	[ "call FILE" ,ln ; ]  >defm 
+"LOAD"	[ "call LOAD" ,ln ; ]  >defm 
+"SAVE"	[ "call SAVE" ,ln ; ]  >defm 
+
+"REDRAW" [ "call REDRAW" ,ln ; ]  >defm 
+"UPDATE" [ "call UPDATE" ,ln ; ]  >defm 
+
+"BPP"	[ dup, "mov eax,[BPP]" ,ln ; ]  >defm 
+"SW"	[ dup, "mov eax,[SW]" ,ln ; ]  >defm 
+"SH"	[ dup, "mov eax,[SH]" ,ln ; ]  >defm 
+
+"FRAMEV" [ dup, "mov eax,FRAMEV" ,ln ; ]  >defm
+"MEM"	[ dup, "mov eax,FREE_MEM" ,ln ; ]  >defm  | mem es direccion final mem :
+indice> 'nuevas !
+;
+
+|------- compilador de memoria
+#unidad 0
+#cntdata
+
+:scad 
+  ( 1+ dup c@ 1? )( 34 =? ( drop 1+ dup c@ 34 <>? ( drop ; ) ) ,c ) drop ;
+  
+:sinc ;
+
+:sdir 
+	ind>nombre ,s " " ,s ;
+
+:snum 
+	|cntdata 0? ( " dd " ,s ) drop
+	,n " " ,s unidad 'cntdata +! ;
+
+:sexit |
+	cntdata 0? ( " dd 0 " ,ln )( ,cr ) drop
+	rdrop ;
+	
+:spal 
+	0 =? ( drop sexit ; )
+	1 =? ( 'unidad ! " db " ,s ; )
+	2 =? ( drop ; )
+	3 =? ( drop " rb " ,s ; )
+	4 =? ( drop 2 'unidad ! " dd " ,s ; )
+	5 =? ( drop ; )
+	drop 
+	"*** error **" ,s ;
+
+|------- COMPILADOR de palabras
+:nextw | adr --|-- NO guarda en espacio de nombres
+	( dup c@ 32 >? )( toupp .c 1+ ) drop ;
+
+:nextw, | adr --|-- convierte nombre y graba
+	1+ 
+	( dup c@ 32 >? )( toupp ,c 1+ ) drop ;
+
+:cdef	| agregar otra definicion
+	,cr nextw, ":" ,s ,cr ;
+|	$000f00 .col! .cr nextw blanco. .> ;
+
+:ccom  	| pasa de largo
+	" ;" ,s
+	( 1+ dup c@ 1? )( 13 =? ( drop 1+ ,cr ; ) ,c ) drop ;
+
+:ccad 	| compila direccion de cadena agrega literal
+|	FddMsg               db ' Drive A:',0
+	( 1+ dup c@ 1? )( 34 =? ( drop 1+ dup c@ 34 <>? ( drop ; ) ) .c ) drop 
+	dup, "mov eax," ,s ,cr
+	0 'salto ! ;
+
+:cinc  | include
+	"include '" ,s nextw, "'" ,ln ;
+
+:cdir | compila direccion
+	| cdup "mov eax,"addr
+	dup, "mov eax," ,s ,n ,cr 
+	0 'salto ! ;
+
+:literal, | nro -- "asm del litera" sin dup
+	0? ( drop "xor eax,eax" ,ln ; )
+	1 =? ( drop "xor eax, eax" ,ln "inc eax" ,ln ; )
+	-1 =? ( drop "or eax,-1" ,ln ; )
+	"mov eax," ,s ,n ,cr ;
+
+:cnum | Numero
+	dup, literal, ,cr 
+	0 'salto ! ;
+	
+:cpal 	| marca llamada y llamador
+	5 >? ( 16 <? ( 1 )( 0 ) )( 0 ) 'salto ! 
+	nuevas <? ( ind>vector exec ; )
+	|dup inv>vector
+	| tipo de palabra
+	|if var
+	|"mov eax, [" ,s label "]" ,ln 
+	|if def
+	" call " ,s	
+	ind>nombre label ,cr ;
+
+:cerr | error del compilador, retroceder memoria
+	rojo. nextw .> ;
+
+#veccomps 'ccom 'scad 'sexit 'sexit 'sinc 'sdir 'snum 'spal 'cerr
+
+:cvar	| agregar otra variable (adentro de una definicion sale)
+	nextw, " " ,s 4 'unidad ! 0 'cntdata !
+	( palabra 1? )( 1- 2 << 'veccomps + @ exec ) drop ;	| hasta ; o : o fin
+
+#veccompi 'ccom 'ccad 'cdef 'cvar 'cinc 'cdir 'cnum 'cpal 'cerr
+
+:compilador | direccion --
+	( palabra 1? )( 1- 2 << 'veccompi + @ exec ) 2drop 
+	;
+
+:loadsrc | -- cargar texto
+	clear 
+	here "diccionario.txt" load 'here !
+	mem 'source !
+	0 ,c
+	here 'asm !
+	;
+
+	
+#lastime 
+
+:main
+	[ toasc dup >lin .xor .c .xor ; ] $53 2 n>key		
+	[ drop <lin .xor .< 32 .c .< .xor ; ] $e >key
+	[ drop .xor .cr .xor ; ] $1c >key
+	inikey
+	cls .home verde. ":REDa4 Compiler - 20060620 " .s  .cr .cr azul. 
+	palcompila
+	loadsrc	source 
+	compilador 
+	asm here over - "cod.asm" save 
+	asm .s
+	.xor redraw
+	( update msec lastime - 40 >? ( redraw msec 'lastime ! ) drop ) ;
+	
+: main ;
+
+|--- generador de codigo asm
+| resuelve un operador
+| obtiene el numero que interviene en el calculo
+| puede ser
+| 1.- registro
+| 2.- numero literal
+| 3.- direccion (numero * [ 1 2 4 8 ] + registro)
+| nro otra [esi] [edx]  [esi-4] [esi-8] [edx+eax*4+nro]
+
+#lugar "eax" "[esi]" "[esi+4]" "[esi+2*4]" "[esi+3*4]" "[esi+4*4]" "[esi+5*4]"
+
+:,adr ; | compila direccion
+:,lit ;	| literal
+:,drop ;
+:,nip ;
+:,swap ;
+:,dup ;
+:,rot ;
+
+| clases de operadores
+:,op1 ; | solo registro
+:,op2 ; | registro, inmediato, memoria, mem calculada
+:,op3 ; | registro8, inmediato8
+:,dxmd ; | edx para imul e idiv
+
+| computacion numerica
+:,and  "and " ,s ,op1 ,op2 ;
+:,or   "or " ,s ,op1 ,op2 ;
+:,xor  "xor " ,s ,op1 ,op2 ;
+:,not  "not " ,s ,op2 ;
+:,neg  "neg " ,s ,op2 ;
+:,+   "add " ,s ,op1 ,op2 ;
+:,-	  "sub " ,s ,op1 ,op2 ;
+:,*   ,dxmd "imul " ,s ,op2 ;
+:,/   ,dxmd "idiv " ,s ,op2 ;
+:,mod 
+:,<<  "sal " ,s ,op2 ,op3 ;
+:,>>  "sar " ,s ,op2 ,op3 ;
+
+|--- Memoria con registro
+:,a!	"mov edi," ,s ,op2 ;
+:,a     ,dup "mov eax, edi" ,s ,op2 ;
+:,a+	"lea edi, edi+" ,s ,op3 ;
+:,!a    "mov [edi],eax" ,s ,drop ;
+:,w!a	"mov word [edi],eax" ,s ,drop ;
+:,c!a	"mov byte [edi],eax" ,s ,drop ;
+:,!a+   "stosd" ,s ,drop ;
+:,w!a+  "stos word [di]" ,s ,drop ;
+:,c!a+  "stos byte [di]" ,s ,drop ;
+:,@a	,dup "mov eax,[edi]" ,s ;
+:,w@a	,dup "mov ax,word [edi]" ,s ;
+:,c@a	,dup "mov al,byte [edi]" ,s ;
+:,@a+	,dup "mov eax,[edi]" ,ln "lea edi,edi+4" ,ln ;
+:,w@a+	,dup "mov ax,word [edi]" ,ln "lea edi,edi+2" ,ln ;
+:,c@a+	,dup "mov al,byte [edi]" ,ln "lea edi,edi+1" ,ln ;
+
+:,>a	"mov [ebx],edi" ,ln "add ebx,4" ,ln
+:,a>	"add,ebx,-4" ,ln "mov edi,[ebx]"
+
+| acceso directo a memoria
+|:,@   >memoria ,@ ; :,c@  ; :,w@  ;  :,!	  ; :,c!  ; :,w!  ;  :,+!  ; :,c+! ; :,w+! ;

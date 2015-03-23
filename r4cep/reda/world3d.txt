@@ -1,0 +1,49 @@
+^reda4.txt
+^gui.txt
+^sprites.txt
+|^r4inc/3dlata.inc
+^r4inc/carrera.inc
+#paso
+#lastime
+
+#xm 0
+
+#rx #ry #rz
+#sx 1000 #sy 1000 #sz 1000
+#mx #my #mz
+
+:main
+	.page
+	'exit <esc>
+	8 16 .table
+	7 0 .at verde
+	$fff 'rx  .hsli .\ $fff  'ry .hsli .\ $fff  'rz .hsli .\
+	amarillo
+	2000 'sx  .hsli .\ 2000  'sy .hsli .\ 2000  'sz .hsli .\
+	cyan
+	$fff 'mx  .hsli .\ $fff  'my .hsli .\ $fff  'mz .hsli .\
+	512 setview
+	.show cls 32 dup screen verde  "world2dYmedio" print 
+		$ffff dup dim 0 0 pos	matini
+||		xm mrotx
+		$1ff mrotx		
+|		xm mrotz
+		0 5000 40000 mtrans
+
+		matpush
+		0 0 xm neg  mtrans
+		'dibu1 3dsprite
+		4 'xm +!
+		matpop
+
+		sx sy sz 	mscale
+		rx mrotxi ry mrotyi rz mrotzi
+		mx my mz mtransi
+		'dibu2 3dsprite
+		
+		32 dup screen 0 1 at blanco
+		msec lastime over <? ( over 'lastime ! - 'paso ! )( 2drop ) 
+		17 0 at 1000 paso  / "fps: %d" print
+		;
+
+: 0 paper 33 main "main.txt" run ;

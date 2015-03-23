@@ -1,0 +1,255 @@
+| Fuente Vectorial 8 bits -  PHReda
+| :r4 main library
+|--------------------------------------
+^graflib.txt
+^romfuente.txt
+
+|--- Fuente en 8 bits
+#wx1 #wy1 #wx2 #wy2 | ventana de texto
+#xo #yo #xa #ya
+#xx #yy #fc 
+
+#inverso
+
+::vidi
+	inverso 0? ( $ff )( 0 ) nip 'inverso ! ;
+
+::ttwin
+	xc dup w 2/ dup >r - 'wx1 !  r> + 'wx2 !
+	yc dup h 2/ dup >r - 'wy1 ! r> + 'wy2 !
+	;
+
+|---- texto->cuadro
+::>win | y2 x2 y1 x1 --
+	'wx1 !+ !+ !+ ! 
+::full	
+	wx2 wx1 2dup - 'w ! + 2/ 'xc ! wy2 wy1 2dup - 'h ! + 2/ 'yc ! ;
+
+::screen | fil col --
+	sh sw 0 dup 'wx1 !+ !+ !+ ! 	
+::ttext | fil col --
+	wy2 wy1 - swap / 'h ! wx2 wx1 - swap / 'w !
+::home	
+	0 0 
+::at | x y --
+	h * h 2/ + wy1 + 'yc ! w * wx1 + 'xc ! ;
+	
+::hsplit | cc --
+	wx2 wx1 - swap / 'w ! wx1 w 2/ + 'xc ! ;
+::xnext
+	w 'xc +! ;
+
+::vsplit | cc --
+	wy2 wy1 - swap / 'h ! wy1 h 2/ + 'yc ! ;
+::ynext
+	h 'yc +! ;
+
+::.win | x1 y1 x2 y2 --
+	h * 'wy2 ! w * 'wx2 ! 
+	h * 'wy1 ! w * 'wx1 ! 
+	home ;
+
+:ibox2 | xl -- 
+	>r xc r - yc h 2/ - 2dup op 2dup h + 2dup swap r> 2* + swap 2dup h - pline pline pline pline ;
+
+#nsize
+
+|--- fuente de letra | 00000 00 0 | valor op x/y
+:tox w 5 *>> xc + ;
+:toy h 5 *>> yc + ;
+
+:p1 xa ya op ;
+:p2 xa ya pline ; 
+:p3 fc 0? ( xa ya cp )( xa ya pcurve ) not 'fc ! ;
+#fpolij 0 p1 p2 p3 
+::rpoli | addr --
+	inverso 1? ( nsize ibox2 ) drop
+	0 dup tox 'xa ! dup toy 'ya ! 'fc ! 
+	( c@+ 1? )(
+		dup $1 and? ( 3 >> tox 'xa )( 3 >> toy 'ya ) !
+		$6 and 2* 'fpolij + @ exec ) 2drop 
+	poli 
+	;
+
+|--- fuente
+::charsize | c -- cnt
+	'sfnt1 + c@ w * 5 >> dup 'nsize ! ;
+
+:sizeprint | "" -- "" x
+	0 >r dup ( c@+ 1? )( charsize r+ ) 2drop r> ;
+
+|-- nice? font
+::charo 2 << 'fnt1 + @ dup  oscuro rpoli -1 dup 'xc +! 'yc +! claro rpoli 1 dup 'xc +! 'yc +! ;
+|::charo 2 << 'fnt1 + @ rpoli ;
+
+|------------------------------------------------------
+::polinv
+	xc w 2/ - yc h 2/ - 2dup 2dup op h + 2dup pline swap w + swap 2dup pline h - pline pline ;
+
+::fcaja
+	xc w 2/ - yc h 2/ - 2dup 2dup op h + 2dup line swap w + swap 2dup line h - line line ;
+
+::ptofill | xy --
+	h * swap w * swap xc yc h 2/ - vfill ;
+
+::ptowin | xy --
+	yc h 2/ - 'wy1 ! xc 'wx1 ! h * wy1 + 'wy2 ! w * wx1 + 'wx2 ! ;
+
+|------------------------------------------------------
+::cr	
+	h 'yc +! wx1 'xc ! ;
+
+:dtab
+	xc 5 >> 1+ 5 <<
+	wx2 >? ( drop cr ; ) 
+	'xc ! ;
+
+|--- numeros
+::emit | c --
+	9 =? ( drop dtab ; ) 
+|	10 =? ( drop ; )
+	13 =? ( drop cr ; )
+	dup charsize
+	dup 2* xc + wx2 >? ( cr ) drop 
+	dup 'xc +! swap 
+	charo 'xc +! ;
+
+::gemit | c --		| ghost emit para calcular tamanios
+	9 =? ( drop dtab ; )
+|	10 =? ( drop ; )
+	13 =? ( drop cr ; )
+	dup charsize 
+	2* dup xc + wx2 >? ( cr ) drop
+	'xc +! ;
+
+::emitout? | -- f
+	yc wy2 >?  ( 1 )( 0 ) nip ;
+
+|--------------------------------------------------------------------------
+::fontd
+	h 2/ 'h ! w 2/ 'w ! 	;
+
+::fonta
+	h 2* 'h ! w 2* 'w ! ;
+
+|///////////////////////////////////////////////////////////////////////////
+|--- numeros
+
+::printn | n --
+	-? ( $2d emit neg ) | - pone menos
+	0 swap ( 10 /mod $30 + swap 0? ) drop 
+	(  emit 0? ) drop ;
+
+::printh | hex --
+	0 swap ( dup $f and $30 + swap 4 >> $fffffff and 0? ) drop 
+	( $39 >? ( 7 + ) emit 0? ) drop ;
+
+::printb | bin --
+	0 swap ( dup $1 and $30 + swap 2/ $7fffffff and 0? ) drop
+	( emit 0? ) drop ;
+
+::prints | "" --
+	( c@+ 1? )( emit ) 2drop ;
+
+::printw | "aaa bb"  --	; aaa
+	( c@+ 32 >? )( emit ) 2drop ;
+
+|--- printf
+:emitf | adr c -- adr  // %d %s %h %b 
+	$ff and $25 <>? ( emit ; )
+	drop c@+
+	$73 =? ( drop swap prints ; ) | s
+	$64 =? ( drop swap printn ; ) | n
+	$68 =? ( drop swap printh ; ) | h
+	$62 =? ( drop swap printb ; ) | b
+	$77 =? ( drop swap printw ; ) | w
+	$3e =? ( drop dtab ; )		|%> =tab
+	$2e =? ( drop cr ; ) 		|%.=enter
+	$2b =? ( drop  fonta ; )	| %+ agranda
+	$2d =? ( drop fontd ; )	| %- achica
+	drop 1- $25 emit ;
+
+::print | "" --	
+	( c@+ 1? )( emitf ) 2drop ;
+
+::printx | "" --	| sin %
+	( c@+ 1? )( $ff and emit ) 2drop ;
+
+|///////////////////////////////////////////////////////////////////////////
+
+|----- cursor
+:ibox | xl -- 
+	>r xc yc h 2/ - 2dup op 2dup h + 2dup swap r> 2* + swap 2dup h - pline pline pline pline ;
+
+::printcur | adr -- adr
+	dup c@ 9 =? ( drop xc 5 >> 1+ 5 << xc - 2/ )( charsize ) ibox poli ;
+
+|---------------------
+::pcenter | "" -- ""
+	sizeprint wx2 wx1 + 2/ swap - 'xc ! ;	
+
+::atcenter | "" -- ""
+	sizeprint neg 'xc +! ;
+
+
+::printc | cnt "" --
+	( swap 0? ( 2drop ; ) 1- swap c@+ 1? )(
+		13 =? ( 3drop ; )
+		dup charsize dup 'xc +! swap charo 'xc +! 
+		)  3drop ;
+
+::dump | addr cnt --		
+	( 1? )( 1- swap
+		c@+ emitf 
+		swap ) 2drop ;
+
+::hdump | addr cnt --		
+	( 1? )( 1- swap
+		@+ printh 32 emit
+		swap ) 2drop ;
+
+|------------------- EDICION DE LETRAS
+|------------- Conversion 32-8-32
+:32to8xy | v -- t x y 
+	dup $3 and 2*
+	over 27 >> 3 <<
+	rot 14 << 27 >> 3 << ;
+
+:graba8 | v -- 
+	32to8xy | t x y 
+	yy =? ( drop xx =? ( 2drop ; ) dup 'xx ! or 1 or ,c ; ) 
+	swap xx =? ( drop dup 'yy ! or ,c ; ) 
+	dup 'xx ! 1 or ,c dup 'yy ! or ,c ;
+
+::d32>8 | 'desde32 'en8 --
+	'here !  0 'xx ! 0 'yy !
+	( @+ 1? )( graba8 ) ,c drop ;
+
+| xxxxx - xxxxx100000000
+:8to32xy | v -- t v | de 5 bits a 14 bits
+	dup 3 >> 9 << ;
+
+:v0 drop ; :v1 1 or , ; :v2 2 or , ;
+:v3 fc 0? ( 3 )( 3 ) swap not 'fc ! or , ;
+#vord 'v0 'v1 'v2 'v3
+	
+:graba32 | v --
+	8to32xy |t v
+	over 1 and 0? ( 'yy )( 'xx ) nip !
+	xx 18 << yy 4 << $3fff0 and or swap
+	6 and 2* 'vord + @ exec	;
+	
+::d8>32 | 'desde8 'en32 --
+	'here ! 0 'fc ! 0 'xx ! 0 'yy !
+	( c@+ 1? )( graba32 ) , drop ;
+
+|-----------------------------------------
+:a0 drop ;
+:a1	>xy op ;
+:a2	>xy pline ;
+:a3  >xy fc 0? ( >r cp )( >r pcurve ) r> not 'fc ! ;
+#acclin  a0 a1 a2 a3
+::v8draw32 | adr --
+	( @+ 1? )( 
+		dup $3 and 2 << 'acclin + @ exec 
+		) 2drop poli ;

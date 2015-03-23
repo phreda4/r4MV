@@ -1,0 +1,101 @@
+// & primitiva
+& ;
+& push
+& pop
+& call
+& jmp
+
+& dup
+& drop	
+& over
+& swap
+& nip
+
+& and	& or
+& xor	& not
+
+& = & < & >
+& + & - 
+& * & / & */
+& % & /%
+
+& 0 & 1 
+& lit1 & lit2 & lit
+& # // direccion
+& ,1 & ,2  & ,
+
+& ? // hay pila
+
+& for & next
+& if & -if & endif
+& jmp
+
+& : // compila palabra 
+
+& abort ;
+
+// $ lugar de memoria con valor
+// # direccion de memoria con valor...
+$ CNTPALABRAS // cuantas palabras hay ahora
+$ ANCHO // de pantalla
+$ ALTO	//de pantalla
+$ XC $ YC
+$ x1 $ Y1 $ X2 $ Y2
+$ MODOC // 0=sin 1=linea 2=poligono 3=rectangulo 4=ellipse 5=frect 6=fellip
+$ COLOR
+
+// # direccion de memoria
+# TRAZO
+# ENTRADA
+
+
+// % macro
+
+% PAGINA 1 
+% PUNTO 2
+% LINEA 3
+% CAJA 4
+% CAJALL 5
+% RRECT 6
+% RRECTLL 7 
+% ARO 8
+% AROLL 9
+
+% CHAR 10
+% NRO 11
+% TEXTO 12
+% DIBUJO 13
+
+: FOR ,PUSH ,BEGIN ;
+: NEXT
+
+
+: BOTON 
+TOCADO? 10 EXPANDE% ;
+2 RRECT CHAR SENSOR ;
+
+: NUEVO 
+HOJA
+[ZONA] ENTRADA TEXTO // mejor especial
+[ZONA] MENUESTADO
+[ZONA] MENUTABLERO
+VALIDA? AGREGAR ;
+
+: AGREGAR
+COMPILA? COMPILA ;
+HACE? HACER ;
+
+: MENU1
+[ 0 0 30 10 ZONA% ] 3  
+VERDE NEGRO 2 BOTON CLICK> NUEVO ;
+VERDE NEGRO 3 BOTON CLICK> UNDO ;
+VERDE NEGRO 4 BOTON CLICK> REDO ;
+
+: MENU0
+MENU1
+0xf000ff0f ZONA%
+ROJO NEGRO 1 BOTON CLICK> SALIR. ;
+
+: MAIN 
+@MENU0 TAREA_DIBUJO ;
+

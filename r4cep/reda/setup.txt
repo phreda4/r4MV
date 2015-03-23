@@ -1,0 +1,57 @@
+| simple interrupciones
+| PHreda 2006-2007
+|---------------------------------------
+^reda4.txt
+^gui.txt
+
+#vkey
+#xpen #ypen #bpen
+
+:nipen
+	xymouse 'ypen ! 'xpen ! bmouse 'bpen ! ;
+
+:nikey
+	key 1 =? ( exit ) 'vkey ! ;
+
+:interrupciones
+	'nikey ikey!
+	'nipen ipen!
+	show cls
+		32 dup screen blanco
+		vkey "key: %d%." print
+		bpen ypen xpen "mouse: %d %d %d%." print 
+		cntjoy "joy: %d%." print 
+		cntjoy ( 1? )( 1-
+			0 over ajoy
+			1 pick2 ajoy "%d %d - " print
+			2 over ajoy
+			3 pick2 ajoy "%d %d %." print
+			) drop
+		;
+
+:setres | ""
+	count "r4.ini" save "main.txt" run ;
+
+:eresolucion
+	.page
+	4 8 .table
+	1 1 .at azul
+	"640x480" [ "640 480 0" setres ; ] .tbtn .\
+	"800x600" [ "800 600 0" setres ; ] .tbtn .\
+	"1024x768" [ "1024 768 0" setres ; ] .tbtn .\
+	"1280x1024"  [ "1280 1024 0" setres ; ] .tbtn .\
+	2 1 .at cyan
+	"640x480" [ "640 480 1" setres ; ] .tbtn .\
+	"800x600" [ "800 600 1" setres ; ] .tbtn .\
+	"1024x768" [ "1024 768 1" setres ; ] .tbtn .\
+	"1280x1024"  [ "1280 1024 1" setres ; ] .tbtn .\
+	0 7 .at rojo
+	"salir" 'exit dup >esc< .tbtn
+|interrupciones
+	.show cls 32 dup screen verde
+		10 2 at "Ventana" print
+		18 2 at "Fullscreen" print		
+		
+		;
+|****** BOOT ******
+: 0 paper eresolucion "main.txt" run ;

@@ -1,0 +1,54 @@
+#x #y #sx 10 #sy 20 
+| --------------colores
+:negro 0 color ;
+:azul $1f color ;
+:verde $7e0 color ;
+:rojo $f800 color ;
+:blanco $ffff color ;
+
+:inicio 
+	500 'x ! 500 'y ! $ffff colorf ;
+:pasobola 
+	sx 'x +! sy 'y +! 
+	x dup 900 - -? *{ -10 'sx ! } drop +? *{ 10 'sx ! } drop
+	y dup 900 - -? *{ -20 'sy ! } drop +? *{ 20 'sy ! } drop ;
+:boton 
+	0 zona 90 zoom verde down? +? *{ 6 dup rmove azul } drop  fbot blanco text ;	 
+:teclado 
+	1000 dup frame
+	300 dup frame 700 dup move 3 4 table 
+	0 0 at "7" boton 1 0 at "8" boton 2 0 at "8" boton 
+	0 1 at "4" boton 1 1 at "5" boton 2 1 at "6" boton
+	0 2 at "1" boton 1 2 at "2" boton 2 2 at "3" boton
+	0 3 at "0" boton 1 3 at " " boton 2 3 at "<" boton
+	1000 dup frame
+	;	 
+:pntrnd 1000 rnd 1000 rnd ;
+:draw0 
+	pantalla cls negro 
+	6 16 table 0 0 at x nro 1 0 at y nro 2 0 at sx nro 3 0 at sy nro
+	4 0 at rojo fbox blanco ":REDa4" text
+	
+	$ffff RND color pntrnd PUNTO
+	40 { 1 - | bucle simple
+	 pntrnd LINEA
+	 +? }* drop
+	
+	600 x 4 / - dup frame x 3 / y 3 / move
+	10 10 table | bucle dentro de bucle
+	10 { 1 -
+	 10 { 1 -
+	  $ffff RND color over over at over nro
+	  +? }* drop
+	 +? }* drop
+	 
+	teclado
+	12 16 table 
+	11 0 at 0 zona rojo down? +? *{ fbot }{ fdot }  drop negro 1 char
+	10 0 at 0 zona azul down? +? *{ 85 zoom } drop fbot blanco 2 char
+	|negro 10 10 frame x y move "O" text
+	azul | color del cursor
+	;
+:b inicio 'draw0 <dialog 'pasobola <time ;
+| main
+b

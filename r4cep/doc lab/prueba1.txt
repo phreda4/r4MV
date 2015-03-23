@@ -1,0 +1,51 @@
+#x #y #sumay 10
+| --------------colores
+:negro 0 color ;
+:azul $1f color ;
+:verde $7e0 color ;
+:rojo $f800 color ;
+:blanco $ffff color ;
+
+:inicio 400 'x ! 500 'y ! 0 colorf ;
+
+:der x ++ 'x ! ;
+:izq x -- 'x ! ;
+:desplaza y sumay + 'y ! y 600 - -? *{ -25 'sumay ! } y 10 - +? *{ 25 'sumay ! } ;
+	 
+:boton 0 zona down? +? *{ 90 zoom azul }{ 95 zoom verde } fbot blanco text ;	 
+:teclado 300 300 frame 600 y move 3 4 table 
+	0 0 at "7" boton 1 0 at "8" boton 2 0 at "8" boton 
+	0 1 at "4" boton 1 1 at "5" boton 2 1 at "6" boton
+	0 2 at "1" boton 1 2 at "2" boton 2 2 at "3" boton
+	0 3 at "0" boton 1 3 at " " boton 2 3 at "<" boton
+	;	 
+
+:draw0 
+	pantalla cls 
+	blanco 
+	| 100 dup frame 100 0 move x nro 200 0 move y nro 300 0 move sumay nro
+	6 16 table 0 0 at x nro 1 0 at y nro 2 0 at sumay nro
+	3 8 at rojo fbox blanco ":REDa4" text
+	$ffff RND color 1000 RND 1000 RND PUNTO
+	40 { 1 - 
+	 1000 RND 1000 RND LINEA
+	 dup +? }*
+	teclado
+	|200 100 frame x y move 
+	|0 zona down? +? *{ 150 zoom } rojo fbot
+	|80 80 frame 600 x move 
+	|0 zona down? +? *{ 150 zoom } azul bot
+	|100 70 frame 100 120 move
+	|0 zona down? +? *{ 80 zoom } verde box
+	|90 90 frame 900 100 move
+	|'der zona rojo down? +? *{ azul } fbox
+	|700 100 move
+	|'izq zona rojo down? +? *{ verde } fbot
+	1000 1000 frame 12 16 table 
+	11 0 at 0 zona rojo down? +? *{ fbot }{ fdot }  negro 1 char
+	10 1 at 0 zona azul down? +? *{ 85 zoom } fbot blanco 2 char
+	azul | color del cursor
+	;
+:b inicio 'draw0 <dialog 'desplaza <time 
+;
+b

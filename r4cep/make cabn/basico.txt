@@ -1,0 +1,16 @@
+| gui basico
+| con detector de errores
+^reda4.txt 
+
+:basico
+	.page		| obligatorio, guarda el estado anterior para apilar y desapilar
+	'exit =>esc | Si aprieto escape, salgo 
+	.show 		| repite a 1/30 veces por segundo, si no llega..no llega
+		cls 	| Ojo, no siempre hace falta
+		8 8 screen	| 8 lineas en la pantalla
+		dup "%n" print
+		;
+		
+:main 33 basico "main.txt" run ;		
+
+: main ;		

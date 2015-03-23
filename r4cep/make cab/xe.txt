@@ -1,0 +1,119 @@
+^reda4.txt
+
+#fondo $52E4C4 $7F3DFB65 $5EDBE197 $40610DB7 $2D57EC47 $D54C497 $CE7EEF47 $C8C4E797 $8BD3E317
+ $83D1F9E7 $E1E1FE4 $9988F0C5 $97A12AA7 $A1292497 $A9292497 $A928F0C7 $A928BCF7 $A128BCF7
+ $9988BCF7 $9988F0C7 $D2AC3CF5 $D0C48187 $DB1076D7 $E24C6F37 $E24C3CF7 $E24C0AA7 $DA4C0AA7
+ $D2AC0AA7 $D2AC3CF7 $F0EFFE4 $1860CC35 $1860F247 $1F9CF247 $273CF247 $2860CF37 $2AA88F37
+ $1F9C9CF7 $1860A797 $1860CC37 $4F9D0615 $4F3D3B67 $56193247 $5C913247 $5E790AA7 $5ED8C497
+ $5618D6D7 $4F9CDB67 $4F9D0617 $FFFE004 $A6DF30D5 $AF4310D7 $C0677B77 $B0030C47 $BB72F257
+ $B12B0627 $A67ECAB7 $B0C70DC7 $A67F30D7 0
+#alien $A2B0C64 $92AFFE85 $92ACC317 $C0C317 $6F3CC317 $6F3FFE87 $6F3F39F7 $C339F7 $92AF39F7
+ $92AFFE87 $C5D1ED4 $B8C76005 $B98BBE87 $803CDC7 $4F3FCAB7 $4DB76197 $373EEF47 $36EC627
+ $CB72E4A7 $B7A35D07 $CD2D2D4 $9B701CF5 $9B703E77 $A5583E77 $AFA03E77 $AFA01CF7 $AFA3FB77
+ $A55BFB77 $9B73FB77 $9B701CF7 $C7A06185 $C7A08307 $D1E88307 $DC948307 $DC946187 $DC944187
+ $D1E84187 $C7A04187 $C7A06187 $FB107555 $FB109867 $5B49867 $10609867 $10607557 $106053C7
+ $5B453C7 $FB1053C7 $FB107557 $336C6185 $336C8307 $3CF08307 $46D88307 $46D86187 $46D84007
+ $3CF04007 $336C4007 $336C6187 $59242305 $59244007 $5F9C4007 $66784007 $66782307 $66780617
+ $5F9C0617 $59240617 $59242307 $EF97584 $A9888F35 $BD58EF36 $E43519E6 $D24CBB66 $BCCC795
+ $2492496 $24911E76 $3A48B3C6 $3984B0C5 $24911CF6 $48C0E926 $54309B66 $D1E8C005 $E4951CF6
+ $2492496 $C90CC36 0
+#nave $2FE9104 $A55D2DC5 $BA4CA927 $CC99B567 $D6DCDCF7 $FF412927 $EAAF39F7 $CC98A627 $AA4EA937
+ $A55D2DC7 $FE7C7CF5 $F8656617 $40C5A937 $46787E77 $6B712627 $65B7F877 $42A8BB67 $1CF3BD07
+ $14910C37 $D24FB0D5 $C61FB9F7 $F8004187 $44F4A7A7 $EDBB9F7 $25568F47 $FC976627 $C67EA007
+ $D5BBA7A7 $2FB8104 $B437D875 $A4F46617 $C5585247 $D128AAA7 $DA4C2307 $F5BBB9F7 $C61F9877
+ $95BB4627 $B437D877 $21E7E7A5 $1BCC79E7 $36184927 $51E4EDB7 $4A4BE7A7 $618727A7 $361B8627
+ $F24F1567 $21E7E7A7 $F064C305 $F7A1A797 $6191CF7 $2AA93867 $1BCCC307 $2433EC47 $6186AA7
+ $DD5BD3D7 $F064C307 $A0C58185 $A0C5D3C7 $B065D3C7 $DB71C307 $C0658187 $C6DCEC37 $B0652F37
+ $9F40EAA7 $A0C58187 $2F92104 $CE1D8DB5 $C989CAA7 $F67DCF37 $33CDCAA7 $4916C37 $1AA8B6D7
+ $F4953CF7 $DC94BB67 $D8016797 $498579E5 $3555CF37 $56D9C497 $78014DB7 $630D6007 $74F04F37
+ $55B50497 $30C0B0C7 $498579E7 $E24F19F5 $E8C793D7 $F4974DC7 $24338DC7 $73F19F7 $67A33D7
+ $F496E7A7 $C61E4AB7 $E24F19F7 0
+#bala $E5E9E74 $167BF875 $A92BB0D6 $D7A0AAA6 $1A4B90D6 $E1EAC315 $B0CAF36 $5C33B3D6 $3802A936
+ $B3B4B34 $E1EAB875 $A8C730D6 $B1E8D3C6 $24F0B0C6 $803E7A5 $C900306 $44306006 $24F30F46
+ $8C898D4 $3862ADC5 $EDB85866 $59E7AAB6 $4C32B6E6 $DB42005 $D7A0AF36 $AB132F46 $DC3750D6
+ $1C1B194 $D67CADB5 $B494D9E6 $19251E76 $C90A306 $CF0A005 $1A491CF6 $4CF10796 $2C904F36
+ $4545444 $2BCC4AA5 $4C90FE76 $63CC8926 $5A4BAAB6 0
+
+
+#xdir 0 #ydir 0
+#fx #fy | 
+#xn #yn 
+#px #py
+#ex #ey
+#paso #minx #maxx
+#puntaje 0
+
+#sizenave 180
+
+:calibracion
+	12 'paso ! 100 'minx !	sw 100 - 'maxx !
+	sw 2/ 'xn ! sh 80 - 'yn ! ;
+	
+:choque
+	1 'puntaje +! -40 'ex +! -20 'ey +!	20 'px +! ;
+	
+:disparo
+	py -? ( drop ; ) 20 - 'py !
+	px py pos 40 dup dim 'bala rand rsprite
+	|ex ey whin 1? ( choque ) drop 
+	;
+		
+:iniene
+	rand $1ff and 40 + 'ey ! -100 'ex ! ;
+	
+:enemigo
+	rand $f and 'ex +! rand $3 and 1- 'ey +! 
+	ex sw 80 + >? ( iniene ) drop
+	ex ey pos 140 140 dim 'alien sprite 
+	px py whin 1? ( choque ) drop ;
+
+:rndf
+	rand $7 and 0? ( -1 )( 1 ) nip ;
+
+:fondoc
+	sw 2/ 'fx ! sh 2/ 'fy ! ;
+	
+:play 
+	inikey 'exit <=esc
+	[ py -? ( xn 'px ! yn 'py ! )( drop ) ; ] $39 >key
+	[ paso 'xdir ! ; ] $4d >key
+	[ paso neg 'xdir ! ; ] $4b >key
+	[ 0 'xdir ! ; ] dup $4d >ukey $4b >ukey	
+	iniene	
+	fondoc -1 'py ! iniene
+	show cls 
+		sw 40 + sh 100 + dim fx fy pos 'fondo sprite
+		16 16 screen 
+		blanco puntaje "G:%n " print
+		xn yn pos sizenave dup dim 'nave sprite
+		xdir 'xn +!
+		minx xn >? ( 'xn ! )( drop )
+		maxx xn <? ( 'xn ! )( drop )
+		enemigo disparo 
+|		rndf 'fx +! rndf 'fy +!
+|		fx sw 2/ - dup * fy sh 2/ - dup * +
+|		40 >? ( fondoc ) drop
+		;
+
+#fade 0
+:presenta
+    16 16 .table
+    4 9 .at 8 2 .to 
+    verde "JUGAR" 'play .tbtn .\ .\
+    rojo "SALIR" 'exit .tbtn 
+	.show cls
+		fade 64 >? ( 0 nip )( 1+ ) dup ink 'fade ! 
+		3 2 screen ":R4%/Games" print
+		16 16 screen blanco
+		1 7 pat "Tirale piedras a lo desconocido" print
+		8 8 screen 
+		negro 0 1 pat "Xenofobia" pcenter print
+		blanco 0 1 pat "Xenofobia" pcenter 8 8 +pos print
+		rojo 0 1 pat "Xenofobia" pcenter 4 4 +pos print		
+		negro 0 2 pat "Extraterrestre" pcenter print
+		blanco 0 2 pat "Extraterrestre" pcenter 8 8 +pos print
+		rojo 0 2 pat "Extraterrestre" pcenter 4 4 +pos print ;
+	
+:juego presenta "main.txt" run  ;
+
+: 0 paper calibracion juego ;

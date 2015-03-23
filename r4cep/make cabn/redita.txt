@@ -1,0 +1,335 @@
+|------------------
+| r-edita
+| 12/2006 phreda
+|
+^reda4.txt
+^medit.txt
+^gui.txt
+
+|----
+#dominios "Lenguaje" "Condicion" "Pila de Datos" "Pila de Direcciones"
+"Logicas" "Aritmeticas" "Memoria" "Sistema" "Pantalla" "Interaccion" "Color" "Dibujo" "Archivo"
+#ultdom )( 8192
+#lastdom 'ultdom
+
+|---- 
+#palabras ";" "(" ")" ")(" "[" "]" 
+"0?" "+?" "-?" "1?" "=?" "<?" ">?" "<=?" ">=?" "<>?" "EXEC" 
+"DUP" "DROP" "OVER" "PICK2" "PICK3" "PICK4" "SWAP" "NIP" "ROT"	|--- pila
+"2DUP" "2DROP" "3DROP" "4DROP" "2OVER" "2SWAP" 
+">R" "R>" "R" "R+" "R@+" "R!+" "RDROP"					|--- pila direcciones
+"AND" "OR" "XOR" "NOT"  								|--- logicas
+"+" "-" "*" "/" "*/" "/MOD" "MOD" "ABS"  				|--- aritmeticas
+"NEG" "1+" "4+" "1-" "2/" "2*" "<<" ">>" 
+"@" "C@" "W@" "!" "C!" "W!" "+!" "C+!" "W+!"  			|--- memoria
+"@+" "!+" "C@+" "C!+" "W@+" "W!+" 
+"MSEC" "TIME" "DATE" "END" "RUN" 						|--- sistema
+"BPP" "SW" "SH" "CLS" "REDRAW" "FRAMEV" "UPDATE" 		|--- pantalla
+"XYMOUSE" "BMOUSE" 
+"START!" "MOTION!" "END!" "KEYMAP" "UKEYMAP" 			|---- raton  teclado
+"PAPER" "INK" "INK@" "ALPHA"  							|--- color
+"OP" "CP" "LINE" "CURVE" "PLINE" "PCURVE" "POLI"		|--- dibujo
+"MEM" "DIR" "FILE" "LOAD" "SAVE"						|--- memoria bloques
+#ultimapal )( 8192 
+#lastpal 'ultimapal
+
+|---info usa.r produce.r usa.data produce.data tipo
+#infopal $0000 $0000 $0000 $0000 $0000 $0000
+$10001 $10001 $10001 $10001 $2f001 $2f001 $2f001 $2f001 $2f001 $2f001 $1f100
+$11102 $1f102 $21102 $31102 $41102 $51102 $20102 $2f102 $30102
+$42102 $2e102 $3d102 $4c102 $42102 $40102
+$11f103 $f01103 $1001103 $101f103 $1001103 $101f103 $f00303
+$2f104 $2f104 $2f104 $2f104
+$2f105 $2f105 $2f105 $2f105 $3e105 $20105 $21105 $10105
+$10105 $10105 $10105 $10105 $10105 $10105 $2f105 $2f105
+$10106 $10106 $10106 $2e106 $2e106 $2e106 $2e106 $2e106 $2e106
+$11106 $2f106 $11106 $2f106 $11106 $2f106
+$1107 $3107 $3107 $100000107 $10001f107
+$1108 $1108 $1108 $108 $108 $1108 $108
+$2109 $1109
+$1f109 $1f109 $1f109 $1109 $1109
+$1f10a $1f10a $110a $1f10a
+$2e10b $2e10b $2e10b $2e10b $2e10b $2e10b $10b
+$110c $1f10c $1010c $2f10c $3e10c
+#ultimainf )( 2048
+#lastinf 'ultimainf
+
+#inddom )( 512		|--- indice de dominios
+#inddom> 'inddom
+
+#indpal )( 2048		|--- indice de palabras
+#indpal> 'indpal
+
+#nombre	"codigo.txt" )( 50 
+
+#ifin ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iok ( -79 -14 -63 -28 -7 36 65 -76 89 -44 17 68 1 102 -15 70 -79 -12 0 )
+#ishift ( -94 -95 4 -27 100 37 4 101 1 -92 0 )
+
+|--- Fuente
+#fuente )( 8192
+#fuente> 'fuente
+#fcursor> 'fuente
+|--- Dato
+#dato )( 8192
+#dato> 'dato
+#dcursor> 'dato
+
+:+comentario
+	;
+:+cadena 
+	;
+:+definicion
+	;	
+:+variable
+	;
+:+include
+	;
+:+numero | nro --
+	fuente> !+ 'fuente> !
+	;
+:+direccion
+	;
+:+palabra
+	;
+	
+|---- Diccionarios
+:haceindices 
+	'palabras 'indpal
+	( over c@ 1? )(
+		drop over swap !+ swap 
+		( c@+ 1? )( drop ) drop swap 
+		) drop dup 'indpal> ! 0 swap ! drop 
+	'dominios 'inddom
+	( over c@ 1? )(
+		drop over swap !+ swap 
+		( c@+ 1? )( drop ) drop swap 
+		) drop |dup 'inddom> ! 0 swap ! drop | 
+		'inddom> ! 0 inddom> ! drop 
+	;
+
+:clearall
+	0 'ultimapal ! 0 'ultdom !
+	haceindices
+	'ultimapal 'lastpal  ! 'ultimainf 'lastinf ! ;
+
+|---- Informacion de cada palabra	
+:clearstat
+	'infopal ( lastinf <? )( dup @ $ffff and swap !+ ) drop	;
+
+:impinfon | nro -- ru rp du dp tipo
+	2* 2* 'infopal + @ ;
+	
+|---- Agrega palabra al diccionario	
+:copyn | src buf -- src' buf'
+    swap ( c@+ 32 >? )( toupp rot c!+ swap ) drop 0 rot c!+ ;
+
+:definepal | addr -
+	lastpal indpal> !+ 'indpal> ! 0 indpal> !
+	lastpal copyn 'lastpal ! ;
+	
+:definedom | addr -
+	lastdom 'inddom> !+ 'inddom> ! 0 inddom> !
+	lastdom copyn 'lastdom ! ;
+
+|----
+:include
+
+	;
+:variable
+	
+	;
+:define
+	;
+	
+|---- Texto gretis
+#texl )( 1024 | 1k de texto
+#texl> 'texl
+
+:instl | c --
+	texl> c!+ 'texl> ! ;
+
+
+#tl1 "7" "8" "9" "A" "B" "C" "D" "E" "F" "G" "H" "I"
+	 "4" "5" "6" "J" "K" "L" "M" "N" "O" "P" "Q" "R"
+	 "1" "2" "3" "S" "T" "U" "V" "W" "X" "Y" "Z" "."
+	 " " "0" "_" "+" "-" "*" "/" "\" "!" "@" "&" ","
+
+#tl2 ":" ";" "|" "a" "b" "c" "d" "e" "f" "g" "h" "i"
+	 """" "'" "^" "j" "k" "l" "m" "n" "o" "p" "q" "r"
+	 "#" "$" "%" "s" "t" "u" "v" "w" "x" "y" "z" "`"
+	 " " "?" "=" "<" ">" "(" ")" "[" "]" "{" "}" "~"
+
+#tlk 'tl1
+
+:tecladraw  | n --
+	-2 dup +dim
+	rcaja ink@ blanco swap 1 1 ttext 
+	2* tlk + pcenter printx
+	|-8 dup +dim 4 dup +pos $7f alpha rcaja $ff alpha
+	ink 
+	;
+	
+:teclaclick | n --
+	2* tlk + c@ instl ;
+
+	
+:comentario
+	'texl 'texl> ! 0 texl> c!
+	|m.clear
+	.page 12 12 .table 0 11 .at 
+	|'texl m.ini	
+	rojo oscuro 'ifin 'exit dup =>esc .sbtn .>
+	verde oscuro 'iok 'exit dup <=f1 .sbtn .>
+	'ishift [ tlk 'tl1 =? ( 'tl2 )( 'tl1 ) nip 'tlk ! ; ] .sbtn .>
+	amarillo oscuro
+	0 7 .at 12 4 .to 'tecladraw 'teclaclick 12 4 .btabla 
+	.show cls
+		12 12 screen 1 6 pat 'texl print 
+		|0 1 pat 12 10 ptowin m.print 
+		;
+		
+:cadena
+	'texl 'texl> ! 0 texl> c!
+	.page 12 12 .table 0 11 .at 
+	rojo oscuro 'ifin 'exit dup =>esc .sbtn .>
+	verde oscuro 'iok 'exit dup <=f1 .sbtn
+	amarillo oscuro
+	0 7 .at 12 4 .to 'tecladraw 'teclaclick 12 4 .btabla 
+	.show cls
+		12 12 screen  1 6 pat 'texl print ;
+		
+|---- Dominios
+#esdominio 0
+#dopal 0
+#indexdom )( 512
+#indexdom> 'indexdom
+
+:domdraw | n --
+	verde oscuro esdominio =? ( rcaja blanco )
+	2* 2* 'inddom + @ 0? ( drop ; )
+	8 1 ttext pcenter print ; |	1+ "%h" print ;
+
+:domclick | n --
+	dup 'esdominio ! 
+	'indexdom >r
+	'infopal ( lastinf <? )( @+ $ff and |********** 255 dominios
+			pick2 =? ( over 'infopal - 4 - 'indpal + @ r!+ )
+			drop ) 2drop
+	r> dup 'indexdom> ! 'indexdom - 2/ 2/
+	dopal <=? ( 1- 'dopal ! )( drop ) ;
+	
+|---- Palabras	
+:paldraw | n --
+	cyan oscuro dopal =? ( rcaja blanco )
+	2* 2* 'indexdom + indexdom> >=? ( drop ; )
+	8 1 ttext @ pcenter print ; |	 1+ "%h" print ;
+	
+:palclick | n --
+	'dopal ! ;
+
+|---- Codigo
+#docod
+
+:coddraw | n --
+	docod =? ( rcaja blanco )
+	drop 
+	;
+	
+:codclick | n --
+	'docod ! ;
+	
+	
+:palabra
+	0 domclick
+	.page 12 12 .table
+	0 11 .at 
+	rojo oscuro 'ifin 'exit dup =>esc .sbtn .>
+	verde oscuro 'iok 'exit dup <=f1 .sbtn
+	24 24 .table azul oscuro 	
+	5 1 .at 6 20 .to 'paldraw 'palclick 1 20 .btabla
+	48 24 .table cyan oscuro
+	0 1 .at 10 20 .to 'domdraw 'domclick 1 20 .btabla
+	.show cls 24 24 screen 0 0 pat 
+		azul oscuro 24 1 ptofill
+	|	verde oscuro 5 1 pat 6 20 ptofill
+		blanco 
+		0 0 pat "Dominio" print
+		5 0 pat "Palabras" print
+		14 0 pat "Codigo" print
+		18 0 pat dup "%n" print
+		|'indexdom indexdom> - dup 
+		|"%n %n" print
+		;
+
+:direccion
+	;
+	
+#nro 0
+#nrom 10
+#nroe 0
+	
+:digs | n --
+	nrom >=? ( drop ; )
+	nro nrom * + 'nro ! ;
+	
+:numero
+	.page 12 12 .table 0 11 .at 
+	rojo oscuro 'ifin 'exit dup =>esc .sbtn .>
+	verde oscuro 'iok [ nro +numero exit ; ] dup <=f1 .sbtn .>
+	azul oscuro "CLR" [ 0 'nro ! ; ] .2btn
+	1 7 .at amarillo oscuro
+	"7" [ 7 digs ; ] .2btn .> "8" [ 8 digs ; ] .2btn .> "9" [ 9 digs ; ] .2btn .> "A" [ $a digs ; ] .2btn .>
+	1 8 .at 
+	"4" [ 4 digs ; ] .2btn .> "5" [ 5 digs ; ] .2btn .> "6" [ 6 digs ; ] .2btn .> "B" [ $b digs ; ] .2btn .>
+	1 9 .at 
+	"1" [ 1 digs ; ] .2btn .> "2" [ 2 digs ; ] .2btn .> "3" [ 3 digs ; ] .2btn .> "C" [ $c digs ; ] .2btn .>
+	1 10 .at 
+	"0" [ 0 digs ; ] .2btn .> "F" [ $f digs ; ] .2btn .> "E" [ $e digs ; ] .2btn .> "D" [ $d digs ; ] .2btn .>
+	0 7 .at verde oscuro
+	"+/-" [ nro neg 'nro ! ; ] .2btn .\
+	"DEC" [ 10 'nrom ! ; ] .2btn .\ "HEX" [ 16 'nrom ! ; ] .2btn .\ "BIN" [ 2 'nrom ! ; ] .2btn .\
+	.show cls
+		12 12 screen
+		0 6 pat 
+		nrom 10 =? ( "%n" )( 16 =? ( "$%h" )( "%%%b" ) ) nip
+		nro swap print
+		;
+		
+|------- dibuja codigo
+:do
+	.page 12 12 .table 0 11 .at 
+	rojo oscuro 'ifin 'exit dup =>esc .sbtn .>
+	azul oscuro "^" [ include ; ] dup <=f1 .2btn .>
+	violeta oscuro "#" [ variable ; ] dup <=f2 .2btn .>
+	rojo oscuro ":" [ define ; ] dup <=f3 .2btn .>
+	verde oscuro "A" [ palabra ; ] dup <=f7 .2btn .>	
+	cyan oscuro "'A" [ direccion ; ] dup <=f4 .2btn .>	
+	amarillo oscuro "123" [ numero ; ] dup <=f8 .2btn .>	
+	blanco oscuro """" [ cadena ; ] dup <=f5 .2btn .>	
+	gris oscuro "|" [ comentario ; ] dup <=f6 .2btn .>
+	.show cls 
+|		12 12 screen 0 0 pat nexttime ftime "%n %n" blanco print
+		12 12 screen 1 0 pat
+		blanco blink 1? ( rcaja ) drop
+		32 32 screen 0 28 pat dup "%n" print
+		0 3 pat cyan
+		'fuente ( fuente> <? )( @+ "%n " print ) drop 
+		azul claro
+		'indpal ( indpal> <? )( @+ "%s " print ) drop 
+		verde oscuro
+		'inddom ( inddom> <? )( @+ "%s %/" print claro ) drop 
+		|dup tocado "%n %n" blanco print 
+		|drawd
+		;
+	
+:main
+	clearall
+	".\codigo\" dir
+	'nombre "r4codigo.nom" load drop
+	33 do
+|	loadtxt pantalla savetxt 
+	".\" dir	
+	"main.txt" run ;
+	
+: main ;

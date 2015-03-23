@@ -1,0 +1,67 @@
+| Manuel Cornes
+| :r4 clock
+
+| These are includes, any words defined in these two files that are prefixed with ::
+| are visible from this file
+^reda4.txt
+^gui.txt
+
+| variables definitions
+#stick #oldsec #xc #yc
+
+| load tick sound
+:load_sound "tick.wav" sload 'stick ! ;
+
+| initialize (xc,yc) = center of clock
+:center sw 2/ 'xc ! sh 2/ 80 - 'yc ! ;
+
+| used to get coordinates of point belonging to a circle centered on (xc,yc)
+| of radius r, at angle 'angle'
+:ccircle_ | ... r angle -- ... x y
+	>r >r xc yc r> r> ccircle ;
+
+| draws a segment of a radius
+:lineclock2 | ... angle r1 r2 -- ...
+	pick2 >r r ccircle_ op r> ccircle_ line drop ;
+
+#gaju
+
+:lineclock | ... angle r1 r2 -- ...
+	pick2 >r r ccircle_  | r1 x y  
+	rot r> ccircle_ 
+	gaju glineg
+	drop ;
+
+| draws clock lines
+:lines	0 ( 12 <? )( dup 2048 12 / * 190 200 lineclock 1 + ) drop ;
+
+| to calculate angle of second, minute and hour arm
+| h m s -- h m s basis val
+:second 60 over ;
+:minute over >r second swap 60 * swap 60 r> * + ;
+:hour pick2 >r minute swap 12 * swap r> 3600 * + ;
+
+| gets angle value from (basis,val)
+:angle | (... basis num | ... angle)
+	$7ff * swap / $7ff 2/ swap - ;
+
+:arm | h m s basis val size -- h m s
+	'gaju !
+	>r angle r> 0 lineclock ;
+
+:start
+	.page
+	'exit <esc>
+	time 'oldsec ! 2drop
+	center
+	.show cls
+		blanco
+		time oldsec <>? ( stick splay dup 'oldsec ! )
+		lines
+		rojo hour 100 10 arm
+		blanco
+		minute 160 6 arm
+		second 180 2 arm
+		3drop ;
+
+: 0 paper load_sound start "main.txt" run ;

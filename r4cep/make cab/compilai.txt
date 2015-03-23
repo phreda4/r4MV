@@ -1,0 +1,515 @@
+| compilador de nada
+| 9/2006 pabloreda
+
+#dato )( 8192 | 8k de datos
+#dato> 'dato
+#prog )( 8192 | 8k de programa
+#prog> 'prog
+
+|--- Pilas
+#PSP )( 1024 
+#RSP )( 1024
+#IP 0	#TOS 0	#NOS 'PSP  #RTOS 'RSP
+		
+|--Pila
+:iDUP	4 'NOS +! TOS NOS ! ;
+:iDROP	NOS @ 'TOS !
+:iNIP	-4 'NOS +! ;
+:i2DROP	NOS 4 - @ 'TOS ! -8 'NOS +! ;
+:i3DROP	NOS 8 - @ 'TOS ! -12 'NOS +! ;
+:i4DROP	NOS 12 - @ 'TOS ! -16 'NOS +! ;
+:iSWAP  NOS @ TOS 'NOS ! 'TOS ! ;
+:iROT	TOS NOS 4 - @ 'TOS ! NOS @ NOS 4 - ! NOS ! ;
+:iOVER	iDUP NOS 4 - @ 'TOS ! ;
+:iPICK2	iDUP NOS 8 - @ 'TOS ! ;
+:iPICK3	iDUP NOS 12 - @ 'TOS ! ;
+:iPICK4	iDUP NOS 16 - @ 'TOS ! ;
+:i2DUP	iOVER iOVER ;
+:i2OVER	iPICK3 iPICK3 ;
+:i2SWAP	TOS NOS 4 - dup @ 'TOS ! ! ;
+|-- Internas
+:i;		RTOS @ 'IP ! -4 'RTOS ! ;
+:iLIT	iDUP IP @ 'TOS ! 4 'IP +! ;
+:iADR	iDUP IP @ @ 'TOS ! 4 'IP +! ; | <-?
+:iCALL	4 'RTOS +! IP dup 4+ RTOS ! @ 'IP ! ;
+:iJMP	IP @ 'IP ! ;
+|-- condicionales
+:i0?	IP @ 4 'IP +! TOS 1? ( over 'IP ! ) 2drop ;
+:i+?	IP @ 4 'IP +! TOS -? ( over 'IP ! ) 2drop ;
+:i-?	IP @ 4 'IP +! TOS +? ( over 'IP ! ) 2drop ; 
+:i1?	IP @ 4 'IP +! TOS 0? ( over 'IP ! ) 2drop ;
+:i=?	IP @ 4 'IP +! NOS @ TOS <>? ( over 'IP ! ) 2drop iDROP ;
+:i<?	IP @ 4 'IP +! NOS @ TOS >=? ( over 'IP ! ) 2drop iDROP ;
+:i>?	IP @ 4 'IP +! NOS @ TOS <=? ( over 'IP ! ) 2drop iDROP ;
+:i<=?	IP @ 4 'IP +! NOS @ TOS >? ( over 'IP ! ) 2drop iDROP ;
+:i>=?	IP @ 4 'IP +! NOS @ TOS <? ( over 'IP ! ) 2drop iDROP ;
+:i<>?	IP @ 4 'IP +! NOS @ TOS =? ( over 'IP ! ) 2drop iDROP ;
+|-- exec
+:iEXEC	TOS iDROP 1? ( 4 'RTOS +! IP RTOS ! 'IP ! ) drop ;
+:i>R	4 'RTOS +! TOS RTOS ! iDROP ;
+:iR>	iDUP RTOS @ 'TOS !
+:iRDROP	-4 'RTOS +! ;
+:iR		iDUP RTOS @ 'TOS ! ;
+:iAND	NOS @ TOS and 'TOS ! iNIP ;
+:iOR	NOS @ TOS or 'TOS ! iNIP ;
+:iXOR	NOS @ TOS xor 'TOS ! iNIP ;
+:iNOT	TOS not 'TOS ! ;
+:i+		NOS @ TOS + 'TOS ! iNIP ;
+:i-		NOS @ TOS - 'TOS ! iNIP ;
+:i*		NOS @ TOS * 'TOS ! iNIP ;
+:i%		NOS @ TOS /mod NOS ! 'TOS ! ;
+:iNEG	TOS neg 'TOS ! ;
+:i<<	NOS @ TOS << 'TOS ! iNIP ;
+:i>>	NOS @ TOS >> 'TOS ! iNIP ;
+|--- mem
+:i@		TOS @ 'TOS ! ;
+:i!		NOS @ TOS ! iNIP iDROP ; 
+:i+!	NOS @ TOS +! iNIP iDROP ;
+:i@+	iDUP 4 NOS @ +! TOS @ ;
+:i!+	NOS @ TOS ! iNIP 4 'TOS +! ;
+|---sis
+:iMSEC		iDUP msec 'TOS ! ; 
+:iTIME		iDUP iDUP iDUP TIME NOS 4 - !+ !+ ! ; | NOS ! 'TOS ! ;
+:iDATE		iDUP iDUP iDUP DATE NOS 4 - !+ !+ ! ; | NOS ! 'TOS ! ;
+:iBPP		iDUP bpp 'TOS ! ;
+:iSW		iDUP sw 'TOS ! ;
+:iSH		iDUP sh 'TOS ! ; 
+:iFRAMEV	iDUP framev 'TOS ! ; 
+:iREDRAW	redraw ;
+:iEND		0 'IP ! ; 
+:iRUN		0 'IP ! ; | falta guardar nombre
+:iUPDATE	update ;
+:iSTART!	TOS start! iDROP ;
+:iMOTION!	TOS motion! iDROP ;
+:iEND!		TOS end! iDROP ;
+:iKEYMAP	keymap ;
+:iUKEYMAP 	ukeymap ;
+:iDIR		TOS dir iDROP ;  
+:iFILE		TOS file 'TOS ! ; 
+:iLOAD		NOS @ TOS load 'TOS ! iNIP ; 
+:iSAVE		NOS 4 - @ NOS @ TOS save iDROP iDROP iDROP ;  
+:iMEM		iDUP mem 'TOS ! ;
+:iNOP	;
+
+#tablai 'i; 'iLIT 'iADR 'iCALL 'iJMP 'iNOP					| 0..5
+	'i0? 'i+? 'i-? 'i1? 'i=? 'i<? 'i>? 'i<=? 'i>=? 'i<>?	| 6..15
+	'iEXEC 'iDUP 'iDROP 'iOVER 'iSWAP 'iNIP 'iROT		|15..21
+	'iPICK2 'iPICK3 'iPICK4 'i2DUP 'i2OVER 'i2SWAP  	|22..27
+	'i>R 'iR> 'iR 'iRDROP								|28..31
+	'iAND 'iOR 'iXOR 'iNOT 'i+ 'i- 'i* 'i%  			|32..39
+	 'iNEG 'i<< 'i>>	 								|40..42
+	'i@ 'i! 'i+! 'i@+ 'i!+ 								|43..47
+	'iMSEC 'iTIME 'iDATE 'iEND							|48..51
+	'iRUN 'iBPP 'iSW 'iSH 'iREDRAW 'iFRAMEV 'iUPDATE	|52..58
+	'iSTART! 'iMOTION! 'iEND! 'iKEYMAP 'iUKEYMAP 		|59..63
+	'iDIR 'iFILE 'iLOAD 'iSAVE 'iMEM					|64..68
+
+#finprog ( 52 ) | end
+
+::resetvm 
+	'RSP 'RTOS ! 'finprog RTOS !	|....END
+	'PSP 'NOS ! 0 NOS ! 0 'TOS ! ;
+
+::interpreta | addr -- ok / error
+	| resetvm
+	'prog dup 'IP !
+	( 1? )( c@ 1 'IP +! 2* 2* 'tablai + @ exec IP ) drop ;
+
+|--- diccionario de palabras
+#palabras ";" "(" ")" ")(" "[" "]" 
+"0?" "+?" "-?" "1?" "=?" "<?" ">?" "<=?" ">=?" "<>?" 
+"EXEC" 
+"DUP" "DROP" "OVER" "PICK2" "PICK3" "PICK4" "SWAP" "NIP" "ROT"  |--- pila
+"2DUP" "2DROP" "3DROP" "4DROP" "2OVER" "2SWAP" 
+">R" "R>" "R" "R+" "R@+" "R!+" "RDROP" |--- pila direcciones
+"AND" "OR" "XOR" "NOT"  |--- logicas
+"+" "-" "*" "/" "*/" "/MOD" "MOD" "ABS"  |--- aritmeticas
+"NEG" "1+" "4+" "1-" "2/" "2*" "<<" ">>" 
+"@" "C@" "W@" "!" "C!" "W!" "+!" "C+!" "W+!"  |--- memoria
+"@+" "!+" "C@+" "C!+" "W@+" "W!+" 
+"MSEC" "TIME" "DATE" "END" "RUN" |--- sistema
+"BPP" "SW" "SH" "CLS" "REDRAW" "FRAMEV" "UPDATE" |--- pantalla
+"XYMOUSE" "BMOUSE" 
+"START!" "MOTION!" "END!" "KEYMAP" "UKEYMAP" 	|---- raton  teclado
+"COLORF" "COLOR" "COLOR@" "ALPHA"  |--- color
+"OP" "CP" "LINE" "CURVE" "PLINE" "PCURVE" "POLI" |--- dibujo
+"MEM" "DIR" "FILE" "LOAD" "SAVE" |--- memoria bloques
+#ultimapal )( 8192 
+#lastpal 'ultimapal
+|--- indice
+#indicepal )( 2048
+#indice> 'indicepal
+
+:cntpal
+	indice> 'indicepal - 2/ 2/ ;
+
+
+|--- locales
+#ultimapall )( 8192
+#lastpall 'ultimapall
+#indicepall )( 2048
+#indicel> 'indicepall
+
+|---info usa.r produce.r usa.data produce.data tipo
+#infopal $000 $000 $000 $000 $000 $000
+$100 $100 $100 $100 $2f0 $2f0 $2f0 $2f0 $2f0 $2f0
+$1f1
+$111 $1f1 $211 $311 $411 $511 $201 $2f1 $301
+$421 $2e1 $3d1 $4c1 $421 $401
+$11f1 $f011 $10011 $101f1 $10011 $101f1 $f001
+$2f1 $2f1 $2f1 $2f1
+$2f1 $2f1 $2f1 $2f1 $3e1 $201 $211 $101
+$101 $101 $101 $101 $101 $101 $2f1 $2f1
+$101 $101 $101 $2e1 $2e1 $2e1 $2e1 $2e1 $2e1
+$111 $2f1 $111 $2f1 $111 $2f1
+$11 $31 $31 $1000001 $10001f1
+$11 $11 $11 $1 $1 $11 $1
+$21 $11
+$1f1 $1f1 $1f1 $11 $11
+$1f1 $1f1 $11 $1f1
+$2e1 $2e1 $2e1 $2e1 $2e1 $2e1 $1
+$11 $1f1 $101 $2f1 $3e1
+#ultimainf )( 2048
+#lastinf 'ultimainf
+#ultimainfl )( 2048
+#lastinfl 'ultimainfl
+#[estado] 0 | main var def
+
+|--- includes
+#includes )( 2048
+#includes> 'includes
+#indexinc )( 512
+#indexinc> 'indexinc
+#incmem )( 512
+#incmem> 'incmem
+#:coderesult 0
+
+:i,	includes> c!+ 'includes> ! ;
+
+:cpy, 	
+	( c@+ 1? )( 33 <? ( drop 0 i, ; ) toupp i, ) i, ;
+	
+:include? | s -- adr/0
+	'indexinc ( indexinc> <? )(
+		@+ pick2 strcmp 1? ( drop nip 4 - ; ) drop 
+		) 2drop 0 ;
+:escom
+    ( c@+ 1? )( 14 <? ( drop ; ) drop ) drop 1- ;
+:escad
+    ( c@+ 1? )( 34 =? ( drop c@+ 34 <>? ( drop ; ) ) drop ) drop 1- ;
+:esnad
+    ( c@+ 1? )( 33 <? ( drop ; ) drop ) drop 1- ;
+
+:esinc 	| a -- a' incluye codigo
+	1+ dup include? 1? ( drop esnad ; ) drop
+	includes> indexinc> !+ 'indexinc> ! 
+	cpy, here dup incmem> !+ 'incmem> !
+	indexinc> 4 - @ load 0 swap c!+ 'here !	;
+	
+:includepal | str -- str'
+	( dup c@ 33 <? )( 0? ( ; ) drop 1+ ) | quitar espacios
+	$7c =? ( drop escom ; )		| $7c |	 Comentario
+	$22 =? ( drop escad ; )		| $22 "	 Cadena		
+	$5e =? ( drop esinc ; )		| $5e ^  Include	
+	drop esnad ;
+
+:loadincludes | fuente --
+	clear 
+	'indexinc 'indexinc> !
+	'incmem 'incmem> !
+	'includes 'includes> !
+	( includepal 0? ) 2drop |c@ ,n |1? ( error ) 
+	0 ( drop indexinc>
+		'incmem ( incmem> <? )( @+ ( includepal 0? ) 2drop ) drop
+		indexinc> =? ) drop	
+	here 'coderesult ! ;
+
+|----- pila de compilador
+#nuevas
+#pilac )( 1024
+#pilac> 'pilac
+
+:inipilac 'pilac 'pilac> ! ;
+:>pilac pilac> !+ 'pilac> ! ;
+:<pilac -4 'pilac> +! pilac> @ ;
+:anida pilac> 'pilac - ;
+
+|---- Diccionarios
+:haceindice 
+	'palabras 'indicepal
+	( over c@ 1? )(
+		drop over swap !+ swap 
+		( c@+ 1? )( drop ) drop swap 
+		) drop 'indice> ! 0 indice> ! drop 
+	cntpal 'nuevas ! ;
+
+:clearall
+	0 'ultimapal !
+	haceindice 
+	inipilac 0 'prog> ! 0 'dato> !
+	'ultimapal 'lastpal  ! 'ultimainf 'lastinf !  
+:clearlocal
+	'ultimapall 'lastpall !
+	'indicepall 'indicel> ! 0 indicel> ! ;
+	
+:clearstat
+	'infopal ( lastinf <? )( dup @ $ffff and swap !+ ) drop	;
+	
+|---- Agrega palabra al diccionario	
+:copyn | src buf -- src' buf'
+    swap ( c@+ 32 >? )( toupp rot c!+ swap ) drop 0 rot c!+ ;
+
+:definepal 
+	lastpal indice> !+ 'indice> ! 0 indice> !
+	lastpal copyn 'lastpal ! ;
+	
+:definepall
+	lastpall indicel> !+ 'indicel> ! 0 indicel> !
+	lastpall copyn 'lastpall ! ;
+
+:impinfon | nro -- ru rp du dp tipo
+	2* 2* 'infopal + @ ;
+
+
+|---- palabras de la memoria
+:m8 | nro8 --
+	dato> c!+ 'dato> ! ;
+:m16 | nro16 --
+	dato> w!+ 'dato> ! ;
+:m32 | nro32 --
+	dato> !+ 'dato> ! ;
+:mcnt | nro --
+	'dato> +! ;
+
+#salto 0	
+#[unidad] 'm32
+
+|---- palabras del codigo
+:g | code --
+	prog> c!+ 'prog> ! ;
+
+:c;	0 g ; :cLIT	1 g ; :cADR	2 g ; :cCALL	3 g ; :cJMP	4 g ;
+:cDUP	16 g ; :cDROP	17 g ; :cNIP	20 g ;
+
+:32g | nro32 -- 
+	prog> !+ 'prog> ! ;
+	
+:hole		prog> >pilac 4 'prog> +! ;
+:holefix	prog> <pilac ! ;
+
+:label		prog> >pilac ;
+:labelfix	<pilac 32g ;
+
+:macro;		c; 0 'salto ! ; | anida 0? ( ) drop
+:macro(		salto 1? ( hole 1 )( label 2 ) >pilac drop ;
+:macro)(	<pilac salto 0? ( drop 
+				1 =? ( drop cJMP hole <pilac holefix >pilac 1 >pilac ; )
+			)( drop 
+				2 =? ( drop <pilac hole >pilac 3 >pilac ; ) ) drop
+			")( error" ,s ;
+:macro)		<pilac salto 0? ( drop 
+				1 =? ( drop holefix ; ) 
+				2 =? ( drop cJMP labelfix ; ) 
+				3 =? ( drop cJMP labelfix holefix ; )
+			)( drop	
+				2 =? ( drop labelfix ; ) ) drop
+			") error" ,s ;
+:macro[ ;
+:macro] ;
+
+#macros 'macro; 'macro(	'macro)( 'macro) 'macro[ 'macro] ;
+
+|----  COMENTARIO
+:escomentario | a -- a' saltea comentario
+	( c@+ 1? )( 13 =? ( drop 1- ; ) drop ) drop 1- ;
+
+|----  CADENA DE CARACTERES
+:avncad | add --  "....."",..."
+	1+ ( c@+ 1? )( 34 =? ( drop c@+ 34 <>? ( drop 0 m8 ; ) ) m8 ) m8  1- ; 
+	
+:escadena | a -- a' graba cadena
+	0 'salto ! 
+	[estado] 1? ( cLIT dato> 32g ) drop
+	avncad ;
+
+|--------------------    	
+
+|:cdef	| agregar otra definicion
+|	1+ prog> swap definew |	nextw, " " ,s 
+|	;
+
+:esdefinicion | a -- a' define palabra
+	| si hay definicion, apilar como pendiente de calculo
+	1 '[estado] !
+	1+ dup c@ $3a =? ( drop 1+ definepal ; ) drop	
+	definepall 
+    ;
+
+|--------------------    
+| agregar otra variable (adentro de una definicion sale)
+|:cvar	| agregar otra variable (adentro de una definicion sale)
+|	1+ dato> swap definev |	nextw, " " ,s 
+|	( palabra 1? )( 1- 2 << 'veccomps + @ exec ) drop ;	| hasta ; o : o fin
+
+:esvariable | a -- a' define variable
+	0 '[estado] ! 'm32 '[unidad] !
+	1+ dup c@ $3a =? ( drop 1+ definepal ; ) drop
+	definepall 
+    ;
+
+|--------------------    
+#deferpalabra 0
+#includeactual
+
+:esinclude	| a -- a' incluye codigo
+	1+ dup include? 1? ( 
+		dup 'includeactual !
+		'indexinc - 'incmem + 
+		dup @ 1? ( 0 rot ! | solo parsea una vez
+			( deferpalabra exec 0? ) |over c@ 0? ( "<ok>" )( "<err>" ) ,s 
+			|drop 
+			) drop  
+		) drop
+	( c@+ 1? )( 33 <? ( drop 1- ; ) drop ) drop 1- ; | NO AQUI!
+	
+|-------------------	
+:esnumero | adr nro -- adr
+	[estado] 0? ( swap [unidad] exec )( cLIT 32g 0 'salto ! ) 
+	drop ; 
+
+|-------------------	
+:spal 
+	0 =? ( drop 2 '[estado] ! ; )							| ;
+	1 =? ( drop [unidad] >pilac 'm8 '[unidad] ! ; ) 	| (
+	2 =? ( drop 'mcnt '[unidad] ! ; )					| )(
+	3 =? ( drop <pilac '[unidad] ! ; )				| )
+	4 =? ( drop [unidad] >pilac 'm16 '[unidad] ! ; )	| [
+	5 =? ( drop <pilac '[unidad] ! ; )				| ]
+	drop "defvar error " ,s  ;
+	
+:cpal | dir num -- dir
+	6 <? ( 1- 2* 2* 'macros + @ exec ; )	| macro
+	16 <? ( 1 )( 0 ) 'salto !				| condicionales
+	nuevas <? ( 1- g 						| primitivas
+		)( | direccion compilado
+		cCALL 32g )
+	;
+
+:espalabra | adr nro -- adr
+	[estado] 0? ( 'spal )( 'cpal ) nip exec ; 
+	
+|-------------------
+:espalabral | adr nro -- adr
+	| direccion compilado
+	cCALL 32g 
+	; 
+
+|-------------------	
+:esdir	
+	[estado] 0? ( swap m32 )( cLIT swap 32g 0 'salto ! ) 
+	drop ;
+
+|-------------------
+:esdirl
+	cLIT 32g 
+	0 'salto ! ;
+	
+|--- Parse
+:base | str -- str base
+	dup c@ | str c 
+	$24 =? ( drop 1+ 16 ; )	| $ hexa $24
+	$25 =? ( drop 1+ 2 ; ) 	| % bin  $25
+	drop 10 ;
+
+:signo | str -- str signo
+	dup c@ 
+	$2b =? ( drop 1+ 1 ; )	| + $2b
+	$2d =? ( drop 1+ -1 ; )	| - $2d
+	drop 1 ;
+
+:digito | str c --  dig / -1
+	$3A <? ( $30 - ; )			| 0..9
+	$60 >? ( $57 - ; )			| a
+	$40 >? ( $37 - ; )			| A
+	drop -1 ;
+
+:?numero | ( str -- str' nro 1 / 0 )
+	signo swap base swap 							| -1 10 str
+	dup c@ 33 <? ( 4drop 0 ; ) drop
+	0 ( over c@ 32 >? )( 
+		digito -? ( drop 4drop 0 ; )				| -1 10 str 0 dig
+		pick3 1- >? ( drop 4drop 0 ; )				| -1 10 str 0 dig
+		swap pick3 * +								| -1 10 str dig+0*10
+		swap 1+ swap )
+	drop rot drop rot * 1 ;	
+
+	
+:?palabra | str -- str' nro 1 / str 0
+	'indicepal ( @+ 1? )( 			| str w pal
+		pick2 =word= 1? (				| str maindic dir 1
+			drop rot drop swap 		| dir maindic
+			'indicepal - 2/ 2/ 1 ; )
+		drop ) nip nip ;					| str md+4 pal'
+		
+:?palabral
+	'indicepall ( @+ 1? )( 			| str w pal
+		pick2 =word= 1? (				| str maindic dir 1
+			drop rot drop swap 		| dir maindic
+			'indicepall - 2/ 2/ 1 ; )
+		drop ) nip nip ;					| str md+4 pal'
+
+|--- busca palabra
+:palabra | str -- str' tipo \finOk-0/com/cad/def/var/inc/dir/num/pal/error
+	( dup c@ 33 <? )( 0? ( ; ) drop 1+ ) | quitar espacios
+	$7c =? ( drop escomentario ; )		| $7c |	 Comentario
+	$22 =? ( drop escadena ; )			| $22 "	 Cadena		
+	$3A =? ( drop esdefinicion ; )		| $3a :  Definicion  
+	$23 =? ( drop esvariable ; )		| $23 #  Variable
+	$5e =? ( drop esinclude ; )			| $5e ^  Include
+	$27 =? ( drop 1+ dup 				| $27 ' Direccion  -- adr nro 6	
+		?palabral 1? ( drop rot drop esdir ; ) drop dup
+		?palabra 1? ( drop rot drop esdirl ; )	; )
+	drop dup ?numero  1? ( drop rot drop esnumero ; )
+	drop dup ?palabral 1? ( drop rot drop espalabral ; )
+	drop dup ?palabra 1? ( drop rot drop espalabra ; )
+	;
+
+|----------------------------------------------
+::dumpwords
+	verde 'indicepal ( @+ 1? )( "%s " print ) 2drop "%/" print 
+	azul 'indicepall ( @+ 1? )( "%s " print ) 2drop 
+|	'pilac ( pilac> <? )( @+ "%n " print ) drop 
+	"%/" print 
+	'indexinc ( indexinc> <? )( dup 'indexinc - 'incmem + @ swap
+		@+ verde "%s " print swap 1? ( "x" )( "o" ) rojo prints drop
+		) drop	
+	indice> 'indicepal - 2/ 2/ "%/%n palabras " print
+	indicel> 'indicepall - 2/ 2/ "%n locales" print
+		
+|	"i1.txt" include? 1? ( 'indexinc - 'incmem + @ prints )( drop )
+	;
+	
+::compila | addr -- addr' / 0 error
+	inipilac 
+	'prog 'prog> ! 'dato 'dato> !
+	'palabra 'deferpalabra !
+	clearall |dup loadincludes
+	( palabra 0? ) drop 
+	|dup c@ 1? ( ) drop 
+	52 g ;
+	
+|----------------------------------------------
+::printpilac
+	'pilac ( pilac> <? )( @+ printn " " prints ) drop ;
+
+::dibujapila
+	TOS NOS ( 'PSP >? )( swap "%n " print dup @ swap  4 - ) 2drop	;
+	
+::dibujadato
+	"%/dato:" print 
+	'dato ( dato> <? )( c@+ "%n," print ) drop ;
+		
+::dibujaprog
+	"%/prog:" print 
+	'prog ( prog> <? )( c@+ "%n," print ) drop ;
+	

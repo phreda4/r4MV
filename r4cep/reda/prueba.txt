@@ -1,0 +1,28 @@
+^reda4.txt
+^gui.txt
+^prueba1.txt
+|^ewrpp.txt
+
+#hola ( 4 4 0 0 )
+
+#x 2  #y 4
+#kk 'x 'y
+|po
+|:salida 1 ;
+
+:salida
+	 ( 1? )( 1- dup ) drop ;
+
+:main
+	.page
+	'exit <esc>
+	.show cls blanco
+		10 dup screen
+		dup "%d" print
+		;
+#xx 'salida
+
+:l 10 xx exec ;
+
+: 33 main ; 
+

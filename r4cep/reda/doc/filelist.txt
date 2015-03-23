@@ -1,0 +1,136 @@
+:r4 files
+
+System files
+--------------
+r4lin		Linux executable
+r4.exe		Win executable
+SDL.dll		.dll graphic library (www.sdllib.com)
+fmod.dll		.dll fmod library (www.fmod.org)
+r4.ini		file configuration screen: width heigth (1/0) fullscreen format
+debug.err	file last error in FILE|LINE|CAR|ERROR format
+
+Main applications
+--------------------
+main.txt	Main program... r4.exe and r4lin load and exec this.
+debug.txt	IDE for edit an error
+trace.txt	Include for trace facilities
+setup.txt	run and change r4.ini...
+garabator.txt	Vector Drawing Program, the draw are in (r4dibujo/) and generate .inc in (r4inc/)
+font8vedit.txt	Font 8v editor, fonts in (r4letras/) 
+fontvedit.txt	Forn V editor, fonts in (r4fontv/)
+
+Main Libraries
+----------------
+reda4.txt		main library  setup keys, basic interaction
+sincos.txt		trigonometrics
+grafR4.txt		graphics library for ASM version
+graflib.txt		graphics vocabulary
+colorlib.txt		color vocabulary
+sprites.txt		sprite, vectorial multicolor graphics
+fug.txt			font unification group
+romfuente.txt	rom for 8v vectorial font
+font8v.txt		8v vectorial font
+fontv.txt		v vectorial font
+font8x12i.txt	f12 fixed font (rom included)
+fontjupiter.txt	JupiterAce font
+gui.txt			Gui 0.99999 library
+mat3d.txt		3d math for boring screen
+parse.txt		string to numbers and things like this
+medit.txt		Memo edit 0.9999 library
+files.txt			choose file in a folder
+oldscreen.txt	Old 8x12 terminal 
+dialogo.txt		Dialog in oldscreen 
+2dutil.txt		future 2d util library
+
+Keyboards things
+--------------------
+keyes1.txt		Espanish keyboard (set in reda4.txt)
+keyfr1.txt		French keyboard (set in reda4.txt)
+keyus1.txt		United States keyboard (set in reda4.txt)
+scancode-c.txt	for make keyXXX.txt file
+scancode.txt	for view the scancode
+
+Metacompilation
+-------------------
+r4ok.txt
+consola.txt
+bytecode.txt
+bytecodecomp.txt
+tokencode.txt
+tokencomp.txt
+tokenizar.txt
+simular.txt
+compila.txt
+compilar.txt
+
+Manuel Cornes programs
+----------------------------
+clickotron.txt
+clock.txt
+tetris.txt
+
+Games and Demos
+---------------------
+pizarra.txt
+world3d.txt
+3d.txt
+models3d.txt
+3dlatr.txt
+capbeto.txt
+crayon.txt
+lagranjita.txt
+memoria.txt
+moscaysapo.txt
+personaje.txt
+pintar.txt
+pong.txt
+rmation2.txt
+slimeatlet.txt
+sraceituna.txt
+uvaman.txt
+xe.txt
+carrera.txt
+cartonman.txt
+carucha.txt
+chispita.txt
+ducha100.txt
+
+ADVA games, need 600x90 pixels
+---------------
+nubedep.txt
+ruta9.txt
+
+Test apps
+-----------
+editor.txt
+leebmp.txt
+render.txt
+rendertest.txt
+tabla.txt
+dtabla.txt
+dbapp.txt
+bbubbles.txt
+bitmap.txt
+dator.txt
+basico.txt
+prueba.txt
+prueba1.txt
+test-arit.txt
+test-atan.txt
+
+Developing...references
+---------------------------
+png.txt
+perlin.txt
+
+<<< Folders >>>
+
+r4asm			assembler with FASM
+r4dibujo			draws from garabator
+r4inc			include draw from garabator
+r4letras			fonts 8v
+r4fontv			fontsv
+r4nom			names for apps
+doc				Documentation
+bmps			Images
+datos			for dbapp

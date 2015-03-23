@@ -1,0 +1,52 @@
+| Simulador y compilador de :reda4
+|---------------------------------------
+^reda4.txt
+|^compilanada.txt
+|^bytecode.txt
+^compilai.txt
+^medit.txt
+
+#isalir ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iplay ( -63 -62 65 4 -63 68 0 )
+#icolor ( -95 -30 -41 -31 6 -15 -74 103 1 -26 -31 70 -47 -2 -95 -26 0 )
+
+#mensaje 0
+#fuente )( 512 | linea
+
+
+:play | --
+	'fuente compila 1? ( interpreta m.clear ) drop
+	
+|	dup c@ 0? ( "sactual.txt" run ; ) drop
+|	m.cur! 
+|	"error" 'mensaje ! 	| copia error a mensaje
+|	mem here over - "dumpmem.txt" save 
+	;
+
+:pantalla 
+	'fuente m.ini
+	'play <=enter
+	|r4inter
+	.cls 
+	16 16 .table 0 15 .at
+	rojo 'isalir 'exit .sbtn .>
+	azul 'iplay [ play ; ] .sbtn .>
+	|'kescf1 .keypad
+	.show cls 
+		32 32 screen blanco
+		0 3 pat dibujapila
+		0 5 pat dibujadato
+		0 7 pat dibujaprog
+		16 16 screen azull
+		0 0 pat 16 1 ptofill
+		0 0 pat blanco dup mensaje "%s %n " print
+		0 10 pat 16 4 2dup azul ptofill ptowin m.print			
+		;
+		
+|----------- principal
+:main 
+	"Ok." 'mensaje !
+	pantalla 
+	"main.txt" run	;
+
+: 0 colorf 33 main   ;

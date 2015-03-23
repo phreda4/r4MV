@@ -1,0 +1,86 @@
+^reda4.txt
+
+#<here
+
+:<,| nro
+	'here !+ 'here ! ;
+:<xyz> |x y z -- v
+	
+	;
+
+|---------------------------	
+:<moveto | x y z --
+	<xyz> join
+	;
+	
+:<lineto | x y z --
+	<xyz> line
+	;
+	
+:<push | --
+	push
+	;
+	
+:<pop | --
+	pop
+	;
+
+|---------------------------
+:ojoin
+	|drawJoint(name(i), m[n-1].get(0,3), m[n-1].get(1,3));
+	m[n-1].postMultiply(matrix(i));
+	;
+	
+:oline	
+	double x = m[n-1].get(0,3);                         // FROM LOCAL
+	double y = m[n-1].get(1,3);                         // ORIGIN TO
+	m[n-1].postMultiply(matrix(i));                     // TRANSFORMED
+	drawLine(x, y, m[n-1].get(0,3), m[n-1].get(1,3));   // LOCAL ORIGIN	
+	;
+	
+:opush	
+	m[n++].set(m[n-2]) ;
+:opop	
+	n--	;
+
+#rendercom 'ojoin 'oline 'opush 'opop
+
+:render | matriz -- 
+	here ( @+ 1? )( dup $3 and 2* 2* 'rendercom + @ exec ) drop ;
+	
+      int n = 1, type;
+      m[0].identity();
+      for (int i = 0 ; i < size() ; i++)
+	 if ((type = instr(i).type) == KVI.LINETO) {         // DRAW A LINE
+	    double x = m[n-1].get(0,3);                         // FROM LOCAL
+	    double y = m[n-1].get(1,3);                         // ORIGIN TO
+	    m[n-1].postMultiply(matrix(i));                     // TRANSFORMED
+            drawLine(x, y, m[n-1].get(0,3), m[n-1].get(1,3));   // LOCAL ORIGIN
+         }
+	 else if (type == KVI.JOINT) {                       // TRANFORM
+            drawJoint(name(i), m[n-1].get(0,3), m[n-1].get(1,3));
+            m[n-1].postMultiply(matrix(i));
+         }
+         else if (type == KVI.PUSH)                          // PUSH-COPY
+            m[n++].set(m[n-2]);
+	 else                                                // POP
+			n--;
+			
+:DefineStickFigure
+	here '<here !
+	50 45 0 <moveto
+	<push -6 0 0 <lineto 0 23 0 <lineto 0 22 0 <lineto 0 0 -5 <lineto <pop
+	<push 6 0 0 <lineto 0 23 0 <lineto 0 22 0 <lineto 0 0 -5 <lineto <pop 
+	0 -5 0 <lineto 0 -10 0 <lineto 0 -10 0 <lineto
+	<push 0 -5 0 <lineto -5 -10 0 <lineto 10  0 0 <lineto -5 10 0 <lineto <pop
+	<push -12 0 0 <lineto 0 15 0 <lineto 0 15 0 <lineto 0 3 0 <lineto <pop
+	<push 12 0 0 <lineto 0 15 0 <lineto 0 15 0  <lineto 0 3 0 <lineto <pop ;
+	
+	
+:main
+	definestickfigure
+	'exit =>esc
+	show cls
+	 render ;
+	 
+: main ;	

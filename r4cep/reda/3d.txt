@@ -1,0 +1,136 @@
+| simple 3D engine
+| traducido de un ejemplo en forth que anda por la web
+|---------------------------------------
+
+^reda4.txt
+^sincos.txt
+^gui.txt
+
+#tx  #ty  #tz      | First translation  
+#dx  #dy  #dz      | Second translation  
+#cx  #sx  #cy  #sy #cz  #sz | precalculados
+#x1  #y1  #z1      | Work variables  
+#x2  #y2  #z2 
+
+#zPull 1024         | Constants for 2D plane projection  
+#magic 600
+#xCenter #yCenter 
+
+:rotate | xAng yAng zAng --    | set the rotation angles  
+	dup cos 'cz ! sin 'sz ! 
+	dup cos 'cy ! sin 'sy !  
+	dup cos 'cx ! sin 'sx ! ; 
+
+:translate | x y z --          |  set first translation  antes rot 
+	'tz !  'ty !  'tx ! ; 
+
+:move3d | x y z --            | despues rot
+	'dz !  'dy !  'dx ! ; 
+
+:project | x y z -- x' y' 
+	tz + >r ty + >r tx + dup							|** Add in the first translation 
+	cz * r sz * - 16 >> 'x1 ! sz * r> cz * + 16 >> 'y1 !			|** Rotate Z axis 
+	r> dup cy * x1 sy * - 16 >> 'z1 ! sy * x1 cy * + 16 >> 'x2 !	|** Rotate Y axis  
+	y1 cx * z1 sx * - 16 >> 'y2 ! y1 sx * z1 cx * + 16 >> 'z2 !	|** Rotate X axis  
+	dz z2 + zPull - neg >r
+	x2 dx + magic r */ xCenter + 
+	y2 dy + magic r> */ yCenter + ; 
+
+|--- Pantalla
+:>uv $ffff and 16 << swap $ffff and or ; | u v -- uv
+:>u 16 << 
+:>v 16 >> ;
+
+|-- buffer de dibujo
+#aux )( 8192 | 2000 puntos
+
+:poli> | n .. 1 cnt --
+	2 << $2 or ;
+	
+|------------------------------------------
+:->pnt | nro -- xy
+	2 << 'aux + @ dup >u swap >v ;
+	
+:al00 drop ;
+:al01 2 >> ink ; | color
+:al10 2 >> 1- swap	| poligono
+	@+ dup ->pnt op swap rot
+	( 1? )( 1- swap @+ ->pnt line swap ) drop swap
+	->pnt line poli
+	;
+:al11 drop ; | sin usar
+
+#alcmd 'al00 'al01 'al10 'al11
+
+:alambroso | addr ---
+	'aux swap 
+	( @+ 1? )( >xyz project >uv rot !+ swap ) 
+	drop nip
+	( @+ 1? )( dup $3 and 2 << 'alcmd + @ exec ) 
+	2drop ;
+	
+|------------------------------------------
+#cubo )( 1024
+#cubos )( 1024
+#vcubos )( 1024
+#cntcu 10
+#lastime #paso
+
+:inicubs
+	'cubos cntcu ( 1? )( 1- rand rot !+ swap ) 2drop ;
+
+:inive
+	'vcubos cntcu ( 1? )( 1- 
+		rand $3 and 1- rand $3 and 1- rand $3 and 1- 3d>
+		rot !+ swap ) 2drop ;
+	
+:sumcubs
+	'vcubos >r 
+	'cubos cntcu ( 1? )( 1- swap dup @ r@+ 3d+ swap !+ swap ) 2drop rdrop ;
+	
+:cubolandia
+|	.page
+	'cubo >r
+	-100 -100 -100 3d> r!+
+	100 -100 -100 3d> r!+
+	100 100 -100 3d> r!+
+	-100 100 -100 3d> r!+
+	-100 -100 100 3d> r!+
+	100 -100 100 3d> r!+
+	100 100 100 3d> r!+
+	-100 100 100 3d> r!+
+	0 r!+
+	4 poli> r!+	0 r!+ 1 r!+ 2 r!+ 3 r!+   
+	4 poli> r!+	1 r!+ 5 r!+ 6 r!+ 2 r!+
+	4 poli> r!+	5 r!+ 4 r!+ 7 r!+ 6 r!+
+	4 poli> r!+	4 r!+ 0 r!+ 3 r!+ 7 r!+
+	4 poli> r!+	4 r!+ 5 r!+ 1 r!+ 0 r!+
+	4 poli> r!+	3 r!+ 2 r!+ 6 r!+ 7 r!+
+	0 r!+ rdrop
+	sh 2/ 'yCenter ! sw 2/ 'xCenter ! 
+	[ rdrop ; ]  1 >key
+	[ 1 'cntcu +! inicubs inive ; ] >arr<
+	[ -1 'cntcu +! inicubs inive  ; ] >aba<
+	msec 'lastime !
+	inicubs inive
+	0 0 0 rotate
+|	4 8 .table 0 0 .at rojo 
+|	"ESC" "Salir" 'exit dup <esc> .fbtn 
+	 'exit <esc> 
+	oshow cls verde
+		'cubos cntcu ( 1? )( 1- swap @+ | rand ink
+			dup >xyz move3d >xyz rotate 
+			'cubo alambroso	
+			swap ) 2drop 
+		sumcubs	
+		|rojo 0 0 0 move3d 10 20 30 rotate 'cubo alambroso
+		48 32 screen verde	
+		0 0 at 
+		msec dup lastime - 'paso ! 'lastime !
+		dup "%d%." print
+		1000 paso / cntcu "3DLater! %d cubos %d fps%." print
+|		'cubos 16 hdump 
+		;
+			
+
+: 0 paper 33 cubolandia "main.txt" run ;

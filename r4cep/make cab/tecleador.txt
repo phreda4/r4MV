@@ -1,0 +1,42 @@
+| generador de ditribucion de teclado
+^reda4.txt
+
+#todos "abcdefghijklmnopqrstuvwxyz1234567890-=[]\;',./!@#$%^&*()_+{}|:""<>?~`"
+#todos> 'todos
+#teclado )( 512
+
+#rescom "                                                                    "
+#resshi "                                                                    "
+#resact 'rescom
+#actual 0
+#ver " "
+
+:grabar
+	clear
+	" #kplano """ ,s
+	'rescom ,s
+	"""" ,s 13 ,c 10 ,c 
+	" #Kplshi """ ,s
+	'resshi ,s
+	""" " ,s 13 ,c 10 ,c 
+	mem here over - "cod.teclas.txt" save ;
+
+:otratecla
+	todos> c@+ 0? ( 2drop grabar exit ; ) dup 'ver c! 'actual ! 'todos> ! ;
+	
+:gscancode | --
+	key resact + actual swap c! 
+	otratecla ;
+
+:recorre
+	'todos	'todos> !
+	'gscancode <=todas
+	[ 'resshi 'resact ! ; ] dup $2a >key $36 >key | teclas shift
+	[ 'rescom 'resact ! ; ] dup $2a >ukey $36 >ukey | levanta shift
+	show cls 32 24 screen
+		'ver todos> 'todos - "nro %n -- %s %/" print blanco 
+		0 2 pat 'rescom print 
+		0 4 pat 'resshi print ;
+		
+: recorre ;	
+

@@ -1,0 +1,147 @@
+^reda4.txt
+^gui.txt
+^graflib.txt
+
+#tinta $ff00
+
+#tecla 
+#fondo 0
+#skip
+
+|----------------------------------------
+#sizebm
+:copybm	framev mem sizebm move ; | de sr cnt --	; de mem a video
+:copymm	mem framev sizebm move ; | de sr cnt --	; de video a mem
+
+|------------ Grabar simple RLE
+#memc
+#memc>
+
+:,comp | v --
+	memc> !+ 'memc> ! ;
+
+#cnt
+#colact
+
+:scanlast | --
+	colact cnt ( 255 >? )( over $ff000000 or ,comp 255 - )
+	24 << or ,comp ; 
+
+:scanconv | adr -- adr+
+	@+ $ffffff and | adr+ color
+	colact =? ( 1 'cnt +! drop ; ) 
+	scanlast 
+:scanini | color --
+	$ffffff and 'colact ! 1 'cnt ! ;
+
+:grabar
+	mem @+ scanini
+	sizebm 2dup 2 << + dup 'memc ! 'memc> !
+	( 1- 1? )( >r scanconv r> ) 2drop 
+	scanlast
+	memc memc> over - "bmps/test.bmr" save
+	;
+
+|-------------- Cargar simple RLE
+:cargar
+	mem sizebm 2 << + 'memc !
+	memc "bmps/test.bmr" load 'memc> !
+	mem >r
+	memc ( memc> <? )( @+ 
+		dup $ffffff and swap 24 >> $ff and | color cant
+		( 1? )( over r!+ 1- ) 2drop
+		) drop
+	rdrop
+	copybm ;
+
+|-----------------------------------------------
+#color.r #color.g #color.b
+
+:2.h | n --
+	$10 <? ( "0" prints ) "%h" print ;
+
+:clcolor
+	*? 1? ( -2 )( -1 ) nip dup +dim
+	tinta ink rcaja 
+	8 6 ttext 2 5 at |negro 4 1 ptofill	negro "." prints 
+	color.r rojo 2.h color.g verde 2.h color.b azul 2.h ;
+
+:elijecolor
+	.page
+	tinta dup $ff and 'color.b ! dup 8 >> $ff and 'color.g ! 16 >> $ff and 'color.r !
+	12 12 .table
+	0 6 .at 8 6 .to 'clcolor 0 .xbtn 
+|	1 7 .at 6 1 .to 'coldraw 'colclick 15 1 .btabla	
+	0 11 .at 
+	rojo oscuro 'ifin 'exit dup >esc< .sbtn .>
+	1 8 .at 6 1 .to 
+	rojo $ff 'color.r .hsli .\ verde $ff 'color.g .hsli .\ azul $ff 'color.b .hsli
+	.show cls | drawmem
+		color.r 16 << color.g 8 << color.b or or 
+		'tinta ! |4 << 4 or poini 1? ( ! )( 2drop ) ;
+		;
+
+:xcolor
+	elijecolor 
+|	poini 1? ( tinta 4 << 4 or swap ! ; ) drop
+|	dibujo> 4 - @ $f and 4 =? ( -4 'dibujo> +! ) drop
+|	tinta 4 << 4 or ++trazo 
+	; 
+
+
+|----------------------------------------
+#x1 #y1
+#linegro 8
+
+#trazo )( 2048
+#trazo> 'trazo
+
+:++trazo | 
+	trazo> @ =? ( drop ; )
+:+trazo | u --
+	trazo> !+ 'trazo> ! ;
+:-trazo
+	'trazo 'trazo> ! ;
+
+:trazo.draw
+	linegro dup gg gg
+	tinta ink 
+	'trazo @+ 0? ( 2drop ; ) >xy gop 
+	( trazo> <? )( @+ >xy gline ) drop ;
+
+:refresca
+	copybm
+	todo trazo.draw
+	copymm ;
+
+:trazo.cal | x y ev --  | 0=up 1=move 2=down
+	0? ( 3drop refresca -trazo ; ) | up
+	1- 0? ( drop xy> ++trazo ; )   | move
+	drop xy> +trazo ; | down
+
+:barra
+	.page
+	[ rand 'tinta ! ; ] <esp>
+	[ cls ; ] <enter>
+	[ linegro 1+ 256 >? ( 256 nip ) 'linegro ! ; ] <arr>
+	[ linegro 1- 1 <? ( 1 nip ) 'linegro ! ; ] <aba>
+	1 1 .table 0 0 .at
+	'trazo.cal 'trazo.draw .ug
+	12 12 .table 0 11 .at 1 1 .to
+	rojo  'ifin 'exit dup >esc< .sbtn .>
+	tinta ink
+	'clcolor 'xcolor dup <f1> .xbtn .> 
+	"F2" "Grabar" 'grabar dup <f2> .fbtn .>
+	"F3" "Cargar" 'cargar dup <f3> .fbtn
+	.show 
+		copybm 
+		blink 1? ( blanco )( tinta ink ) drop
+		xymouse linegro gcursor 
+		;	 
+
+:inicio
+	sw sh * 'sizebm !
+	cls copymm
+	barra ;
+
+: $ffffff paper 33 inicio "main.txt" run ;

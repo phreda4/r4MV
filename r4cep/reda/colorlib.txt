@@ -1,0 +1,46 @@
+
+|--- inkes
+::negro $000000 ink ;		
+::azul $0000ff ink ;		::azull $0000cc ink ;
+::verde $00ff00 ink ;		::verdel $00cc00 ink ;
+::rojo $ff0000 ink ;		::rojol $cc0000 ink ;
+::violeta $ff00ff ink ;		::cyan $00ffff ink ;
+::cyanl $00cccc ink ;		::amarillo $ffff00 ink ;
+::amarillol $cccc00 ink ;	::blanco $ffffff ink ;
+::gris $999999 ink ;		::naranja $ff8888 ink ;
+::celeste $8888ff ink ;		::verdor $88ff88 ink ;
+
+::oscuro ink@ 2/ $7f7f7f and ink ;
+::claro ink@ 2* $010101 or ink ;
+
+|--------------------------------------------------
+| a b n 
+
+:h0  $ff and over 8 *>> pick2 + $ff >? ( $ff nip ) 8 <<  | g-c
+	pick2 rot + $ff >? ( $ff nip ) 16 << or	| r-max
+	or ;	| b-min
+:h1  not $ff and over 8 *>> pick2 + $ff >? ( $ff nip ) 16 << | r-c
+	pick2 rot + $ff >? ( $ff nip ) 8 << or |g-max
+	or ; | b-min
+:h2	$ff and over 8 *>> pick2 + $ff >? ( $ff nip ) | b-c
+	pick2 rot + $ff >? ( $ff nip ) 8 << or | g -max
+	swap 16 << or ; | r-min
+:h3	not $ff and over 8 *>> pick2 + $ff >? ( $ff nip ) 8 <<  | g-c
+	pick2 rot + $ff >? ( $ff nip ) or | b -max
+	swap 16 << or ; | r-min
+:h4	$ff and over 8 *>> pick2 + $ff >? ( $ff nip ) 16 << | r-c
+	pick2 rot + $ff >? ( $ff nip ) or | b -max
+	swap 8 << or ; | g-min
+:h5	not $ff and over 8 *>> pick2 + $ff >? ( $ff nip )  | b-c
+	pick2 rot + $ff >? ( $ff nip ) 16 << or	| r-max
+	swap 8 << or ; | g-min
+
+#ach h0 h1 h2 h3 h4 h5 h0 h1 
+
+| sistema de color para :r4
+| a.. +		0-255		0..$ff
+| b.. *		0-255		0..$ff
+| h..Color	0-1536		0..$5ff
+::abh>rgb | a b n -- color
+	dup 8 >> $7 and 2 << 'ach + @ >r ; | $f and -> $1f
+

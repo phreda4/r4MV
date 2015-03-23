@@ -1,0 +1,454 @@
+| Rmation y su lenguaje :REDa4
+| graficos y animacion vectorial
+| Pablo Reda 2006
+|---------------------------------
+^reda4.txt 
+
+|---- BOTONES
+#ifin ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iok ( -95 -30 -41 -31 6 -15 -74 103 1 -26 -31 70 -47 -2 -95 -26 0 )
+#idibuja ( 81 -14 -90 7 -95 4 100 5 81 -12 -79 66 12 -1 86 -59 70 -73 0 )
+#icaja ( -79 -78 84 85 -76 -75 0 )
+#icirculo ( -78 -73 6 86 7 87 6 -74 7 0 )
+#iedita ( -39 -6 -63 -90 -41 -25 -15 -18 -42 7 23 -18 -42 39 55 -10 28 54 39 23 102 -11 54 -25 -41 30 6 -65 -79 -10 -63 -18 -55 -26 -39 -2 -15 -62 -75 -116 -11 -60 0 )
+#ipolis ( -15 -78 -79 68 65 36 -15 -76 -95 -94 100 101 -92 -91 0 )
+#ilupa ( -39 -110 39 -26 6 25 14 81 68 49 116 -7 44 -15 54 -33 -105 -26 -106 -33 -87 -30 30 -33 15 -26 -82 -33 -81 -26 0 )
+#ireloj ( -78 -73 6 86 7 87 6 -74 7 2 -23 -12 -68 1 -28 4 17 -12 41 4 17 20 1 4 -7 -46 13 -60 -3 -44 -47 10 -4 -59 12 -43 49 -6 12 69 -4 53 -7 50 68 13 52 -3 0 )
+
+#ivacio ( -71 74 -66 7 79 54 45 -34 7 -33 78 -67 0 )
+#illeno ( -71 74 -66 7 79 54 -71 76 0 )
+
+#imas ( 17 -70 -11 -12 -67 20 -11 76 21 20 77 -12 21 0 )	
+#imenos ( -71 -14 20 77 -12 0 )
+
+#ipunto ( -15 -14 20 21 -12 0 )
+#ilinea ( 89 -102 -103 84 -95 100 97 -84 0 )
+#icurva ( 89 -102 -63 -82 -103 86 -95 100 -55 -66 97 -82 0 )
+
+#ibotonera 'idibuja 'icaja 'icirculo 'iedita 'ipolis 'ilupa 'ireloj
+
+#dibmem )( 8192 | dibujo actual
+#dfin> 'dibmem
+#hojas )( 8192	| cada hoja
+#hojas> 'hojas
+#indice )( 512  | indice de cada hoja
+#indice> 'indice
+#actual 'indice
+
+#xc #yc #cc
+#color.act $ff00
+#color.r #color.g #color.b
+
+#modotrazo	4	| linea poli
+#vzoom 0 #xi 0 #yi 0
+#xl #yl | limites
+#hunidad 0
+#xyhoja 0 0 0 0
+
+#estad 0	
+#estadpun
+#tocado 0
+#tocadoc 0 
+#poini #pofin
+
+:hajusta
+	0 'vzoom !
+	sh 14 * 16 / sw 14 * 16 / min dup 'hunidad !
+	sw 2/ 'xi ! sh 2/ 'yi ! 2/ xi over - 'xl ! yi swap - 'yl !	;
+
+:hset 
+	hunidad vzoom 10 + * 10 / dup >r 
+	2/ yi over - yl >? ( yl - neg 'yi +! yl )
+	xi rot - xl >? ( xl - neg 'xi +! xl )
+	over r + yl hunidad + <? ( yl hunidad + - neg 'yi +! yl hunidad + )
+	over r> + xl hunidad + <? ( xl hunidad + - neg 'xi +! xl hunidad + )
+	2swap 'xyhoja !+ !+ !+ ! ;
+
+|-------------------------------
+:qs	| paxy axy -- qs
+	>xy rot >xy rot - dup * >r - dup * r> + ;
+
+:reduce | pxy --
+	dfin> 8 - 'dibmem <? ( drop ; ) 
+	dup 4+ @ dup $3 and 1 =? ( 3drop ; ) drop
+	swap @ dup $3 and 1 =? ( 3drop ; ) drop
+	rot 2dup qs >r rot 2dup qs >r rot qs 				| pact q3    r: q1 q2
+	dup dup * r> swap over dup * + r> swap over dup * + >r
+	+ + dup * r> 2* - abs
+	|$fffff | para d>xy
+	256 <? ( -4 'dfin> +! ) drop ;
+	
+:+trazo | nodo --    insertar
+	reduce
+:++trazo
+	dfin> !+ dup 'dfin> ! 0 swap ! ;
+
+:drawmem
+	blanco fill	rgrilla 
+	'dibmem sprite ;
+
+|--------------------- Editar
+:erase-draw  | --
+	'dibmem 'dfin> ! 0 dfin> ! 0 'tocado ! 
+	color.act 4 << 4 or ++trazo ;
+
+:load-car | --
+	actual @ 0? ( erase-draw ; )
+	'dibmem swap zcopy 'dfin> ! 0 dfin> ! 0 'tocado ! 
+	-1 'color.act !
+	'dibmem ( @+ 1? )( dup $f and 4 =? ( drop 4 >> 'color.act ! )( 2drop ) ) 2drop
+	color.act -1 =? ( $ff dup 'color.act ! 4 << 4 or ++trazo ) drop	;
+
+:save-last
+	hojas> dup actual !	'dibmem zcopy0 'hojas> ! ;
+	
+:hacelugar | addr dif -- addr'
+	0? ( drop ; )
+	+? ( over + swap hojas> over - cmove>	| agrandar texto
+		)(  over + swap hojas> over - cmove		| achicar texto
+		) ; 
+
+:save-car | --
+	actual @ 0? ( drop save-last ; )
+	dfin> 'dibmem - 4+ over 0 >r ( @+ 1? )( drop 4 r+ ) 2drop r> 4+	- | diferencia
+	1? ( 2drop save-last ; ) drop 'dibmem zcopy0 drop
+|	hacelugar 'dibmem zcopy0 drop 
+	;
+
+#apunto ( 0 1 1 1 4 5 5 5 )
+:espunto | --
+	tocado 0? ( drop ; ) 
+	dup @ dup $7 and 'apunto + c@ swap $fffffff0 and or swap ! ;
+
+:alinea
+	dup @ $fffffffc and 2 or over ! ;
+	
+:line-nodo | --
+	tocado 0? ( drop ; ) 
+	|dup @ $3 and 3 <>? ( 2drop ; ) drop
+	alinea 4+ dup @ $3 and 3 <>? ( 2drop ; ) drop
+	alinea drop ;
+
+:acurva | adr -- adr
+	dup @ 3 or over ! ;
+	
+:curve-nodo | nro --
+	tocado 0? ( drop ; ) 
+	dup @ $3 and 2 <>? ( 2drop ; ) drop
+	dup 4+ dup @ $3 and 2 <>? ( 3drop ; ) drop
+	acurva drop acurva drop ;	
+
+:alfin	|  -- cnt
+	dfin> tocado - 2/ 2/ ;
+	
+|:zinsert
+|	dfin> 4+ ( tocado >? )( @+ swap !+ 12 - ) drop ;
+
+:get-nodo | adr --
+	 @ dup $f and 'cc ! >xy 'yc ! 'xc ! ;
+
+:del-nodo | --
+	dfin> 'dibmem =? ( drop 0 'tocado ! ; ) drop
+	tocado 0? ( drop ; ) 
+	
+	dup @ $3 and swap 
+	dup 4+ alfin move -4 'tocado +! -4 'dfin> +! 
+	1 =? ( 0 'tocado ! ) drop ;
+
+:ins-nodo | --
+	tocado 0? ( drop ; ) |0 0 xy> 1 modotrazo + or ++trazo ; )
+	dup 4 - alfin 1+ move> |4 'tocado +! 
+	4 'dfin> +! 
+	tocado dup @+ dup $f and >r d>xy >r >r @ d>xy swap r> + 2/ swap r> + 2/ xy>d r> or swap ! 
+	tocado dup @ dup $f and 1 =? ( 2 nip ) 5 =? ( 6 nip ) or swap !
+	;	
+
+| zcopy0 | des fuen -- des
+:del-poli 
+	poini pofin zcopy0 4 - 'dfin> !
+	0 'tocado !	;
+
+| move> | de sr cnt --
+:copy-poli 
+	pofin poini 2dup dfin> over - 2/ 2/ move> - 'dfin> +! 0 dfin> !
+	0 'tocado !	
+	;
+|--cursor ab
+#xa #ya #xb #yb
+
+:cur.clr	0 0
+:cur.set	dup 'ya ! 'yb ! dup 'xa ! 'xb ! ;
+
+|-- trazo
+:trazo.cal | x y ev --  | 0=up 1=move 2=down
+	0? ( 3drop ; ) | up
+	1- 0? ( drop xy> 2 modotrazo + or +trazo ; )   | move
+	drop xy> 1 modotrazo + or ++trazo ; | down
+	
+:trazo.draw	
+	drawmem ;
+
+|-- caja
+:caja.ins
+	xa xb =? ( drop ; ) ya yb =? ( 2drop ; )
+	xy> 1 modotrazo + or ++trazo xa yb xy> 2 modotrazo + or ++trazo 
+	xb yb xy> 2 modotrazo + or ++trazo xb ya xy> 2 modotrazo + or ++trazo
+	modotrazo 0? ( xa ya xy> 2 or ++trazo ) drop ;
+	
+:caja.calc | x y ev --  | 0=up 1=move 2=down
+	0? ( 3drop caja.ins cur.clr ; )
+	1- 0? ( drop 'yb ! 'xb ! ; ) drop 
+	cur.set ;
+	
+:caja.draw	
+	drawmem 
+	msec $80 and 1? ( color.act nip )  ink
+	xa xb =? ( drop ; ) ya yb =? ( 2drop ; ) 
+	2dup 2dup op drop yb 2dup line nip xb swap 2dup line drop ya line line ; 
+	
+|-- circulo
+:circ.ins
+	xa xb =? ( drop ; ) ya yb =? ( 2drop ; )
+	yb + 2/ xy> dup 1 modotrazo + or ++trazo xa yb xy> 3 modotrazo + or ++trazo 
+	xa xb + 2/ yb xy> 3 modotrazo + or ++trazo xb yb xy> 3 modotrazo + or ++trazo 
+	xb ya yb + 2/ xy> 3 modotrazo + or ++trazo xb ya xy> 3 modotrazo + or ++trazo
+	xa xb + 2/ ya xy> 3 modotrazo + or ++trazo xa ya xy> 3 modotrazo + or ++trazo
+	3 modotrazo + or ++trazo ;
+	
+:circ.calc | x y ev --  | 0=up 1=move 2=down
+	0? ( 3drop circ.ins cur.clr ; )
+	1- 0? ( drop 'yb ! 'xb ! ; ) drop 
+	cur.set ;
+	
+:circ.draw	
+	drawmem 
+	msec $80 and 1? ( color.act nip ) ink 
+	xa xb =? ( drop ; ) ya yb =? ( 2drop ; )
+	yb + 2/ 2dup op xa yb cp xa xb + 2/ yb curve
+	xb yb cp xb ya yb + 2/ curve xb ya cp xa xb + 2/ ya curve
+	xa ya cp curve ; 
+
+|--- edita puntos
+| busca posicion de color		
+
+:indot | x y x y --
+	rot - dup * swap rot - dup * + | dx2+dy2
+	64 <=? ( 1 )( 0 ) nip ; | 
+
+:toconodo | x y addr -- x y 0/point
+	( @+ 1? )( swap >r >xy 2over indot 1? ( drop r> 4 - ; ) drop r> ) nip ;	
+	
+:t0 drop ;
+:t1 >xy rojo 2 box ;
+:t2 >xy verde 3 box ;
+:t3	>xy azul 3 fcircle ;
+#tipos 't0 't1 't2 't3
+	
+:cadanodo | adr --
+	( @+ 1? )( dup $3 and 2* 2* 'tipos + @ exec ) 2drop ;
+
+:colorpoli | ad -- 'adc
+	( 'dibmem >? )( dup @ $f and 4 =? ( drop ; ) drop 4 - ) ;
+
+:nodos.adj
+	tocado colorpoli @ 4 >> 'color.act ! ;
+	
+:nodos.calc
+	0? ( 3drop ; )
+	1- 0? ( drop xy> tocado 0? ( 2drop ; ) @ $f and or tocado ! ; )
+	drop 'dibmem toconodo 1? ( 'tocado ! nodos.adj )( drop )
+	2drop ;
+	
+:nodos.draw
+	drawmem 
+	rojo 'dibmem cadanodo 
+	tocado 1? (	get-nodo verde 
+		xc yc 2dup mcursor msec 6 >> $7 and 2 + box
+		)( drop ) ;
+
+|--- edita polis
+#xd #yd
+
+:cadapoli | adr --
+	azul
+	( @+ 1? )( dup $3 and 0? ( 2drop )( swap >xy rot box ) ) 2drop ;
+
+:prevpoli | ad -- ad'
+	( 'dibmem >? )( dup @ $3 and 0? ( drop 4+ ; ) drop 4 - ) 4+ ;
+:nextpoli | ad -- 'ad
+	( dfin> <? )( dup @ $3 and 0? ( drop ; ) drop 4+ ) ;
+
+:prevtrazo | ad -- ad'
+	( 'dibmem >? )( dup @ $2 and 0? ( drop ; ) drop 4 - ) 4+ ;
+:nexttrazo | ad -- 'ad
+	( dfin> <? )( dup @ $2 and 0? ( drop ; ) drop 4+ ) ;
+		
+		
+:poli.adj
+	tocado dup prevpoli 4 - @ 4 >> 'color.act ! 
+	dup prevtrazo dup 'poini ! @ 4 and 'modotrazo ! 
+	nexttrazo 'pofin ! ;	
+	
+:poli.llenovacio
+	poini ( pofin <? )( dup @ $4 xor over ! 4+ ) drop ;
+	
+		
+:poli.move
+	xy> tocado 0? ( 3drop ; )
+	@ dxy 'yd ! 'xd !
+	poini ( pofin <? )( dup @ dup d>xy yd + swap xd + swap xy>d swap $f and or over ! 4+ ) drop ;
+	
+:polis.calc
+	0? ( 3drop ; )
+	1- 0? ( drop poli.move ; ) |xy> tocado 0? ( 2drop ; ) @ $f and or tocado ! ; )
+	drop 'dibmem toconodo 1? ( 'tocado ! poli.adj )( drop )
+	2drop ;
+	
+:polis.draw
+	drawmem 
+	rojo 'dibmem cadapoli
+	tocado 1? (	get-nodo verde xc yc msec 6 >> $3 and 2 + fcircle
+		)( drop ) ;	
+
+:vista.draw
+	blanco fill rgrilla 'dibmem sprite 
+	;
+	
+:vista.calc
+	0? ( 3drop ; ) 
+	1- 0? ( drop dup yd - 'yi +! 'yd ! dup xd - 'xi +! 'xd ! ; ) drop
+	'yd ! 'xd ! ;
+
+|--- Color
+:clcolor
+	*? 1? ( -2 )( -1 ) nip dup +dim
+	color.act ink rcaja 
+	8 4 ttext color.act "   $%h" negro print ;
+
+:elijecolor
+	color.act dup $ff and 'color.b ! dup 8 >> $ff and 'color.g ! 16 >> $ff and 'color.r !
+	estad 3 <? ( 0 'tocado ! ) drop
+	tocado 1? ( colorpoli ) 'tocadoc !
+	'xyhoja .pos 'vista.calc 'vista.draw .ug	
+	16 16 .table
+	0 0 .at 8 4 .to 'clcolor 0 .xbtn 
+	0 0 .at	rojo 'ifin 'exit .sbtn .\ verdel 'iok 'exit .sbtn 
+	1 1 .at 6 1 .to 
+	rojo $ff 'color.r .hsli .\ verde $ff 'color.g .hsli .\ azul $ff 'color.b .hsli
+	.show cls
+		color.r 16 << color.g 8 << color.b or or 
+		dup 'color.act ! 4 << 4 or tocadoc 1? ( ! )( 2drop )
+		hset ;
+
+:xcolor
+	elijecolor 
+	tocadoc 1? ( color.act 4 << 4 or swap ! ; ) drop
+	dfin> 4 - @ $f and 4 =? ( -4 'dfin> +! ) drop
+	color.act 4 << 4 or ++trazo ; 
+	
+|--- lleno/trazo
+:cllipo
+	*? 1? ( -2 )( -1 ) nip dup +dim
+	rcaja color.act ink
+	modotrazo 0? ( 'ivacio )( 'illeno ) rpoli drop ;
+
+:xlipo
+	estad 4 =? ( poli.llenovacio ) drop
+	modotrazo 0? ( 4 )( 0 ) nip 'modotrazo ! ;
+
+:1xzoom 0 'vzoom ! ;
+:2xzoom 10 'vzoom ! ;
+:4xzoom 24 'vzoom ! ;
+
+|-------------------	
+:edicion
+	inikey 
+	hajusta	'xyhoja .pos 	
+	'estad 0 1 .cond 'trazo.cal 'trazo.draw .ug
+	'estad 1 1 .cond 'caja.calc 'caja.draw .ug
+	'estad 2 1 .cond 'circ.calc 'circ.draw .ug
+	'estad 3 1 .cond 'nodos.calc 'nodos.draw .ug
+	'estad 4 1 .cond 'polis.calc 'polis.draw .ug		
+	'estad 5 1 .cond 'vista.calc 'vista.draw .ug		
+	16 16 .table 0 0 .at 
+	negro 'ifin 'exit dup =>esc .sbtn .\ 
+	verdel 'clcolor 'xcolor .xbtn .\ 'cllipo  'xlipo .xbtn .\
+	1 0 .at 5 1 .to 'ibotonera 'estad 7 .htool
+	7 0 .at azul
+	'estad 0 1 .cond
+		'imenos 'erase-draw .sbtn
+	7 0 .at azul		
+	'estad 3 5 .cond
+		'imas 'ins-nodo .sbtn .> 'imenos 'del-nodo .sbtn .> 
+		'ipunto 'espunto .sbtn .> 
+		'ilinea 'line-nodo .sbtn .> 
+		'icurva 'curve-nodo .sbtn 
+	7 0 .at azul		
+	'estad 4 2 .cond
+		'imas 'copy-poli .sbtn .>
+		'imenos 'del-poli .sbtn 
+	'estad 5 4 .cond 
+		7 0 .at azul "1x" '1xzoom .2btn .> "2x" '2xzoom .2btn .> "4x" '4xzoom .2btn 
+		0 4 .at 1 10 .to 190 'vzoom .vsli
+	.show cls 
+		32 32 screen 0 30 pat 
+		dup "salud:%n%/" blanco print 
+|		vzoom yi xi "x:%n y:%n vz:%n" print		
+		dfin> 'dibmem - 2/ 2/ tocado dup 1? ( 4+ @ ) swap dup 1? ( @ ) swap 
+		"t:%h @:%h +@:%h cnt:%n" print		
+		hset ;
+
+|---------- Lista de dibujos
+:hdraw
+	dup 2* 2* 'indice + actual =? ( blanco )( gris ) ffill
+	@ 1? ( sprite )( drop ) 
+	verde oscuro 4 4 ttext 1+ "%h" print ;
+	
+:hclick
+	2* 2* 'indice + 'actual ! ;
+|	load-car edicion save-car ;
+	
+:menu-principal
+	inikey 
+	16 16 .table 0 0 .at 
+	rojo 'ifin 'exit dup =>esc .sbtn .>
+	azul "Edit" [ load-car edicion save-car ; ] dup <=f1 .4btn .>
+	verde "Copy" 'exit dup <=f2 .4btn
+	10 10 .table 1 1 .at 8 8 .to 'hdraw 'hclick 8 8 .btabla
+	.show cls 
+		32 32 screen 0 31 pat azul dup "RMation : %n" print 
+		|'indice 4 ( 1? )( 1- >r @+ "%n " print r> ) 2drop "%/" print
+		|hojas> 'hojas actual "%n h:%n >:%n %/" print
+		|'hojas 8 ( 1? )( 1- >r @+ " %n" print r> ) drop @ " %n%/" print
+		;
+
+|---------------------------------------------
+:load-dibu
+	'hojas ".d.bin" load 'hojas> !+ 0 swap !	
+	'indice 'hojas ( dup @ 1? )( drop dup 
+		rot !+ swap ( @+ 1? )( drop ) drop
+		) 2drop 'indice> ! ;
+
+:save-dibu
+	clear 'indice ( @+ 1? )( ( @+ 1? )( , ) , drop ) , drop
+	mem here over - ".d.bin" save ;
+	
+:newline 13 ,c 10 ,c ; | m#@$#!%@$#
+
+:save-code
+	clear 0 'indice 
+	( "#:dibu" ,s swap 1+ dup ,h swap @+ 1? )(
+	0 ( >r @+ 1? )( " $" ,s ,h  
+			r> 1+ 8 >? ( drop 0 newline ) ) 
+			32 ,c ,n newline drop rdrop
+			) 3drop
+	mem here over - "c.d.txt" save ;
+			
+:do 
+	0 erase-draw
+	load-dibu 'indice 'actual ! load-car
+	33 menu-principal
+	save-dibu save-code
+	0 paper "main.txt" run ;
+
+: do  ;

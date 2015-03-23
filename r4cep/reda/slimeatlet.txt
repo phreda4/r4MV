@@ -1,0 +1,134 @@
+|//<!-- 2-player version of Slime Volleyball -->
+|// Original code: Quin Pendragon, 1999.
+| version r4 - phreda
+|---------------------------------------------------
+^reda4.txt
+^gui.txt
+^sprites.txt
+
+#p1Score 0  #p2Score 0
+#p1X 200    #p1Y 0
+#p2X 800    #p2Y 0
+#p1XV 0     #p1YV 0
+#p2XV 0     #p2YV 0
+
+#ballX 200  #ballY 600
+#ballVX 0   #ballVY 0
+
+| x y vx vy a va r dibu 
+#ball 200 600 0 0 
+#jug1 200 0 0 0
+#jug2 800 0 0 0
+
+#JUMPVEL 31 | 65
+#SLIMEVEL 16
+#GRAVITY 2 | 8
+#PISO 30
+#RADIOSLIME
+#RADIOBALL
+
+:drawsprite | 'add --
+	@+ 2* %dim @+ over @ %pos fcircle ;
+
+:addsprite | 'add 
+	dup 12 + @ over 4+ +!
+	dup 16 + @ over 8 + +!	;
+
+:inicioini
+	0 'p1Score ! 0 'p2Score !
+	sh 2 100 */ dup 'RADIOBALL ! 'ball !
+	sh 6 100 */ dup 'RADIOSLIME ! dup 'jug1 ! 'jug2 !
+
+:inicio
+	200 'p1X !  PISO 'p1Y !
+	800 'p2X !  PISO 'p2Y !
+	0 'p1XV !   0 'p1YV !
+	0 'p2XV !   0 'p2YV !
+	p1x 'ballX ! 200 'ballY !
+	0 'ballVX !	0 'ballVY !	;
+
+|------------------------------
+:ballhitx		ballvx neg 'ballvx ! ;
+:ballhity		ballvY neg 'ballvy ! ;
+:squared2d | x y  -- x y v
+	ballx pick2 - dup * bally pick2 - dup * + ;
+	
+:calcball | x y  --
+	squared2d | x y v 
+	RADIOSLIME RADIOBALL + dup * <? ( 
+		bally pick2 - dup 2/  'bally +! 'ballvy +! 
+		ballx pick3 - dup 2/  'ballx +! 'ballvx +!  
+		) drop ;
+
+:%oo | x y -- nx ny
+	swap sw 1000 */ 1000 rot - sh 1000 */  ; 
+
+|------------------------------  
+:DrawBall
+	ballvy 1-
+	-22 <? ( -22 nip ) 22 >? ( 22 nip ) 
+	dup 'bally +! 'ballvy !
+	bally PISO 10 + <? ( 
+		PISO 10 + 'bally ! 
+		ballhity
+		ballx 500 <? ( 'p1Score )( 'p2Score ) nip 1 swap +!
+		) drop
+	ballvx 
+	-15 <? ( -15 nip ) 15 >? ( 15 nip ) 'ballvx !
+	ballx ballvx +
+	50 <? ( 50 nip ballhitx ) 950 >? ( 950 nip ballhitx ) 
+	bally 254 <? (
+		swap dup 500 -	| y x r
+		dup abs 10 RADIOBALL + <? ( 
+			drop + 
+			over 250 <? ( ballhitx )( ballhity )
+			dup ) 2drop
+		swap 
+		) drop
+	'ballx !
+	ballx 500 <? ( p1x p1y )( p2x p2y ) calcball 3drop
+ 	ballX ballY %oo RADIOBALL blanco fcircle	;
+
+|------------------------------
+:juego
+	.page
+	'exit >esc<
+|---- player 2
+	[ SLIMEVEL neg 'p1XV ! ; ] 30 >key 
+	[ SLIMEVEL 'p1XV ! ; ] 32 >key
+	[ 0 'p1XV ! ; ] dup 30 >ukey 32 >ukey
+	[  p1Y PISO <>? ( drop ; ) drop JUMPVEL 'p1YV ! ; ] 17 >key
+|---- player 1
+	[ SLIMEVEL neg 'p2XV ! ; ] <izq>
+	[ SLIMEVEL 'p2XV ! ; ] <der>
+	[ 0 'p2XV ! ; ] dup >izq< >der<
+	[  p2Y PISO <>? ( drop ; ) drop JUMPVEL 'p2YV ! ; ] <arr>
+	.show cls
+	|----	jugador 1
+		p1x p1xv + 75 <? ( 75 nip ) 425 >? ( 425 nip ) 'p1x !
+		p1yv 0? ( drop )( 
+			p1y + GRAVITY neg 'p1yv +!
+			PISO <? ( PISO nip  0 'p1yv ! ) 'p1y ! )
+		p1x p1y %oo RADIOSLIME azul fcircle
+	|----	jugador 2
+		p2x p2xv + 925 >? ( 925 nip ) 575 <? ( 575 nip ) 'p2x !
+		p2yv 0? ( drop )(
+			p2y + GRAVITY neg 'p2yv +!
+			PISO <? ( PISO nip 0 'p2yv ! ) 'p2y ! ) 
+		p2x p2y %oo RADIOSLIME rojo fcircle
+		DrawBall
+|---- 	Dibujo fondo
+		verde
+		1000 25 %oo 0 25 %oo vfill | ancho alto x y 
+		20 250 %oo 490 250 %oo vfill	
+		25 10 %oo 2dup 0 990 %oo vfill 976 990 %oo vfill	
+
+|---- Carteles		
+		10 6 screen
+		5 0 at verde "Slimetlet" print 
+		1 0 at blanco p2Score p1Score "%d - %d" print
+|		5 1 at azul bally ballx "%d.%d" print
+		;
+
+    
+: 0 paper inicioini 4 juego "main.txt" run ;

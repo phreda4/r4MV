@@ -1,0 +1,331 @@
+| gui
+| pabloreda@gmail.com
+|----------
+
+#x1 #y1 #x2 #y2 | zona de dibujo
+#xx -1 #yy -1 
+#nw #nh	| aux y tabla
+#xa #ya #xb #yb | zona actual
+#zns	)( 8192 | pila de zonas
+#zns>	'zns	
+#za>	'zns	
+#zf>	'zns
+#dlg	)( 256
+#dlg>	'dlg
+#zact 0
+#activo 0
+#teclados )( 8192 | guarda teclados
+#teclados> 'teclados
+
+|::.cls
+|	'zns dup dup 'zns> ! 'za> ! 'zf> ! 'dlg 'dlg> ! -1 dup 'xx ! 'yy ! ;
+
+::.table | cf -- 
+	sh swap / 'nh ! sw swap / 'nw ! -1 dup 'xx ! 'yy ! 0 0
+::.at | xy --
+	nh * dup nh + 'y2 ! 'y1 ! nw * dup nw + 'x2 ! 'x1 ! ;
+::.to | xy --
+	nh * y1 + 'y2 ! nw * x1 + 'x2 ! ;
+::.> 	
+	x1 nw + sw >? ( 0 nip 'x1 ! nw 'x2 ! y2 y1 - 'y1 +! 'y2 +! ; ) 'x1 ! 
+	nw 'x2 +!	; 		| x2 x1 - dup 'x1 +! 'x2 +! 
+::.<
+	x1 nw - 0 <? ( 0 nip 'x1 ! nw 'x2 ! y2 y1 - neg 'y1 +! 'y2 +! ; ) 'x1 !
+	nw neg 'x2 +! ;
+::.\ 
+	y2 y1 - dup 'y1 +! 'y2 +! ;
+::./ 
+	y2 y1 - neg dup 'y1 +! 'y2 +! ;
+::all
+	x2 x1 - y2 y1 - dim
+::center	
+	x1 x2 + 2/ y1 y2 + 2/ pos ;
+	
+::rect.
+	y2 x2 y1 x1 ;
+	
+|--- Cuadro de pantalla
+::fill
+	x2 x1 - y2 y1 - x1 y1 vfill ;
+::hlinea | x --
+	dup y1 op y2 line ;
+::vlinea | y --
+	dup x1 swap op x2 swap line ;
+::mcursor | x y --
+	vlinea hlinea ;
+::caja 
+	x1 hlinea x2 hlinea y1 vlinea y2 vlinea ;
+	
+|--------pantalla
+:inbox? | x y -- 1/0
+	y1 <? ( 2drop 0 ; ) y2 >? ( 2drop 0 ; ) drop
+	x1 <? ( 0 nip ; ) x2 >? ( 0 )( 1 ) nip ;
+
+:inboxb? | x y -- 1/0
+	ya <? ( 2drop 0 ; ) yb >? ( 2drop 0 ; ) drop
+	xa <? ( 0 nip ; ) xb >? ( 0 )( 1 ) nip ;
+
+|---- condicion,var,key
+:ex00 drop ;
+:ex01
+	over @ @ over 4 >> $fff and <>? ( drop 16 >> 'activo ! )( 2drop ) 4+ ;
+:ex10
+	drop @+ @+ 'x1 ! @+ 'y1 ! @+ 'x2 ! @ 'y2 ! ; 	| variables por programa	
+:ex11
+	drop ;
+	
+#extras 'ex00 'ex01 'ex10 'ex11
+
+:p0 dup $c and 'extras + @ exec ; 
+:p1 d>xy 'x2 ! 'x1 ! ; 
+:p2 d>xy 'y2 ! 'y1 ! ; 
+|---- Dibujando
+:p3
+	2 >> dup 6 >> ink	$3f and 
+	activo 1? ( 1- 'activo ! + ; ) drop
+	y2 x2 y1 x1 >win
+	>r dup @ exec r> + ; 
+
+#toc 0	
+|---- Buscando	
+:b3
+	2 >> $3f and 
+	activo 1? ( 1- 'activo ! + ; ) drop
+	2over inbox? 1? ( y2 x2 y1 x1 'xa !+ !+ !+ ! pick2 'toc ! ) drop 
+	+ ;
+
+#pcom p0 p1 p2 p3
+:dlg.draw | --
+	0 'activo !
+	za> ( @+ 1? )( dup $3 and 2 << 'pcom + @ exec ) 2drop ;
+	
+#bbus p0 p1 p2 b3
+:dlg.busca | xy -- xy0/addr
+	0 'activo ! 0 'toc ! 
+	za> ( @+ 1? )( dup $3 and 2 << 'bbus + @ exec ) 2drop toc ;
+	
+|--- interaccion
+:msinicio | xy --
+	dlg.busca 0? ( 'zact ! 2drop ; ) dup 'zact ! 2
+:mscal
+	swap 4+ @ 0? ( 4drop ; ) yb xb ya xa 
+	2over 2over >win | sacar esto
+	'x1 !+ !+ !+ !
+	exec ;
+:msup
+	0 motion! 0 end! zact 0? ( drop ; ) 
+	>r xymouse r> 0 mscal 0 'zact ! ;
+:msmove
+	xymouse zact 0? ( drop msinicio ; ) >r
+	2dup inboxb? 0? ( rdrop drop msinicio ; ) drop r>
+	1 mscal ;
+:msdown
+	'msmove motion! 'msup end! xymouse msinicio ;
+
+
+|---- compila dialogo
+:,. | o --
+	zns> !+ 'zns> ! ;
+	
+:savelugar
+	x1 x2 xy>d xx <>? ( dup 'xx ! 1 or ,. )( drop )
+	y1 y2 xy>d yy <>? ( dup 'yy ! 2 or ,. )( drop ) ;
+:col3 | cnt -- col
+	$3f and 2 << ink@ 8 << or 3 or ;
+	
+::.ug	| cd --
+	savelugar 8 col3 ,. ,. ,. ;
+::.ug1 | acd -- 
+	savelugar 12 col3 ,. ,. ,. ,. ;
+::.ug2 | bacd --	
+	savelugar 16 col3 ,. ,. ,. ,. ,. ;
+::.ug3 | cbacd --	
+	savelugar 20 col3 ,. ,. ,. ,. ,. ,. ;
+
+::.cond | vnc -- | variable valor cantidad
+	16 << swap 4 << or $4 or ,. ,. ;
+
+::.pos | 'd -- variables de posicion (4 enteros)
+	x1 x2 xy>d 'xx ! y1 y2 xy>d 'yy !
+	$8 ,. ,. ;
+
+::*? 
+  zact =? ( 1 )( 0 ) ;
+  
+|--- botones spoli,text
+:cboton | xyv --
+	0? ( 3drop zact 8 + @ exec ; ) 3drop ;
+	
+:dboton
+	zact =? ( oscuro -3 )( -1 ) dup +dim rcaja  	
+	rcaja blanco dup 12 + @ rpoli ;
+
+:dbotont
+	zact =? ( claro -3 )( -1 ) dup +dim rcaja  
+	blanco 6 1 ttext dup 12 + @ pcenter print ;
+
+:8botont
+	zact =? ( claro -3 )( -1 ) dup +dim rcaja  
+	blanco 12 1 ttext dup 12 + @ pcenter print ;
+
+:4botont
+	zact =? ( claro -3 )( -1 ) dup +dim rcaja  
+	blanco 3 1 ttext dup 12 + @ pcenter print ;
+
+:2botont
+	zact =? ( claro -3 )( -1 ) dup +dim rcaja  
+	blanco 2 1 ttext dup 12 + @ pcenter print ;
+
+:dib.gboton
+	ink@ swap
+	zact =? ( verde fill oscuro )
+	swap
+	ink 12 1 ttext dup 12 + @ pcenter print ;
+	
+::.sbtn | 'sprite 'click --
+	'cboton 'dboton .ug2 ;
+	
+::.tbtn | "hola" 'click --	
+	'cboton 'dbotont .ug2 ;
+
+::.8btn | "hola" 'click --	
+	'cboton '8botont .ug2 ;
+
+::.4btn | "hola" 'click --	
+	'cboton '4botont .ug2 ;
+
+::.2btn | "hola" 'click --	
+	'cboton '2botont .ug2 ;
+
+::.gbtn | "hola" 'click --	
+	'cboton 'dib.gboton .ug2 ;
+
+::.xbtn | 'vec 'click --
+	'cboton rot .ug1 ;
+	
+|---sliders
+:x>scl | max xr -- x'
+	x1 max x2 min x1 - * x2 x1 - / ;
+:scl>x | max x' -- xr
+	0 max over min x2 x1 - * swap / x1 + ;
+:y>scl | max yr -- x'
+	y1 max y2 min y1 - * y2 y1 - / ;
+:scl>y
+	0 max over min y2 y1 - * swap / y1 + ;
+
+:chsli | xyv --
+	0? ( 3drop ; ) 2drop 
+	zact dup >r 12 + @ swap x>scl r> 8 + @ ! ;
+
+:riellh
+	ink@ y1 y2 + 2/ dup dup blanco 1- vlinea gris vlinea 1+ negro vlinea ink ;
+	
+:dhsli
+	riellh dup 12 + @ over 8 + @ @ scl>x 
+	x1 max x2 min dup y2 y1 + 2/ y2 y1 - 2/ 2/ dup >r  fcircle r>
+	2/ dup >r - y2 y1 + 2/ r - r> 2/ blanco fcircle ;
+	
+::.hsli | max var --  | slide de 0..max
+	'chsli 'dhsli .ug2 ;
+
+:cvsli | xyv --
+	0? ( 3drop ; ) drop nip
+	zact dup >r 12 + @ swap y>scl r> 8 + @ ! ;
+
+:riellv
+	ink@ x1 x2 + 2/ dup dup blanco 1- hlinea gris hlinea 1+ negro hlinea ink ;
+	
+:dvsli
+	riellv dup 12 + @ over 8 + @ @ scl>y
+	y1 max y2 min dup x2 x1 + 2/ swap x2 x1 - 2/ 2/ dup >r fcircle r>
+	2/ dup >r - x2 x1 + 2/ r - swap r> 2/ blanco fcircle ;
+	
+::.vsli | max var --  | slide de 0..max
+	'cvsli 'dvsli .ug2 ;
+	
+|--- boton tabla
+|#acel 0
+#tx #ty #tx2 #ty2
+#sx #sy #ix #iy
+
+:defbox | f c --
+	y2 x2 y1 x1 'tx !+ !+ !+ ! 		| guardo cuadro
+:defadj
+	y2 y1 - swap / 'sy ! x2 x1 - swap / 'sx ! 
+	x1 'ix ! y1 'iy ! ;
+
+:undefbox
+	ty2 tx2 ty tx 'x1 !+ !+ !+ ! ;
+
+:cbtabla | xyv --
+	0? ( drop zact 8 + @ dup 16 >> swap $ffff and over swap defadj
+		swap y1 - sy / * swap x1 - sx / + zact 12 + @ exec ; )
+	3drop ;
+	
+:dbtabla
+	dup 16 + @ over 8 + @ dup 16 >> swap $ffff and 2dup defbox
+	0 >r ( 1? )( 1- over ( 1? )( 1-
+			iy ix over sy + over sx + 2swap >win
+			pick3 r swap exec 1 r+
+			sx 'ix +! ) drop 
+		tx 'ix ! sy 'iy +! ) 3drop rdrop 
+	undefbox ;
+
+::.btabla | draw click f c --
+	16 << or 'cbtabla 'dbtabla .ug3 ;
+
+|--- HTOOL botonera horizontal de estados
+:chtool | xyv --
+	0? ( 3drop ; ) 2drop
+	zact 8 + @ swap x>scl zact 12 + @ ! ;
+
+:dhtool | 
+	dup 16 + @ >r dup 12 + @ @ 
+	over 8 + @ dup hsplit
+	swap over swap - 1- swap 
+	( 1? )( 1- 
+		over =? ( ink@ amarillo rcaja ink 4 )( -4 ) dup dup +dim
+		r@+ rpoli neg dup +dim
+		xnext ) 
+	2drop rdrop ;
+	
+::.htool | botonera var cnt --
+	'chtool 'dhtool .ug3 ;
+	
+|--- dibujo grilla	
+::rgrilla
+	y2 y1 - 5 >> x2 x1 - 5 >>
+	32 ( 1? )( 1- 
+		dup 1 and 0? ( $aaaaff )( $cccccc ) ink drop 	16 =? ( $ffaaaa ink )
+		dup pick2 * x1 + pick2 2/ + hlinea 
+		dup pick3 * y1 + pick3 2/ + vlinea
+		) 3drop ;
+
+#lastime 
+#startime
+
+::.restart
+	lastime 'startime !	;
+
+::.show
+	za> dlg> !+ 'dlg> !	zf> 'za> ! zns> 'zf> !
+	'msdown start! msec 'lastime ! 0 '.exit ! 0 zns> !
+	|-----graba y avanza
+	teclados> ukeymap 254 move 1024 'teclados> +!
+	teclados> keymap 254 move 1024 'teclados> +!
+	.restart
+	( .exit 0? )( drop update msec 
+		lastime >? ( 30 + 'lastime ! r exec dlg.draw redraw )( drop ) 
+		) drop 
+	0 '.exit ! 0 motion! 0 end! 
+	za> dup 'zf> ! 'zns> ! dlg> 4 - dup 'dlg> ! @ 'za> ! 
+	0 zns> ! 
+	|----- retocede y carga
+	-1024 'teclados> +! keymap teclados> 254 move
+	-1024 'teclados> +! ukeymap teclados> 254 move
+	;
+	
+::.segs | seg --
+    1000 * lastime startime - >? ( drop rdrop ; ) drop	;
+    
+	

@@ -1,0 +1,135 @@
+| Fuentes unificadas
+| :r4 libreria de sistema - Fuente de letras
+|---------------------------------------------
+
+| print a buffer
+|-------------------------
+^reda4.txt	| Distribucion de teclado - Scancode to Ascii
+
+|----------- Print a memoria
+#mbuffer )( 4096 | 4kb linea
+#mbuffer> 'mbuffer
+
+:m, mbuffer> !+ 'mbuffer> ! ;
+:m,c mbuffer> c!+ 'mbuffer> ! ;
+:m,w mbuffer> w!+ 'mbuffer> ! ;
+
+:c0	| 'p
+	;
+:c1	| a,q
+	;
+:c2	| b,r		(%b) binario
+	0 rot
+	( dup $1 and $30 + swap 2/ $7fffffff and 0? ) drop
+	( m,c 0? ) drop ;
+:c3	| c,s		(%s) string
+	swap 
+	( c@+ 1? )( m,c ) 2drop ;
+:c4	| d,t		(%d) decimal
+	swap
+	-? ( "-" m,s neg ) 
+	0 swap ( 10 /mod $30 + swap 0? ) drop 
+	( m,c 0? ) drop ;
+:c5	| e,u,%		(%%) caracter %
+	$25 m,c ;
+:c6	| f,v		(%f) punto fijo
+	over 16 >> c4
+	$2e m,c | .
+	swap $ffff and c4 ; | <--- no es
+:c7	| ..w		(%w) palabra
+	swap
+	( c@+ 32 >? )( m,c ) 2drop ;
+:c8	| h..			(%h) hexa
+	0 rot
+	( dup $f and $30 + swap 4 >> $fffffff and 0? ) drop 
+	( $39 >? ( 7 + ) m,c 0? ) drop ;
+:c9	| i,y			(%i) parte entera fixed
+	swap 16 >> c4 ;
+:ca	| j,z			(%j) parte decimal fixel
+	swap $ffff and c4 ; | <--- NO ES
+:cb	| k,
+	;
+:cc	| l,			(%l) linea
+	swap
+	( c@+ 1? )( 13 =? ( 2drop ; ) m,c ) 2drop ;
+:cd	| m,}
+	;
+:ce	| .	| cr		(%.) finlinea
+	13 m,c ;
+:cf	| o,			(%o) octal
+	0 rot
+	( dup $7 and $30 + swap 3 >> $1fffffff and 0? ) drop
+	( m,c 0? ) drop ;
+
+#control c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf
+
+:m,emit | c --
+	$25 <>? ( m,c ; ) drop c@+ 
+	$f and 2 << 'control + @ exec ;
+
+::mprint | .. a b c adr -- addr
+	'mbuffer 'mbuffer> !
+	( c@+ 1? )( m,emit ) 2drop 0 m,c 
+	'mbuffer ;
+
+|------------------- ventana de texto
+
+#:cols #:fils
+#xc #yc
+#x1 #y1 #x2 #y2
+
+#interface 
+
+#*window
+#*at
+#*emit
+#*text
+#*font
+#*inv 
+
+::window *window exec ;
+::at		*at exec ;
+::text	*text exec ;
+::font	*font exec ;
+|::char	*char exec ;
+::inv		*inv exec ;
+
+::print	*print exec ;
+::oldscreen
+	f12.lim 'fils ! 'cols ! 
+	0 0
+::at | x y --
+	2dup 'yc ! 'xc !
+:gat	| sin mover cursor
+	swap 3 << swap 	3 << dup 2/ + |	12 * 
+	*at exec ; | f12.at 
+
+::gotoxy+ | rx ry --
+	swap xc 3 << + swap yc 12 * + *at exec ; |f12.at ;
+
+::cr
+	0 'xc ! yc 1+ 'yc ! xc yc *at exec ;
+
+::char | n --
+	1 'xc +!
+	xc cols >=? ( cr ) drop
+	*char exec ;
+
+::sprint | "" --
+	( c@+ 1? )( *char exec ) 2drop ;
+
+|----------- ancho fijo
+::lprint | "" cnt --
+	( 1? )( 1- swap c@+ 0? ( drop 1- 32 ) char swap ) 2drop ;
+
+::rprint | "" cnt --
+	swap count neg rot + -? ( swap count rot + lprint ; )
+:auxp
+	( 1? )( 1- 32 char ) drop sprint ;
+
+::cprint | "" cnt --
+	swap count neg rot + -? ( swap count rot + lprint ; )
+	dup 2/ | "" resto r2/
+	dup >r - auxp
+	r> ( 1? )( 1- 32 char ) drop ;
+

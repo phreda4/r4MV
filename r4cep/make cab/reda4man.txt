@@ -1,0 +1,107 @@
+^reda4.txt
+^gui.txt
+
+#ifin ( -30 -31 -60 -55 -82 -71 -66 -87 -50 -63 -26 -31 4 -63 36 -87 62 -71 78 -55 94 -31 70 1 36 33 68 57 94 73 78 89 62 65 38 33 4 65 -28 89 -50 73 -66 57 -82 33 -58 1 -28 0 )
+#iprev ( 17 -30 -76 -90 7 -87 -12 -103 6 -87 22 1 100 23 86 36 85 103 22 -12 -26 87 21 0 )
+#inext ( -94 89 -12 105 6 89 22 1 100 -9 86 36 -75 -89 22 -12 -26 -73 -11 -76 -90 7 0 )
+
+#pant16 0
+#pant32 0
+
+:bsalir "main.txt" run ;
+
+:pantalla
+	12 12 .table 11 11 .at
+	verde 'inext 'exit .sbtn .<
+	rojo 'ifin 'bsalir .sbtn 
+|	amarillo 'iprev 'exi .sbtn .<
+	.show cls 		
+		16 16 screen azul
+		0 0 pat 16 1 ptofill
+		0 0 pat blanco ":REDa4" print
+		0 1 pat pant16 print
+		32 32 screen
+		22 0 pat blanco "pabloreda@gmail.com" print
+		0 2 pat pant32 print ;
+
+
+:referencia
+	clear here 'pant16 !
+	,azul "Referencia Rapida%/" ,ln
+
+	0 ,c here 'pant32 !
+	,blanco "%/%/Para darle instrucciones a una PC." ,ln
+	"Reconoce Numeros en",ln
+	,verde
+	"   decimal    %>15" ,ln
+	"   binario    %>%%111" ,ln
+	" exagesimal %>$f" ,ln
+	,blanco
+	"Lo que no es numero es palabra." ,ln
+	"El espacio separa las palabras." ,ln
+	"Se busca en el " ,s ,rojo "diccionario" ,s ,blanco " haciendo lo que indica." ,ln
+	,verde "Final   " ,s ,rojo "; " ,s ,blanco	" Termina palabra" ,ln
+	,verde "Lista   " ,s ,rojo "( )( ) " ,s ,blanco	" Agrupa palabras" ,ln
+	,verde "Anonima " ,s ,rojo "[ ]" ,s ,blanco	" Define sin nombre" ,ln
+	,blanco
+	
+	,verde "Valor del TOPE" ,s ,rojo " 0? 1? +? -? " ,s ,blanco "Cero/No cero/Positivo/Negativo" ,ln 
+	"TOPE y ANTERIOR" ,s ,rojo "<? >? =? <>? >=? <=?" ,s ,blanco "Usa el numero comparado" ,ln 
+	,rojo "+ - * / " ,s ,blanco	" Aritmeticas" ,ln
+	,rojo "dup drop swap over rot " ,s ,blanco	" Pila" ,ln
+	0 ,c pantalla ;
+	
+:introduccion
+	clear here 'pant16 !
+	,verde
+	"Introduccion" ,ln
+	0 ,c here 'pant32 !
+	,blanco "%/%/Todo comenzo empezando.." ,ln
+	0 ,c pantalla ;
+
+:numeroypalabra
+	clear here 'pant16 !
+	,verde
+	"Interprete" ,ln
+	0 ,c here 'pant32 !
+	,blanco "%/%/Todo comenzo empezando.." ,ln
+	0 ,c pantalla ;
+
+:diccionario
+	clear here 'pant16 !
+	,verde
+	"Pila y Diccionario" ,ln
+	0 ,c here 'pant32 !
+	,blanco "%/%/Todo comenzo empezando.." ,ln
+	0 ,c pantalla ;
+
+:pilaoperar
+	clear here 'pant16 !
+	,verde
+	"Basicas" ,ln
+	0 ,c here 'pant32 !
+	,blanco "%/%/Todo comenzo empezando.." ,ln
+	0 ,c pantalla ;
+
+:control 
+	clear here 'pant16 !
+	,blanco "Estructuras de Control" ,ln
+	0 ,c here 'pant32 !
+	,verde
+	"%/%/%/%/?? ( cero )       %>SI (IF)" ,ln
+	"%/+? ( pos )( net ) %>SI SINO (IF ELSE)" ,ln
+	"%/5 ( 1? )( 1- dp ) %>MIENTRAS (WHILE)" ,ln
+	"%/0 ( 1+ 100 >?   ) %>HASTA (UNTIL)" ,ln
+	"%/( limpia barre  ) %>SIEMPRE (ALWAYS)" " ,ln
+	
+	0 ,c pantalla ;
+
+:lista
+	inikey 'exit <=ESC
+	.cls
+	(
+	referencia
+	control 
+	) ;
+
+: 0 colorf 33 lista ;

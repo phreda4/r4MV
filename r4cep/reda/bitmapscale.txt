@@ -1,0 +1,188 @@
+| escala a memoria
+| phreda en clase
+|--------------------------------------------
+^reda4.txt
+^gui.txt
+^files.txt
+
+#nombre )( 64
+#ancho
+#alto 
+#sancho
+#salto 
+
+#iniciobmp
+#imagen
+#*linea
+
+#scalax
+#scalay
+
+#errbmp
+#base
+#code
+
+#planos
+#bitcount
+#compresion
+#paleta
+#pad
+
+:color24>32 | 'b -- 'b+ rgb
+	c@+  $ff and >r c@+ $ff and 8 << >r c@+ $ff and 16 <<  r> or r> or ;
+
+:color8>32 | b -- b+ rgb
+	c@+ $ff and 2 << paleta + @ ;
+
+|----------------------------------- 4 > 32
+#slot 0
+#netok 0
+
+:esta2 | adr -- adr++ color
+	slot $f and 2 << paleta + @  
+	0 'netok ! ;
+
+:color4>32 | b -- b+ p1 p2 
+	netok 1? ( >r ; ) drop 
+	c@+ dup 'slot !
+	4 >> $f and 2 << paleta + @  
+	'esta2 'netok ! ;
+|----------------------------
+
+:linea24 | 'v 'b --
+	ancho ( 1? )( 1- >r
+		color24>32 rot !+ swap
+		r> )  drop ;
+
+:linea8 | 'v 'b --
+	ancho ( 1? )( 1- >r
+		color8>32 rot !+ swap
+		r> )  drop ;
+
+:linea4 | 'v 'b --
+	0 'netok !
+	ancho ( 1? )( 1- >r
+		color4>32 rot !+ swap
+		r> )  drop ;
+
+
+:bmp
+|	dup 2 + @ |; :bfsize
+|	dup 6 + @ | :bfOffBits 
+	dup $12 + @ 'ancho !
+	dup $16 + @ 'alto !
+	dup $20 + w@ 'planos !
+	dup $22 + w@ 'bitcount !
+	dup $24 + @ 'compresion !
+|	dup $30 + @  |:base 
+	dup $36 + 'paleta ! 
+	ancho $3 and 'pad !
+	dup 10 + @ 54 =? ( 'linea24  )( 118 =? ( 'linea4 )( 'linea8 ) ) '*linea ! 
+	over + 'iniciobmp ! 
+|	drop bfOffBits + 'iniciobmp ! 
+|	 'membmp ! 
+	drop
+	ancho alto 1- * 2 << imagen +
+	iniciobmp
+	alto ( 1? )( 1- >r 	
+		*linea exec |linea24
+		swap ancho 8 * - 
+		swap pad +
+		r> ) 
+	3drop  ;
+
+|----------------------------------------------------------
+:elegir
+	'nombre explore
+:recargabmp
+	mem 'nombre load 'imagen ! cls 
+:redibuja
+	mem bmp 
+|	sw sh settam 
+	;
+
+|----------------------------------------------------------
+:getp |x y -- c
+	ancho * + 2 <<
+	imagen +
+	@ ;
+
+:settam | w a --
+	'salto ! 'sancho !
+	sancho 8 << ancho / 'scalax !
+	salto 8 << alto / 'scalay !
+	;
+
+:escala>screen
+	framev >r imagen
+	0 ( salto <? )(
+		dup 8 << scalay /
+		0 ( sancho <? )(
+			dup 8 << scalax /
+			pick2 
+			getp r!+
+			1 + ) 2drop
+			sw sancho - 2 << r+
+		1 + )  drop
+	rdrop ;
+
+#re #gr #bl
+
+:ordenrgb
+	dup $ff and 'bl ! 
+	dup $ff00 and 8 >> 'gr !
+	$ff0000 and 16 >> 're ! 
+	re bl >? ( gr >? ( drop 0 |$ff0000 
+							gr 8 << or bl or ; )( drop 0 |$ff00 
+											re 16 << or bl or ; ) ) drop
+	bl gr >? ( drop 0 |$ff 
+			re 16 << or gr 8 << or )( drop 0 |$ff00 
+				re 16 << or bl or )
+	;
+
+
+:escala>graba
+	imagen >r
+	0 ( alto <? )( 
+		0 ( ancho <? )( | y x
+			r @
+			ordenrgb
+|			$3f3f3f and |$e0e0e0 or
+			|2/ $7f7f7f and |oscuro
+			r!+
+			1+ ) drop
+		1+ ) drop rdrop 
+	escala>screen
+	;
+
+
+:inicio
+	cls recargabmp
+	.page
+	'exit <esc>
+	'elegir <f1>
+	'escala>graba <f2>
+	6 8 .table
+	5 0 .at rojo oscuro
+	"Salir" 'exit .tbtn
+			sw sh settam
+		escala>screen
+
+	.show |cls
+|		msec 3 >> $1ff and dup settam
+|		ancho alto settam
+
+		blanco 24 16 screen
+		0 15 at rojo
+		blanco alto ancho " %dx%d " print 
+|		verde 
+		|planos bitcount compresion pad "%d planos:%d bitcount:%d compresion:%d " print
+		;
+	
+: 0 paper
+'nombre ".//r4nom//leebmp.nom" load drop
+".//bmps//" dir
+inicio
+".//" dir
+'nombre count ".//r4nom//leebmp.nom" save 
+"main.txt" run 
