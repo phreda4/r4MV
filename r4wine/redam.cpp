@@ -787,18 +787,33 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
         NOS++;*NOS=TOS;TOS=cHeightPels;
         continue;
 #endif
-    case SYSTEM: // "" --
-        //if (TOS!=0)
-        //system((char*)TOS);
+    case SYSTEM: // "" -- st
+         if (TOS==0) {
+            if (ProcessInfo.hProcess!=0) {
+               TerminateProcess(ProcessInfo.hProcess,0);
+               CloseHandle(ProcessInfo.hThread);
+               CloseHandle(ProcessInfo.hProcess);
+               ProcessInfo.hProcess=0; 
+               }
+            TOS=-1;
+            continue;
+            }
+         if (TOS==-1) {
+            if (ProcessInfo.hProcess==0) continue;
+            W=WaitForSingleObject(ProcessInfo.hProcess,0);
+            if (W==WAIT_TIMEOUT) TOS=0; else TOS=-1;
+            continue;
+            }
         ZeroMemory(&StartupInfo, sizeof(StartupInfo));
         StartupInfo.cb = sizeof StartupInfo ; //Only compulsory field
-        if(CreateProcess(NULL,(char*)TOS,NULL,NULL,FALSE,0,NULL,NULL,&StartupInfo,&ProcessInfo))
+        TOS=CreateProcess(NULL,(char*)TOS,NULL,NULL,FALSE,CREATE_NO_WINDOW,NULL,NULL,&StartupInfo,&ProcessInfo);
+/*        if(CreateProcess(NULL,(char*)TOS,NULL,NULL,FALSE,0,NULL,NULL,&StartupInfo,&ProcessInfo))
             { 
             WaitForSingleObject(ProcessInfo.hProcess,INFINITE);
             CloseHandle(ProcessInfo.hThread);
             CloseHandle(ProcessInfo.hProcess);
             }  
-        TOS=(*NOS);NOS--;
+            */
         continue;
 	default: // completa los 8 bits con apila numeros 0...
         NOS++;*NOS=TOS;TOS=W-ULTIMAPRIMITIVA;continue;
