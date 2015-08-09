@@ -428,8 +428,10 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
 //-hasta aca solo lo escribe el compilador
 //--- condicionales
 	case IF: W=*(char*)IP;IP++;if (TOS!=0) IP+=W; continue;
-    case PIF: W=*(char*)IP;IP++;if (TOS<=0) IP+=W; continue;
-	case NIF: W=*(char*)IP;IP++;if (TOS>=0) IP+=W; continue;
+    case PIF: W=*(char*)IP;IP++;if (TOS&0x80000000) IP+=W; continue;
+	case NIF: W=*(char*)IP;IP++;if (!(TOS&0x80000000)) IP+=W; continue;
+//    case PIF: W=*(char*)IP;IP++;if (TOS<=0) IP+=W; continue;
+//	case NIF: W=*(char*)IP;IP++;if (TOS>=0) IP+=W; continue;
     case UIF: W=*(char*)IP;IP++;if (TOS==0) IP+=W; continue;
     case IFN: W=*(char*)IP;IP++;if (TOS!=*NOS) IP+=W;
 		TOS=*NOS;NOS--;continue;
@@ -793,7 +795,7 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
                TerminateProcess(ProcessInfo.hProcess,0);
                CloseHandle(ProcessInfo.hThread);
                CloseHandle(ProcessInfo.hProcess);
-               ProcessInfo.hProcess=0; 
+               ProcessInfo.hProcess=0;
                }
             TOS=-1;
             continue;
@@ -807,13 +809,6 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
         ZeroMemory(&StartupInfo, sizeof(StartupInfo));
         StartupInfo.cb = sizeof StartupInfo ; //Only compulsory field
         TOS=CreateProcess(NULL,(char*)TOS,NULL,NULL,FALSE,CREATE_NO_WINDOW,NULL,NULL,&StartupInfo,&ProcessInfo);
-/*        if(CreateProcess(NULL,(char*)TOS,NULL,NULL,FALSE,0,NULL,NULL,&StartupInfo,&ProcessInfo))
-            { 
-            WaitForSingleObject(ProcessInfo.hProcess,INFINITE);
-            CloseHandle(ProcessInfo.hThread);
-            CloseHandle(ProcessInfo.hProcess);
-            }  
-            */
         continue;
 	default: // completa los 8 bits con apila numeros 0...
         NOS++;*NOS=TOS;TOS=W-ULTIMAPRIMITIVA;continue;
