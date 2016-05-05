@@ -47,7 +47,6 @@
 |		randxy pline
 |		randxy randxy pcurve
 		randxy randxy randxy pcurve3
-
 		) drop
 	pline poli
 	;

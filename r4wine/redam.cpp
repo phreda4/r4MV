@@ -430,8 +430,6 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
 	case IF: W=*(char*)IP;IP++;if (TOS!=0) IP+=W; continue;
     case PIF: W=*(char*)IP;IP++;if (TOS&0x80000000) IP+=W; continue;
 	case NIF: W=*(char*)IP;IP++;if (!(TOS&0x80000000)) IP+=W; continue;
-//    case PIF: W=*(char*)IP;IP++;if (TOS<=0) IP+=W; continue;
-//	case NIF: W=*(char*)IP;IP++;if (TOS>=0) IP+=W; continue;
     case UIF: W=*(char*)IP;IP++;if (TOS==0) IP+=W; continue;
     case IFN: W=*(char*)IP;IP++;if (TOS!=*NOS) IP+=W;
 		TOS=*NOS;NOS--;continue;
@@ -450,7 +448,6 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case IFNAND: W=*(char*)IP;IP++;if (TOS&*NOS) IP+=W;
 		TOS=*NOS;NOS--;continue;
 //--- fin condicionales dependiente de bloques    
-//	case EXEC:W=TOS;TOS=*NOS;NOS--;if (W!=0) { R++;*R=IP;IP=(BYTE*)W; } continue;
 	case EXEC:R++;*R=IP;IP=(BYTE*)TOS;TOS=*NOS;NOS--;continue;
 //--- pila de datos
 	case DUP: NOS++;*NOS=TOS;continue;
@@ -485,16 +482,11 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
 	case SUMA: TOS=(*NOS)+TOS;NOS--;continue;
     case RESTA: TOS=(*NOS)-TOS;NOS--;continue;
 	case MUL: TOS=(*NOS)*TOS;NOS--;continue;
-    case DIV: //if (TOS==0) { TOS=*NOS;NOS--;continue; }
-	     TOS=*NOS/TOS;NOS--;continue;
-	case MULDIV: //if (TOS==0) { NOS--;TOS=*NOS;NOS--;continue; }
-	     TOS=(long long)(*(NOS-1))*(*NOS)/TOS;NOS-=2;continue;
-
+    case DIV: TOS=*NOS/TOS;NOS--;continue;
+	case MULDIV: TOS=(long long)(*(NOS-1))*(*NOS)/TOS;NOS-=2;continue;
 	case MULSHR: TOS=((long long)(*(NOS-1))*(*NOS))>>TOS;NOS-=2;continue;
     case CDIVSH: TOS=(((long long)(*(NOS-1))<<TOS)/(*NOS));NOS-=2;continue;
-
-    case DIVMOD: //if (TOS==0) { NOS--;TOS=*NOS;NOS--;continue; }
-	     W=*NOS%TOS;*NOS=*NOS/TOS;TOS=W;continue;
+    case DIVMOD: W=*NOS%TOS;*NOS=*NOS/TOS;TOS=W;continue;
 	case MOD: TOS=*NOS%TOS;NOS--;continue;
     case ABS: W=(TOS>>31);TOS=(TOS+W)^W;continue;
     case CSQRT: TOS=isqrt32(TOS);continue;
@@ -612,7 +604,6 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case PCURVE3:
 		gr_pcurve3(gx1,gy1,*NOS,TOS,*(NOS-2),*(NOS-1),*(NOS-4),*(NOS-3));gx1=*(NOS-4);gy1=*(NOS-3);
 		NOS-=5;TOS=*NOS;NOS--;continue;
-
 
 	case POLI: gr_drawPoli();continue;
     case FCOL: fillcol(*NOS,TOS);NOS--;TOS=*NOS;NOS--;continue;
@@ -777,8 +768,6 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
         tmpDC = CreateCompatibleDC( phDC );
         SelectObject( tmpDC, hBmp );
         GetObject( hBmp, sizeof( info ), &info );
-//      StretchDIBits(phDC,(*NOS),TOS,bmih.biWidth,bmih.biHeight,0,0,bmih.biWidth, bmih.biHeight, lpBits, &lpBitsInfo, DIB_RGB_COLORS,SRCCOPY);
-//BOOL StretchBlt(phDC,XO,YO,(info.bmWidth*SIZE)>>16,(info.bmHeight*SIZE)>>16,tmpDC,0,0,info.bmWidth, info.bmHeight,SRCCOPY);
         BitBlt( phDC,(*NOS),TOS, info.bmWidth, info.bmHeight, tmpDC, 0, 0, SRCCOPY );
         DeleteDC( tmpDC );
         DeleteObject(hBmp);
@@ -1179,19 +1168,26 @@ otrapalabra:
             aux=desapila();lastcall=NULL;
             if (aux==1) {
               aux=desapila();
-              if (salto==0) { prog[aux]=cntprog-aux-1; }
+//              if (salto==0) { prog[aux]=cntprog-aux-1; } //sin control
+              if (salto==0) { if ((cntprog-aux-1)==(char)(cntprog-aux-1)) prog[aux]=cntprog-aux-1; 
+                 else { sprintf(error,"bloque muy largo ");goto error; } }
                 else { sprintf(error,"? ) no valido ");goto error; }
             } else if (aux==2) { // repeticion
               aux=desapila();
-              if (salto==1) { prog[cntprog]=aux-cntprog-1;cntprog++;salto=0; } 
+              if (salto==1) { if ((aux-cntprog-1)==(char)(aux-cntprog-1)) { prog[cntprog]=aux-cntprog-1;cntprog++;salto=0; }
+                 else { sprintf(error,"bloque muy largo ");goto error; } } 
                 else { // repeat
                   aprog(JMPR);prog[cntprog]=aux-cntprog-1;cntprog++;
                    }
             } else if (aux==3) { // rep cond
               aux=desapila();
               if (salto==0) { 
-                  aprog(JMPR);prog[cntprog]=aux-cntprog-1;cntprog++; 
-                  aux=desapila();prog[aux]=cntprog-aux-1;
+                  aprog(JMPR);
+                  if ((aux-cntprog-1)==(char)(aux-cntprog-1)) { prog[cntprog]=aux-cntprog-1;cntprog++; }
+                  else { sprintf(error,"bloque muy largo ");goto error; }
+                  aux=desapila();
+                  if ((cntprog-aux-1)==(char)(cntprog-aux-1)) { prog[aux]=cntprog-aux-1; }
+                  else { sprintf(error,"bloque muy largo ");goto error; }
                   } 
                 else { sprintf(error,") mal cerrado");goto error; }
               } else
@@ -1203,7 +1199,8 @@ otrapalabra:
 				aux=desapila();// direccion
 				if (salto==0) { 
                   aprog(JMPR);apila(cntprog);apila(1);cntprog++;
-                  prog[aux]=cntprog-aux-1;
+                  if ((cntprog-aux-1)==(char)(cntprog-aux-1)) { prog[aux]=cntprog-aux-1; }
+                  else { sprintf(error,"bloque muy largo ");goto error; }
                  } else { sprintf(error,"? )( no valido");goto error; }
             } else if (aux==2) {
                 aux=desapila();
@@ -1219,7 +1216,9 @@ otrapalabra:
 		    break;
 		  case 5:// ]
 			if (desapila()!=4) { sprintf(error,"[] mal cerrado");goto error; }
-			aux=desapila();prog[aux]=cntprog-aux-1;
+			aux=desapila();
+			if ((cntprog-aux-1)==(char)(cntprog-aux-1)) { prog[aux]=cntprog-aux-1; }
+            else { sprintf(error,"bloque muy largo ");goto error; }
 		    break;
 		  default:
 		    aprog(numero);// compila primitiva
