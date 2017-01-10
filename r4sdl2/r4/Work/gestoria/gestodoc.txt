@@ -1,0 +1,1939 @@
+|
+| Gestoria para COMAR
+| PHREDA 2011
+|_______________________________
+^r4/lib/gui.txt
+^r4/lib/clock.txt
+^r4/lib/parse.txt
+^r4/lib/fontt.txt
+
+^r4/lib/trace.txt
+
+^r4/lib/db2.txt
+^r4/lib/db2m.txt
+^r4/lib/formkit.txt
+^r4/lib/leebmp.txt
+^r4/lib/nro2texto.txt
+
+#bmppag
+#actpag
+#cntpag
+#sizep
+
+#nform
+#doc
+
+#hereform
+|---------------------------------
+|---------------------------------
+#bmpfondo 0
+
+|--- tablas
+#dbtvehiculo 0 "db/gestoria/tvehiculo.db"
+#dblocalidad 0 "db/gestoria/localidad.db"
+#dbpais 0 "db/gestoria/pais.db"
+
+#dbventa 0 "db/gestoria/venta.db"
+
+|--- formularios
+#fkventa 0 "db/gestoria/venta.fk"
+
+|--- listados
+#grVenta 0 0
+$200 $156 $157 $25a $167 0
+"Nombre|N.Fac|Fecha|Vehiculo|Crédito"
+
+|---- titulo
+:titulo
+	clrscr
+	fonta-Arial14
+	76 gc.top
+	$00528A $10101 hfil
+	blanco cr2
+	" Comar Automotores S.A." print
+	"gESTOdOC " printr
+|*** DEBUG
+|		dup "(%d)" printc
+|****
+	cr cr2 scr ;
+
+|--- auxiliares de formulario
+#formularios )( 80 | 20 formularios max
+#formularios> 'formularios
+
+:formclear
+	hereform 'here !
+	'formularios 'formularios> ! ;
+
+:formpag
+	here formularios> !+ 'formularios> ! ;
+
+:formend
+	-1 'here +! 0 ,c ;
+
+:formcntcodo | -- cntcodominio
+	26 dbnfld? 0? ( drop 1 ; ) drop
+	46 dbnfld? 0? ( drop 2 ; ) drop
+	66 dbnfld? 0? ( drop 3 ; ) drop
+	drop 4 ;
+
+:,* | "" --
+	"%a" mprint dup strup
+:,|
+	,s "|" ,s ;
+
+:,fld* | nro
+	dbnfld  ,* ;
+
+:,fld+ | nro
+	dbnfld "%a" mprint dup strup ,s ;
+
+:,ffld* | nro fix --
+	dup "!%d," mprint ,s
+	swap
+	dbnfld "%a" mprint dup strup
+	swap ( 1? )( 1- swap
+		c@+ 0? ( swap 1- swap 32 nip )
+		,c swap ) 2drop
+ 	"|" ,s ;
+
+:,tipodoc | xx xx xx xx xx xx
+	dup dbnfld? 0? ( 2drop "||||||" ,s ; ) drop
+	dbnfld ?sint
+	0 ( 6 <? )(
+		over =? ( "X" )( "" ) ,*
+		1+ ) 3drop ;
+
+:,fldfecha3 | "d" "m" "y"
+	dup dbnfld? 0? ( 2drop "|||" ,s ; ) drop
+	dbnfld
+	?sint 0? ( drop "|" )( "%d|" ) mprint ,s
+	?sint "%d|" mprint ,s
+	?sint 100 mod "%d|" mprint ,s
+	drop ;
+
+:,fldfecha4 | "d" "m" "y"
+	dup dbnfld? 0? ( 2drop "|||" ,s ; ) drop
+	dbnfld
+	?sint 0? ( drop "|" )( "%d|" ) mprint ,s
+	?sint "%d|" mprint ,s
+	?sint 100 <? ( "20" ,s 10 <? ( "0" ,s ) )
+	"%d|" ,print
+	drop ;
+
+#mes "Enero" "Febrero" "Marzo" "Abril" "Mayo" "Junio" "Julio" "Agosto" "Septiembre" "Octubre" "Noviembre" "Diciembre"
+
+:,fldfecha2 | "d" "mes" "yyyy"
+	dup dbnfld? 0? ( 2drop "|||" ,s ; ) drop
+	dbnfld
+	?sint 0? ( drop "|" )( "%d|" ) mprint ,s
+	?sint 1- 'mes ( swap 1? )( 1- swap >>0 ) drop
+	"%s|" mprint ,s
+	?sint 100 mod "20%d|" mprint ,s
+	drop ;
+
+:,fldfecha2d | "d" "mes" "yyyy"
+	dup dbnfld? 0? ( 2drop "|||" ,s ; ) drop
+	dbnfld
+	?sint 0? ( drop "|" )( "%d|" ) mprint ,s
+	?sint 1- 'mes ( swap 1? )( 1- swap >>0 ) drop
+	"de %s|" mprint ,s
+	?sint 100 mod "20%d|" mprint ,s
+	drop ;
+
+:,fldfecha2dN | "d" "mes" "yyyy"
+	dup dbnfld? 0? ( 2drop "|||" ,s ; ) drop
+	dbnfld
+	?sint 0? ( drop "|" )( "%d|" ) mprint ,s
+	?sint "%d|" ,print
+	?sint 100 mod "20%d|" mprint ,s
+	drop ;
+
+:,fldfecha2dN2 | "d" "mes" "yyyy"
+	dup dbnfld? 0? ( 2drop "|||" ,s ; ) drop
+	dbnfld
+	?sint 0? ( drop "|" )( "%d|" ) mprint ,s
+	?sint 1- 'mes ( swap 1? )( 1- swap >>0 ) drop "%s|" ,print 
+	?sint 100 mod "20%d|" mprint ,s
+	drop ;
+
+:,fldfecha1t | "d mes yyyy"
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld
+	?sint "%d de " mprint ,s
+	?sint 1- 'mes ( swap 1? )( 1- swap >>0 ) drop
+	"%s de " ,print
+	?sint 100 <? ( "20" ,s 10 <? ( "0" ,s ) )
+	"%d|" ,print
+	drop ;
+
+
+:,fldmes*
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld
+	?sint nip
+	1- 'mes ( swap 1? )( 1- swap >>0 ) drop
+	"%s|" ,print ;
+
+:,fldfecha1 | "ddmmyy"
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld
+	"!6," ,s
+	?sint 10 <? ( "0" ,s ) "%d" mprint ,s
+	?sint 10 <? ( "0" ,s ) "%d" mprint ,s
+	?sint 100 mod 10 <? ( "0" ,s ) "%d" mprint ,s
+	"|" ,s
+	drop ;
+
+:2digyear | n --
+	100 mod
+	10 <? ( "0" ,s )
+	"%d|" ,print ;
+
+:,modelov | "yy"
+	174 dbnfld? 1? ( drop 174 dbnfld ?sint nip "!2," ,s 2digyear ; ) drop
+	87 dbnfld? 0? ( drop "|" ,s ; ) drop
+	"!2," ,s
+	87 dbnfld
+	?sint drop ?sint drop ?sint nip
+	2digyear ;
+
+:,aniov*
+	174 dbnfld? 1? ( drop 174 dbnfld ?sint nip "20" ,s 2digyear ; ) drop
+	87 dbnfld? 0? ( drop "|" ,s ; ) drop
+	87 dbnfld
+	?sint drop ?sint drop ?sint nip
+	"20" ,s
+	2digyear ;
+
+:,anio2*
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld
+	?sint nip
+	100 <? ( "20" ,s 100 mod 10 <? ( "0" ,s ) )
+	"%d|" ,print ;
+
+
+:,estado | xx xx xx xx
+	dup dbnfld? 0? ( 2drop "||||" ,s ; ) drop
+	dbnfld ?sint
+	0 ( 4 <? )(
+		over =? ( "X" )( "" ) ,*
+		1+ ) 3drop ;
+
+#ssestt "Soltero" "Casado" "Viudo" "Divorciado"
+
+:,estadot
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld ?sint nip
+	'ssestt swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+
+:,todos
+	formcntcodo
+	0 dbnfld "%a" mprint dup strup ,s
+	1 =? ( drop "|" ,s ; )
+	26 dbnfld " y %a" mprint dup strup ,s
+	2 =? ( drop "|" ,s ; )
+	46 dbnfld " y %a" mprint dup strup ,s
+	3 =? ( drop "|" ,s ; )
+	66 dbnfld " y %a|" mprint dup strup ,s
+	drop ;
+
+:,todosdireccion
+	formcntcodo
+	8 ,fld+ " " ,s 9 ,fld+ " " ,s 10 ,fld+ " " ,s 11 ,fld+ ", " ,s 5 ,fld+
+	1 =? ( drop "|" ,s ; ) "; " ,s
+	28 ,fld+ " " ,s 29 ,fld+ " " ,s 30 ,fld+ " " ,s 31 ,fld+ ", " ,s 33 ,fld+
+	2 =? ( drop "|" ,s ; ) "; " ,s
+	48 ,fld+ " " ,s 49 ,fld+ " " ,s 50 ,fld+ " " ,s 51 ,fld+ ", " ,s 53 ,fld+
+	3 =? ( drop "|" ,s ; ) "; " ,s
+	68 ,fld+ " " ,s 69 ,fld+ " " ,s 70 ,fld+ " " ,s 71 ,fld+ ", " ,s 73 ,fld+
+	drop "|" ,s ;
+
+:+cod
+	121 dbnfld? 0? ( drop "|" ,s ; ) drop
+	121 dbnfld " y %a" mprint dup strup ,s
+	127 dbnfld? 0? ( drop "|" ,s ; ) drop
+	127 dbnfld " y %a" mprint dup strup ,s
+	"|" ,s
+	;
+
+:,todos+cod
+	formcntcodo
+	0 dbnfld "%a" mprint dup strup ,s
+	1 =? ( drop +cod ; )
+	26 dbnfld " y %a" mprint dup strup ,s
+	2 =? ( drop +cod ; )
+	46 dbnfld " y %a" mprint dup strup ,s
+	3 =? ( drop +cod ; )
+	66 dbnfld " y %a" mprint dup strup ,s
+	drop +cod ;
+
+:+codn
+	121 dbnfld? 0? ( drop "|" ,s ; ) drop
+	122 dbnfld "; %a" ,print
+	127 dbnfld? 0? ( drop "|" ,s ; ) drop
+	128 dbnfld "; %a" ,print
+	"|" ,s ;
+
+:,tododni+cod
+	formcntcodo
+	14 dbnfld "%a" ,print
+	1 =? ( drop +codn ; )
+	37 dbnfld "; %a" ,print
+	2 =? ( drop +codn ; )
+	57 dbnfld "; %a" ,print
+	3 =? ( drop +codn ; )
+	77 dbnfld "; %a" ,print
+	drop +codn ;
+
+:+codd
+	121 dbnfld? 0? ( drop "|" ,s ; ) drop
+	"; " ,s 123 ,fld+ ", " ,s 124 ,fld+
+	127 dbnfld? 0? ( drop "|" ,s ; ) drop
+	"; " ,s 129 ,fld+ ", " ,s 130 ,fld+
+	"|" ,s ;
+
+
+:,todosdireccion+cod
+	formcntcodo
+	8 ,fld+ " " ,s 9 ,fld+ " " ,s 10 ,fld+ " " ,s 11 ,fld+ ", " ,s 5 ,fld+
+	1 =? ( drop +codd ; ) "; " ,s
+	28 ,fld+ " " ,s 29 ,fld+ " " ,s 30 ,fld+ " " ,s 31 ,fld+ ", " ,s 33 ,fld+
+	2 =? ( drop +codd ; ) "; " ,s
+	48 ,fld+ " " ,s 49 ,fld+ " " ,s 50 ,fld+ " " ,s 51 ,fld+ ", " ,s 53 ,fld+
+	3 =? ( drop +codd ; ) "; " ,s
+	68 ,fld+ " " ,s 69 ,fld+ " " ,s 70 ,fld+ " " ,s 71 ,fld+ ", " ,s 73 ,fld+
+	drop +codd ;
+
+:,todos2
+	formcntcodo
+	0 dbnfld "%a" mprint dup strup ,s
+	1 =? ( drop "|" ,s ; )
+	" Y OTRO" ,s
+	2 =? ( drop "|" ,s ; )
+	"S|" ,s
+	drop ;
+
+:,fldntxt | nro --
+	dbnfld
+	?real2 nip
+	100 /mod swap
+	nro2texto dup strup ,s
+	1? ( " con %d/100 " mprint ,s )( drop )
+	"|" ,s ;
+
+:,fld$ | nro --
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld
+	?real2 nip
+	100 /mod swap | .00 0000
+	"$ " ,s
+	"%d" mprint c@+ ,c
+	count ( 1? )( 1-
+		5 =? ( "." ,s )
+		2 =? ( "." ,s )
+		swap c@+ ,c swap ) 2drop
+	"," ,s
+	9 <=? ( "0" ,s )
+	"%d" mprint ,s
+	".-|" ,s ;
+
+#sstipodoc "DNI" "LC" "LE" "DNI ex" "LC ex" "Pass"
+
+:,fld*tdoc
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld ?sint nip
+	'sstipodoc swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+:,fld*tdoc+
+	dup dbnfld? 0? ( 2drop ; ) drop
+	dbnfld ?sint nip
+	'sstipodoc swap ( 1? )( 1- swap >>0 swap ) drop
+	,s " " ,s ;
+
+#sstipov "SEDAN 3 PTAS" "SEDAN 4 PTAS" "SEDAN 5 PTAS" "PICK UP CABINA SIMPLE" "PICK UP CABINA DOBLE" "TODO TERRENO" "RURAL"
+#sstipova "AU" "AU" "AU" "PK" "PK" "TT" "RU"
+
+:,fldt
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld ?sint nip
+	'sstipov swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+:,fldta
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	"!2," ,s
+	dbnfld ?sint nip
+	'sstipova swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+:,fldori
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld ?sint nip
+	1+ "!2, %d" mprint ,| ;
+
+#sscom "NAFTA" "DIESEL"
+
+:,fldcom
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld ?sint nip
+	'sscom swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+:,fld--
+	"-------------------------------------------------------------------------------------------" ,* ;
+
+#ssuso "USO PARTICULAR." "USO REMIS." "USO TAXI."
+:,flduso*
+	dbnfld ?sint nip
+	'ssuso swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+#ssuso2 "PARTICULAR" "REMIS" "TAXI"
+:,flduso2*
+	dbnfld ?sint nip
+	'ssuso2 swap ( 1? )( 1- swap >>0 swap ) drop
+	,* ;
+
+:,fldusor
+	dbnfld ?sint nip
+	1 >? ( 1 nip )
+	1+ "!2, %d" mprint ,|
+	;
+
+
+#se0hugo	"?COMAR AUTOMOTORES S.A._HUGO REDA CRAVELLO_APODERADO_COM.HAB.:RCA 00231"
+#se0silvia	"?COMAR AUTOMOTORES S.A._SILVIA A.ISGUENDERIAN_APODERADA_COM.HAB.:RCA-0231-002"
+
+:,sello0
+	134 dbnfld ?sint
+	0? ( "" )( 1 =? ( 'se0hugo )( 'se0silvia ) )
+	nip nip
+	,s "|" ,s ;
+
+#se1hugo	"?HUGO REDA CRAVELLO_BROWN 3232_DNI:18.671.676_MAR DEL PLATA-Bs.As."
+#se1silvia	"?SILVIA ALEJANDRA ISGUENDERIAN_BROWN 3232_DNI:16.012.135_MAR DEL PLATA-Bs.As."
+#se1gladys	"?GLADYS MABEL ZGAINER_BROWN 3232_DNI:13.552.168_MAR DEL PLATA-Bs.As."
+
+:,sello1
+	135 dbnfld ?sint
+	0? ( "" )( 1 =? ( 'se1hugo )( 2 =? ( 'se1silvia )( 'se1gladys ) ) )
+	nip nip
+	,s "|" ,s ;
+
+:,bbterm
+  	dbnfld ?sint 0? ( 2drop "|" ,s ; ) 2drop
+	"#SI LA INSCRIPCION DE DOMINIO DE ESTE AUTOMOTOR SE PRODUJERA EL AÑO ANTERIOR AL CONSIGNADO EN EL PRESENTE CERTIFICADO DE FABRICACION COMO MODELO-AÑO, REGIRA A ESTOS EFECTOS EL AÑO DE SU INSCRIPCION TAL COMO LO ESTABLECE LA RESOLUCION EX-S.I.M. 416/82" ,* ;
+
+:,bbentrega
+  	dbnfld ?sint 0? ( 2drop "|" ,s ; ) 2drop
+	"#EL CONCESIONARIO COMAR AUTOMOTORES S.A. HACE ENTREGA DE LA UNIDAD" ,* ;
+
+:,bbcelazul
+  	dbnfld ?sint 0? ( 2drop "|" ,s ; ) 2drop
+	"SE SOLICITA CEDULA AZUL" ,* ;
+
+:,bbobscelazul
+	170
+	dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	dbnfld
+	"#" ,s "%a" mprint dup strup ,s "|",s ;
+
+
+|121)Nombre ; codeudor1
+|122)DNI
+|123)Domicilio
+|124)Localidad
+|125)Conyuge
+|126)DNI
+|127)Nombre ; codeudor2
+|128)DNI
+|129)Domicilio
+|130)Localidad
+|131)Conyuge
+|132)DNI
+
+:,certificacampo
+	"#CERTIFICAMOS QUE LA FIRMA DEL SR./SRA. " ,s
+	175 dbnfld "%a, " mprint dup strup ,s
+	" <DEUDOR> ES AUTENTICA Y FUE PUESTA EN NUESTRA PRESENCIA." ,s
+	"|" ,s ;
+
+:,certificatodos
+	175 dbnfld?
+	1? ( drop ,certificacampo ; ) drop
+	"#CERTIFICAMOS QUE LA FIRMA DEL SR./SRA. " ,s
+	0 dbnfld "%a, " mprint dup strup ,s
+	13 ,fld*tdoc+ 14 ,fld+ " <DEUDOR>" ,s
+	0 | 0 1 2
+	26 dbnfld? 1? ( drop 46 dbnfld? 1? ( 2drop 2 )( 2drop 1 ) )( drop )
+	0 >? ( 26 dbnfld ", %a, " mprint dup strup ,s 27 dbnfld "DNI %a" mprint ,s )
+	2 =? ( 46 dbnfld ", %a, " mprint dup strup ,s 47 dbnfld "DNI %a" mprint ,s )
+	0
+	121 dbnfld? 1? ( drop 127 dbnfld? 1? ( 2drop 2 )( 2drop 1 ) )( drop )
+	0 >? ( 121 dbnfld ", %a, " mprint dup strup ,s 122 dbnfld "DNI %a" mprint ,s )
+	2 =? ( 127 dbnfld ", %a, " mprint dup strup ,s 128 dbnfld "DNI %a" mprint ,s )
+	1 =? ( " <CODEUDOR SOLIDARIO>" ,s )
+	2 =? ( " <CODEUDORES SOLIDARIOS>" ,s )
+	+
+	2 <? ( " ES AUTENTICA Y FUE PUESTA EN NUESTRA PRESENCIA." )( " SON AUTENTICAS Y FUERON PUESTAS EN NUESTRA PRESENCIA." )
+	,s "|" ,s drop 	;
+
+:,certificaconyuge
+	19 dbnfld? 0? ( drop "|" ,s  ; ) drop
+	"#CERTIFICAMOS QUE LA FIRMA DEL SR./SRA. " ,s
+	19 dbnfld "%a, " mprint dup strup ,s 22 dbnfld "DNI %a" ,print
+	" ES AUTENTICA Y FUE PUESTA EN NUESTRA PRESENCIA.|" ,s
+	;
+
+
+:,certificaconyuge2
+	125 dbnfld? 0? ( drop "|" ,s  ; ) drop
+	"#CERTIFICAMOS QUE LA FIRMA DEL SR./SRA. " ,s
+	125 dbnfld "%a, " mprint dup strup ,s 126 dbnfld "DNI %a" ,print
+	" ES AUTENTICA Y FUE PUESTA EN NUESTRA PRESENCIA.|" ,s
+	;
+
+|*** modificar para que una los nombres
+
+|---- ENFORMULARIO imagen
+:form01
+	formclear
+	formpag	| ********* pagina 1
+	formcntcodo
+	1 =? ( "100" ,* ) 2 =? ( "50" ,* ) 3 =? ( "34" ,* ) 4 =? ( "25" ,* )
+	drop "00" ,*
+	4 ,fld* | cuit
+	0 ,fld* "=" ,* | nombre
+	3 ,fld*	| profesion
+	8 ,fld*
+	9 ,fld*
+	10 ,fld*
+	11 ,fld*
+	12 ,fld*
+	5 ,fld*
+	6 ,fld*
+	7 ,fld* | provincia
+
+	13 ,tipodoc
+
+	14 ,fld*
+	15 ,fld*
+	16 ,fldfecha3
+	17 ,estado
+	18 ,fld*
+	19 ,fld*
+	23 ,fld*
+	24 ,fld*
+	25 ,fldfecha3
+
+	89 ,fld* 91 ,fld*
+	92 ,fldt 90 ,fld*
+	93 ,fld* 94 ,fld*
+	95 ,fld* 96 ,fld*
+	97 ,flduso2*
+
+	formcntcodo
+	1 =? ( "" dup ,* ,* ) 2 =? ( "50" ,* "00" ,* ) 3 =? ( "33" ,* "00" ,* ) 4 =? ( "25" ,* "00" ,* )
+	drop
+	27 ,fld*
+	26 ,fld* "=" dup ,* ,*
+	28 ,fld*
+	29 ,fld*
+	30 ,fld*
+	31 ,fld*
+	32 ,fld*
+	33 ,fld*
+	34 ,fld*
+	35 ,fld*
+	36 ,tipodoc
+	37 ,fld*
+	38 ,fld*
+	39 ,fldfecha3
+	40 ,estado
+	41 ,fld*
+	42 ,fld*
+	43 ,fld*
+	44 ,fld*
+	45 ,fldfecha3
+
+	88 ,fld$
+	87 ,fldfecha3
+	102 ,fld*
+	"Factura " ,s 86 ,fld*
+
+	formend
+
+
+	formpag | *********** pagina 2
+	,todos
+	"=" ,*
+
+	136 ,bbterm
+
+	87 ,fldfecha3
+	,sello0
+	"Mdp" ,*
+	87 ,fldfecha3
+	,sello0
+
+	formcntcodo
+	1 >? ( "Mdp" ,* 87 ,fldfecha3 ,sello0 )( "|||||" ,s )
+	drop
+
+	138 ,bbcelazul
+	137 ,bbentrega
+
+	,sello0
+
+	,bbobscelazul
+	formend
+
+	formcntcodo 3 <? ( drop ; ) drop
+	formpag | *** pagina 1 c
+	formcntcodo
+	3 =? ( "33" ,* "00" ,* ) 4 =? ( "25" ,* "00" ,* )
+	drop
+	46 ,fld* "=" dup ,* ,*
+
+	formcntcodo
+	3 =? ( "" dup ,* ,* ) 4 =? ( "25" ,* "00" ,* )
+	drop
+	66 ,fld* "=" dup ,* ,*
+	formend
+
+	formpag | *** pagina 2 c
+	,todos
+	"=" ,*
+	formend ;
+
+:form01N
+	formclear
+	formpag	| ********* pagina 1
+	formcntcodo
+	1 =? ( "100" ,* ) 2 =? ( "50" ,* ) 3 =? ( "34" ,* ) 4 =? ( "25" ,* )
+	drop "00" ,*
+	4 ,fld* | cuit
+	0 ,fld* "=" ,* | nombre
+	3 ,fld*	| profesion
+	8 ,fld*
+	9 ,fld*
+	10 ,fld*
+	11 ,fld*
+	12 ,fld*
+	5 ,fld*
+	6 ,fld*
+	7 ,fld* | provincia
+
+	13 ,tipodoc
+
+	14 ,fld*
+	15 ,fld*
+	16 ,fldfecha3
+	17 ,estado
+	18 ,fld*
+	19 ,fld*
+	23 ,fld*
+	24 ,fld*
+	25 ,fldfecha3
+
+	89 ,fld* 91 ,fld*
+	92 ,fldt 90 ,fld*
+	93 ,fld* 94 ,fld*
+	95 ,fld* 96 ,fld*
+	97 ,flduso2*
+
+	formcntcodo
+	1 =? ( "" dup ,* ,* ) 2 =? ( "50" ,* "00" ,* ) 3 =? ( "33" ,* "00" ,* ) 4 =? ( "25" ,* "00" ,* )
+	drop
+	27 ,fld*
+	26 ,fld* "=" ,*
+
+	28 ,fld*
+
+	169 ,fld* | profesion
+
+	29 ,fld*
+	30 ,fld*
+	31 ,fld*
+	32 ,fld*
+	33 ,fld*
+	34 ,fld*
+	35 ,fld*
+	36 ,tipodoc
+	37 ,fld*
+	38 ,fld*
+	39 ,fldfecha3
+	40 ,estado
+	41 ,fld*
+	42 ,fld*
+	43 ,fld*
+	44 ,fld*
+	45 ,fldfecha3
+
+	88 ,fld$
+	87 ,fldfecha3
+	102 ,fld*
+	"Factura " ,s 86 ,fld*
+
+149 ,fld* |150)Localidad|A15~
+150 ,fld* |150)Localidad|A15~
+151 ,fld* |151)Partido o Departamento|A20~
+152 ,fld* |152)Provincia|A20~
+153 ,fld* |153)Calle|A24~
+154 ,fld* |154)Nro|A5~
+155 ,fld* |155)Piso|A4~
+156 ,fld* |156)Dpto.|A5~
+157 ,fld* |157)Cod. Postal|A8~
+158 ,fld* |158)e-mail|A30~
+159 ,fld* |159)Teléfono|A30~
+
+160 ,fld* |160)Localidad|A15~
+161 ,fld* |161)Partido o Departamento|A20~
+162 ,fld* |162)Provincia|A20~
+163 ,fld* |163)Calle|A24~
+164 ,fld* |164)Nro|A5~
+165 ,fld* |165)Piso|A4~
+166 ,fld* |166)Dpto.|A5~ 
+167 ,fld* |167)Cod. Postal|A8~
+168 ,fld* |168)e-mail|A30~
+169 ,fld* |169)Teléfono|A20~ 
+170 ,fld* |170)Profesión|A30~
+
+	formend
+
+
+	formpag | *********** pagina 2
+	,todos
+	"=" ,*
+
+	136 ,bbterm
+
+	87 ,fldfecha3
+	,sello0
+	"Mdp" ,*
+	87 ,fldfecha3
+	,sello0
+
+	formcntcodo
+	1 >? ( "Mdp" ,* 87 ,fldfecha3 ,sello0 )( "|||||" ,s )
+	drop
+
+	138 ,bbcelazul
+	137 ,bbentrega
+
+	,sello0
+
+	,bbobscelazul ||171)Observación Celula Azul:|M
+
+	formend
+
+	formcntcodo 3 <? ( drop ; ) drop
+	formpag | *** pagina 1 c
+	formcntcodo
+	3 =? ( "33" ,* "00" ,* ) 4 =? ( "25" ,* "00" ,* )
+	drop
+	46 ,fld* "=" dup ,* ,*
+
+	formcntcodo
+	3 =? ( "" dup ,* ,* ) 4 =? ( "25" ,* "00" ,* )
+	drop
+	66 ,fld* "=" dup ,* ,*
+	formend
+
+	formpag | *** pagina 2 c
+	,todos
+	"=" ,*
+	formend ;
+
+:form02
+	formclear
+	formpag
+	"Solicito inscripcion inicial con solicitud 01 Nº .................... CONDICIONADO a inscripcion de contrato de Prenda con Form.03 Nº ...................."
+	,* "=" ,* "=" ,*
+	formcntcodo
+	1 =? ( "" ,* 0 ,fld* )
+	2 >=? ( 0 ,fld* 26 ,fld* )
+	drop
+	13 ,tipodoc
+	14 ,fld*
+	15 ,fld*
+	87 ,fldfecha3
+	,sello0
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	90 ,fld* | modelo
+	93 ,fld* | marca motor
+	94 ,fld* | nro motor
+	95 ,fld*
+	96 ,fld*
+	formend
+	formpag
+	formend
+	;
+
+:compGPAT
+	"GPAT COMPANIA FINANCIERA S.A." ,*
+	"" ,*
+	"30-67856482-2" ,*
+	"Av. Eduardo Madero" ,*
+	"942" ,* "12" ,* "" ,* "1106" ,*
+	"Capital Federal" ,*
+	"" ,* "" ,*
+	"I.G.J." ,*
+	"Nº 18890, Lº 8" ,* "16" ,* "12" ,* "99" ,*
+	;
+
+:compGMAC
+	"CHEVROLET S.A. DE AHORRO" ,*
+	"PARA FINES DETERMINADOS" ,*
+	"30-68588847-1" ,*
+	"San Martin" ,*
+	"344" ,* "7" ,* "" ,* "1004" ,*
+	"Capital Federal" ,*
+	"" ,* "" ,*
+	"I.G.J." ,*
+	"Nº 2515, Lº 118, TºA" ,* "25" ,* "03" ,* "96" ,*
+	;
+
+
+:form03
+	formclear
+	formpag
+	87 ,fldfecha3
+	103 ,fld$
+
+	171 dbnfld ?sint 
+	0? ( compGPAT )( compGMAC )
+	2drop
+
+	4 ,fld* | cuit
+	0 ,fld+ | nombre
+
+	formcntcodo
+	1 >? ( " Y OTRO" ,s )
+	drop
+
+	"|" ,s
+	"=" ,* 
+	3 ,fld*	| profesion
+	8 ,fld*
+	9 ,fld*
+	10 ,fld*
+	11 ,fld*
+	12 ,fld*
+	5 ,fld*
+	6 ,fld*
+	7 ,fld* | provincia
+	13 ,tipodoc
+	14 ,fld*
+	15 ,fld*
+	16 ,fldfecha3
+	17 ,estado
+	18 ,fld*
+	19 ,fld*
+	23 ,fld*
+	24 ,fld*
+	25 ,fldfecha3
+
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	90 ,fld* | modelo
+	93 ,fld* | marca motor
+	94 ,fld* | nro motor
+	95 ,fld*
+	96 ,fld*
+
+	"" ,* "X" ,*
+	"" ,* "X" ,*
+	"1º" ,*
+	"" ,* "X" ,*
+
+	formend
+	formpag
+	formend ;
+:form08
+	formclear
+	formpag
+	formend ;
+:form12
+	formclear
+	formpag
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	90 ,fld* | modelo
+	93 ,fld* | marca motor
+	94 ,fld* | nro motor
+	95 ,fld*
+	96 ,fld*
+
+	137 ,bbentrega
+
+	"#HE VERIFICADO PERSONALMENTE LA AUTENTICIDAD DE LOS DATOS QUE FIGURAN EN EL PRESENTE FORMULARIO Y ME HAGO RESPONSABLE CIVIL Y CRIMINALMENTE POR LOS ERRORES U OMISIONES EN QUE PUDIERA INCURRIR SIN PERJUICIO DE LOS QUE A LA EMPRESA LE CORRESPONDA" ,*
+	"Mar del Plata" ,*
+	87 ,fldfecha3
+	,sello0
+	"COMAR AUTOMOTORES S.A." ,*
+	"Alte. Brown" ,*
+	"3232" ,*
+	"Mar del Plata" ,*
+	formend ;
+:form13
+	formclear
+
+	formpag
+	formend
+
+	formpag
+	formend ;
+
+:form13A
+	formclear
+	formpag
+	"X" ,*
+	87 ,fldfecha1 |,fld*
+	91 ,fld*
+	90 ,fld*
+
+	,modelov
+	92 ,fldta |tipo
+	97 ,fldusor |uso
+
+	99 ,fldori |nac
+	100 5 ,ffld* | peso
+	101 5 ,ffld*
+	93 ,fld* | marca motor
+	94 17 ,ffld* | nro motor
+	98 ,fldcom | combustible
+
+	4 ,fld* | cuit
+	0 ,fld* | nombre
+	14 9 ,ffld* 13 ,fld*tdoc | tipodoc**convertir
+	12 4 ,ffld* 5 ,fld*
+	8 ,fld* 9 5 ,ffld* 10 2 ,ffld* 11 3 ,ffld*
+
+	27 ,fld*
+	26 ,fld*
+	37 9 ,ffld* 36 ,fld*tdoc
+	32 4 ,ffld* 33 ,fld*
+	28 ,fld* 29 5 ,ffld* 30 2 ,ffld* 31 3 ,ffld*
+	156 4 ,ffld* 149 ,fld*
+	152 ,fld* 153 5 ,ffld* 154 2 ,ffld* 155 3 ,ffld*
+
+	formend
+	formpag
+	0 ,fld*
+	"=|" ,s
+
+
+	formend 
+	;
+
+:selloh | hacer opciones
+	139 dbnfld ?sint nip
+	0? (
+		"MARTINEZ" ,|
+		"FRANCISCO DIEGO" ,|
+		"L.E." ,| "8.704.477" ,|
+		drop ; )
+	1 =? (
+		"ALVAREZ" ,|
+		"S. ALEJANDRA" ,|
+		"D.N.I." ,| "13.879.409" ,|
+		drop ; )
+	2 =? (
+		"GALVAN" ,|
+		"MARIA LAURA" ,|
+		"D.N.I." ,| "21.504.006" ,|
+		drop ; )
+	drop
+	"||||" ,s ;
+
+
+:form59
+	formclear
+	formpag
+	"COMAR AUTOMOTORES S.A." ,|
+	"" ,|
+	"Matricula 38475 del 27/06/94 Direccion Pcial. Personas Juridicas" ,|
+	"RCA-00231-002" ,|
+
+	selloh
+	,sello0
+
+
+	"" ,|
+	"0km" ,|
+	"01" ,|
+	"" ,|
+|
+|	"" ,|
+|	"0km con prenda condicionada" ,|
+|	"01-02-03" ,|
+|	"" ,|
+
+	formend ;
+
+:,fldtipodoct | 5 lugares DNI,LE,CI LC PASS
+	dup dbnfld? 0? ( 2drop "|||||" ,s ; ) drop
+	dbnfld ?sint nip
+	0 =? ( "X|" )( "|" ) ,s
+	2 =? ( "X|" )( "|" ) ,s
+	3 =? ( "X|" )( "|" ) ,s  |****??
+	1 =? ( "X|" )( "|" ) ,s
+	5 =? ( "X|" )( "|" ) ,s 
+	drop ;
+
+:,fldtipoest
+	dup dbnfld? 0? ( 2drop "||||" ,s ; ) drop
+	dbnfld ?sint nip
+	0 =? ( "X|" )( "|" ) ,s
+	1 =? ( "X|" )( "|" ) ,s
+	2 =? ( "X|" )( "|" ) ,s
+	3 =? ( "X|" )( "|" ) ,s
+	drop ;
+
+:,porcond
+	formcntcodo
+	1 =? ( "100%|" ,s )
+	2 =? ( "50%|" ,s )
+	3 =? ( "34%|" ,s )
+	4 =? ( "25%|" ,s )
+	drop ;
+
+:,prenda?
+	103 dbnfld? 0? ( "!2, X|" )( "!2,X |" ) ,s drop ;
+
+:,condominos
+	formcntcodo
+	1 =? ( "|" ,s drop ; )
+	"#DATOS CONDOMINOS:  50%" ,s
+	26 ,fld+ ", " ,s
+	36 ,fld*tdoc+ " " ,s 
+	37 ,fld+ ", " ,s
+|	40 ,fld+ ", " ,s
+	39 ,fld+ ", " ,s
+	33 ,fld+ ", " ,s
+	28 ,fld+ " " ,s 29 ,fld+ " " ,s 30 ,fld+ " " ,s 31 ,fld+
+	1 =? ( "|" ,s drop ; )
+	"|" ,s drop
+	;
+
+:fecha115
+	115 dup dbnfld? 0? ( 2drop "|" ,s ; ) drop
+	,fld+ "/" ,s
+	116 ,fld+ "/" ,s
+	117 ,fld* ;
+
+
+:formtit
+	formclear
+	formpag
+	92 ,fldta
+	97 ,fldusor
+
+	0 ,fld+ | apellido nombre
+	formcntcodo
+	1 >? ( " Y OTRO" ,s )
+	drop
+	"|" ,s
+
+	,porcond | porcentaje condominio
+	1 ,fld* | nacionalidad
+	14 ,fld* | nro documento
+	15 ,fld* | expedido por
+	16 ,fldfecha1 | facha nacimientos !6
+	13 ,fldtipodoct | tipodocumento  
+| carga por sociedad
+"" ,* | documentacion o razon social
+	8 ,fld* | domicilio calle
+	9 ,fld* | nro calle
+	10 ,fld* | piso
+	11 ,fld* | depto
+	5 ,fld* |localidad
+	17 ,fldtipoest | soltero,casado,viudo,divorciado
+	6 ,fld* | partido o depart
+	12 ,fld* | codigo postal
+	7 ,fld* | provincia
+	18 ,fld* | nupcias
+	19 ,fld* |conyuge
+	,prenda? | prenda
+	88 ,fld$ | valor
+	87 ,fldfecha1 | fecha
+	102 ,fld* | elemento prob adquisicion 2
+	"Factura " ,s 86 ,fld*
+
+	103 ,fld$ | monto prenda
+	104 ,fld* | cntcuotas
+
+	fecha115
+	147 ,fldfecha1 |)vto ultima
+|	"|" ,s
+	105 ,fld$ |)importe cuota
+
+	"1|" ,s
+	formend
+
+	formpag
+	,todos
+	136 ,bbterm
+	,sello0
+	,condominos
+
+	formend ;
+
+:formgpat
+	formclear
+	formpag |----------- pagina 1
+	103 ,fld$
+	"Mar del Plata" ,*
+	87 ,fldfecha2dn
+	103 ,fldntxt "=" ,*
+	,todos
+
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	"<*>" ,*
+	93 ,fld* | marca motor
+	94 ,fld* | nro motor
+	95 ,fld* | marca chasis
+	96 ,fld* | nro chasis
+
+	97 ,flduso*	|año tipo
+	"Año " ,s
+	,aniov*
+	"<*> " ,s 90 ,fld* | modelo
+
+	7 ,fld* |Provincia
+	6 ,fld* |Partido
+	"|||" ,s
+	5 ,fld*
+	8 ,fld* 9 ,fld*
+	104 ,fld* | cuotas
+	105 ,fld* | pesos
+|************************
+
+	115 ,fld* | dia
+	116 ,fldmes*  | pasar a mes
+	117 ,anio2* | año vencimiento
+
+
+
+	118 ,fld* | interez nominal anual
+
+	0 ,fld* |deudor nombre
+	17 ,estadot |Estado civil
+	3 ,fld* |Profesion
+	1 ,fld* |nacionalidad
+	2 ,fld* |edad
+	8 ,fld+ " " ,s 9 ,fld+ " " ,s 10 ,fld+ " " ,s 11 ,fld+
+	", " ,s 5 ,fld*
+	"=|" ,s |=
+	13 ,fld*tdoc+ 14 ,fld* |documento de identidad
+	"-|-|" ,s
+	formend
+
+	formpag  |----------- pagina 2
+
+	19 dbnfld? 0? ( "|||||" ,s drop )( drop
+
+	
+	19 ,fld*	| nombre conyuge
+	"Casado|" ,* | estado civil
+	21 ,fld* | nacionalidad
+	20 ,fld+ " años" ,* | edad
+	8 ,fld+ " " ,s 9 ,fld+ " " ,s 10 ,fld+ " " ,s 11 ,fld+
+	", " ,s 5 ,fld*  |domicilio
+	"DNI: " ,s 22 ,fld*
+	)
+	formend
+
+	formpag  |----------- pagina 3
+	,todos
+	"=|" ,s
+	"------------|" ,s
+	formend
+
+	formpag | pagina4
+	87 ,fldfecha2 | dia| mes| año
+	0 ,fld* | deudor nombre y ape
+	14 ,fld* | dni deudor
+	formend
+
+	formpag | pagina5
+	103 ,fld* | valor de la prenda
+	formend
+
+	formpag | pagina6
+	87 ,fldfecha2 | dia| mes| año
+	0 ,fld* | deudor nombre y ape
+	14 ,fld* | dni deudor
+	formend
+
+	formpag | pagina7
+	,todos+cod
+	,todosdireccion+cod
+	formend
+
+	formpag | pagina8
+	87 ,fldfecha2	| dia	| mes	| año
+
+	,todos+cod
+|	0 ,fld* | deudor nombre y ape
+	"=|=|" ,s | =
+|	14 ,fld* | dni deudor
+	,tododni+cod
+	formend
+
+	formpag |------------------ pagina9
+	0 ,fld*
+ 	26 ,fld*
+
+	121 dbnfld? 0? ( drop "|" ,s )( drop
+
+	"#Datos complementarios del CODEUDOR: " ,s
+	13 ,c
+	121 ,fld+ ", DNI " ,s
+	122 ,fld+ ", " ,s
+	123 ,fld+ ", " ,s |)Domicilio
+	124 ,fld+ |)Localidad
+	"|" ,s
+	)
+	formend
+
+	;
+
+
+:formchev
+	formclear
+	formpag |------------------ pagina 1
+	107 5 ,ffld* | ngrupo
+	108 3 ,ffld* | norden
+	109 10 ,ffld* | nsolicitud
+
+	103 ,fld$
+	"Mar del Plata" ,*
+	87 ,fldfecha2dn2
+	103 ,fldntxt "=" ,*
+	,todos "=" ,* "=" ,*
+
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	"<*>" ,*
+	"<*> " ,s 90 ,fld* | modelo
+	,aniov*
+
+	93 ,fld* | marca motor
+	94 ,fld* | nro motor
+	95 ,fld* "=" ,*
+	96 ,fld*
+	97 ,flduso*
+
+|
+	110 ,fld* |110)Provincia
+	111 ,fld* |111)Partido
+	112 ,fld* |112)Ciudad
+	113 ,fld* |113)Calle
+	114 ,fld* |114)Nro
+
+	104 ,fld* |114)Nro
+	"(1)" ,|
+	115 ,FLD* |115)Dia
+	116 ,fldmes* |116)Mes
+	117 ,FLD* |117)año
+
+	,todos2
+	17 ,estadot
+	3 ,fld*	| profesion
+	1 ,fld*
+	2 ,fld*
+
+	8 ,fld+ ,sp 
+	9 ,fld+ ,sp |domicilio
+
+	10 ,fld+ ,sp | piso
+	11 ,fld+ ,sp | depto
+	5 ,fld+ ,sp |localidad
+|	6 ,fld+ ,sp | partido o depart
+	7 ,fld* | provincia
+
+
+	13 ,fld*tdoc+
+	14 ,fld*
+
+	formend
+
+	formpag |------------------ pagina 2
+	121 ,fld* |)Nombre
+	123 ,fld* |)Domicilio
+	124 ,fld* |)Localidad
+	122 ,fld* |)DNI
+	127 ,fld* |)Nombre
+	129 ,fld* |)Domicilio
+	130 ,fld* |)Localidad
+	128 ,fld* |)DNI
+
+	,certificatodos
+
+	,sello1
+	,sello0
+	formend
+
+	formpag |------------------ pagina 3
+	121 ,fld* |)Nombre
+	"=|" ,s
+	123 ,fld* |)Domicilio
+	"=|" ,s
+	124 ,fld* |)Localidad
+	122 ,fld* |)DNI
+
+	127 ,fld* |)Nombre
+	"=|" ,s
+	129 ,fld* |)Domicilio
+	"=|" ,s
+	130 ,fld* |)Localidad
+	128 ,fld* |)DNI
+
+	,certificatodos
+	,sello1
+	,sello0
+	formend
+
+
+	formpag |------------------ pagina 4
+	"(1) Pagadero en         cuotas mensuales consecutivas segun el siguiente detalle:|" ,s
+
+| campo abierto
+
+	"#Lease domicilio acreedor en contrato de prenda original y sus copias: San Martin Nro. 344 7mo Piso Capital Federal|" ,s
+
+	87 ,fldfecha1t | fecha
+	,todos
+	91 ,fld* | marca
+	90 ,fld* | modelo
+	92 ,fldt | tipo| tipo
+
+	94 ,fld* | nro motor
+	96 ,fld* | chasis
+
+	107 ,fld+ | ngrupo
+	"-" ,s
+	108 ,fld* | norden
+	formend
+
+	formpag |------------------ pagina 5
+	,certificatodos
+	,sello1
+	,sello0
+	formend
+
+	formpag |------------------ pagina 6
+	87 ,fld*
+	0 ,fld*
+	91 ,fld* | marca
+	90 ,fld* | modelo
+	92 ,fldt | tipo
+	94 ,fld* | nro motor
+	96 ,fld* | nro chasis
+
+	107 ,fld+ | ngrupo
+	"-" ,s
+	108 ,fld* | norden
+
+	"84|" ,s
+	172 ,fld* | cambio modelo
+	"12,10|" ,s
+	"doce con diez|" ,s
+	172 ,fld* | cambio modelo
+	106 ,fld*
+	"84|" ,s
+
+	| licitado
+	173 dbnfld? 0? ( "|||" ,s )(
+	173 ,fld+
+	" (" ,s
+|*************************************
+	173 dbnfld ?sint nip nro2texto ,s
+|*************************************
+	")|" ,s | plan
+	 "100|CIEN|" ,s )
+	drop
+
+	formend
+
+	formpag |------------------ pagina 7
+	formend
+
+	formpag |------------------ pagina 8
+	|domicilio deudor
+	8 ,fld+ " " ,s
+	9 ,fld+ " " ,s
+	10 ,fld+ " " ,s
+	11 ,fld+ ", ",s
+	5 ,fld*
+
+	123 ,fld* | domicilio codeudor
+	129 ,fld* | domicilio codeudor2
+
+	121 ,fld* |)Nombre
+
+
+	"=|" ,s
+	123 ,fld* |)Domicilio
+	"=|" ,s
+	124 ,fld* |)Localidad
+	122 ,fld* |)DNI
+
+	,certificatodos
+	,sello1
+	,sello0
+	formend
+
+	formpag |------------------ pagina 9
+	"Mar del Plata," ,s
+	87 ,fldfecha2d
+
+	0 ,fld*
+	"|||" ,s | fecha de matrimonio
+
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	90 ,fld* | modelo
+	94 ,fld* | nro motor
+	93 ,fld* | marca motor
+	95 ,fld* | marca chasis
+	96 ,fld* | nro chasis
+
+	19 ,fld* | nombre conyuge
+	22 ,fld* | dni conyuge
+	8 ,fld+ " " ,s	9 ,fld+ " " ,s	10 ,fld+ " " ,s 11 ,fld* | domicilio
+	5 ,fld*
+	,certificaconyuge
+	,sello1
+	,sello0
+	formend
+
+	formpag |---------------- pagina 10
+	"Mar del Plata," ,s
+	87 ,fldfecha2d
+
+	121 ,fld*
+	"|||" ,s | fecha de matrimonio
+	
+	91 ,fld* | marca
+	92 ,fldt | tipo
+	90 ,fld* | modelo
+	94 ,fld* | nro motor
+	93 ,fld* | marca motor
+	95 ,fld* | marca chasis
+	96 ,fld* | nro chasis
+
+	125 ,fld*
+	126 ,fld*
+	123 ,fld* | domicilio
+	124 ,fld*
+	,certificaconyuge2
+	,sello1
+	,sello0
+	formend
+	;
+
+
+#fn01 2 form01 10 "01"
+"01p1.bmp" "01p2.bmp" 0
+#fn01n 2 form01n 10 "01N"
+"01np1.bmp" "01np2.bmp" 0
+#fn01na 2 form01n 10 "01NA"
+"01nap1.bmp" "01np2.bmp" 0
+#fn02 2 form02 10 "02"
+"02p1.bmp" "02p2.bmp" 0
+#fn03 2 form03 10 "03"
+"03p1.bmp" "03p2.bmp" 0
+#fn08 2 form08 10 "08"
+"08p1.bmp" "08p2.bmp" 0
+#fn12 1 form12 10 "12"
+"12p1.bmp" 0
+#fn13 2 form13 10 "13"
+"13p1.bmp" "13p2.bmp" 0
+#fn13a 2 form13a 10 "13A"
+"13Ap1.bmp" "13Ap2.bmp" 0
+#fn59 1 form59 10 "59"
+"59p1.bmp" 0
+#fntit 2 formtit 10 "TITULO"
+"titulop1.bmp" "titulop2.bmp" 0
+#fngpat 9 formgpat 8 "GPAT"
+"GPATp1.bmp" "GPATp2.bmp" "GPATp3.bmp" "GPATp4.bmp" "GPATp5.bmp" "GPATp6.bmp" "GPATp7.bmp" "GPATp8.bmp" "GPATp9.bmp" 0
+#fnchev 10 formchev 8 "CHEV"
+"chevp1.bmp" "chevp2.bmp" "chevp2c.bmp" "chevp3.bmp" "chevp4.bmp" "chevp5.bmp" "chevp6.bmp"
+"chevp7.bmp" "chevp8.bmp" "chevp9.bmp" 0
+
+|----------------------------------
+|----------------------------------
+|----------------------------------
+#herebmp
+#namebmp
+#infodoc
+
+|--- tam impresora
+#wpr #hpr
+|--- tam ventana
+#wven #hven
+
+|--- campos  x y | w h
+#cell )( 8192
+#cell> 'cell
+|--- info | tipo+3param
+#info )( 8192
+#info> 'info
+
+:cntcells
+	cell> 'cell - 3 >> ;
+
+:loadform | "name" --
+	'cell 'cell> !
+	'info 'info> !
+|	docres
+	4950 7000
+	'hpr ! 'wpr !							| tam. impresora
+
+	mark
+	here dup rot load
+	=? ( drop empty ; )
+	@+ 'cell swap | adr 'cell cant
+	( 1? )( 1- >r
+		swap @+ rot !+
+		r> ) drop 'cell> !
+	@+ 'info swap
+	( 1? )( 1- >r
+		swap @+ rot !+
+		r> ) drop 'info> !
+	drop
+	empty ;
+
+
+|---- Condicional
+#cond )( 1024
+#condcnt 0
+#condcc 0
+
+:condclear
+	0 'condcnt ! ;
+
+:+cond
+	1 condcnt 2 << 'cond + !
+	1 'condcnt +! ;
+
+:ncond
+	0 'condcc ! ;
+
+:ncond?
+	condcc 2 << 'cond + @
+	1 'condcc +! ;
+
+:clickse
+	dup 2 << 'cond + dup @ 1 xor swap ! ;
+
+:botoncond
+	0 ( condcnt <? )(
+		dup 2 << 'cond + @ 0? ( gris )( amarillo ) drop
+		'clickse over 1+ " Sello %d " mprint sp link cr
+		1+ ) drop
+	;
+
+
+|---- Impresion
+
+#formtext 0
+#textfield )( 1024
+#textfieldc
+#textfieldp )( 1024
+#tfpl
+
+#yp #xp #hp #wp
+#wt #ht
+
+|
+|brother HL-2140
+|
+#xoff -110 #yoff -60
+
+:ajustaw
+	textfieldc 'textfieldp strcpy | copia cadena actual
+	wp wt >=? ( drop 'textfield ( c@+ 1? )( drop ) drop 1- 'textfieldc ! ; ) drop
+	'textfieldp ( c@+ 1? )( drop ) drop 1- 'tfpl !
+	( 'textfieldp docsize drop 'wt ! wp wt <? )( drop
+		tfpl 1- ( dup c@ $ff and 32 >? )( drop 1- ) drop
+		'textfieldp <=? ( tfpl 1- nip )
+		0 over c! 'tfpl ! )
+	drop
+	tfpl 'textfieldp - 'textfieldc +!
+	textfieldc c@ 32 =? ( 1 'textfieldc +! ) drop
+	;
+
+
+:boxprintsello
+	7 0 "Arial Black" docfont
+	( 1? )(
+		dup "%a" mprint dup docsize drop
+		wp swap - 2/ xp + yp docat
+		doctext
+		"A" docsize 'yp +! drop
+		>mfld> ) drop
+	sizep 0 "Arial" docfont
+	;
+
+:boxmemo
+	"%a" mprint
+	'textfield strcpy
+	'textfield 'textfieldc !
+	dup ( drop
+		textfieldc docsize 'ht ! 'wt !
+		ajustaw
+		xp yp docat
+		'textfieldp doctext
+		"A" docsize 'yp +! drop
+		textfieldc c@ 0? ) drop ;
+
+:boxprintfix
+	?sint
+	wp over / rot rot
+	( 1? )( 1-
+		xp yp docat
+		swap
+		c@+ "%k" mprint doctext
+		pick2 'xp +!
+		swap ) 3drop ;
+
+:boxprintr | w h x y --
+	yoff + 'yp ! xoff + 'xp ! 'hp ! 'wp !
+|	xp yp docat xp wp + yp docline xp wp + yp hp + docline xp yp hp + docline
+	formtext 0? ( drop ; ) dup >fld> 'formtext !
+	dup c@
+	$3f =? ( drop 1+ ncond? 0? ( 2drop ; ) drop boxprintsello ; )	| ? Sello condicional
+	$26 =? ( drop 1+ boxprintsello ; )	| & Sello
+	$21 =? ( drop 1+ boxprintfix ; )	| ! anchofijo
+	$23 =? ( drop 1+ boxmemo ; ) 		| # memo
+	drop
+	"%a" mprint
+	dup c@ $3d <>? ( drop 'textfield strcpy 'textfield 'textfieldc ! )( 2drop )
+	textfieldc docsize 'ht ! 'wt !
+	hp ht >? ( dup ht - 2/ 'yp +! ) drop | centra en y
+	ajustaw
+	xp yp docat
+	'textfieldp doctext
+	;
+
+:imprimeh
+	ncond
+	sizep 0 "Arial" docfont
+	actpag 1- 2 << 'formularios + @ 'formtext !
+	docini
+	'cell
+	( cell> <? )( >r
+		r@+ >uv r@+ >uv
+		boxprintr r> ) drop
+	docend ;
+
+|-------- dibujo pantalla
+#bh #bw
+#bx #by
+:r2v | x y -- xv yv ; de real a ventana
+	swap wven wpr */ swap hven hpr */ ;
+
+:boxx | w h x y --
+	2dup op
+	pick3 pick2 + over line
+	pick3 pick2 + pick3 pick2 + line
+	over pick3 pick2 + line
+	line 2drop ;
+
+:drawsello
+	( 1? )(
+		ccx
+		over "%a" print
+		'ccx ! 9 'ccy +!
+		>mfld> ) drop ;
+
+:drawbox | nro -- nro
+	dup 3 << 'cell + >r
+	r@+ >uv r2v
+	2dup 'bh ! 'bw !
+	r> @ >uv
+	r2v
+	by + swap bx + swap
+	2dup atxy
+|	boxx
+	4drop
+	formtext 0? ( 'formtext ! ; )
+	dup >fld> 'formtext !
+	dup c@
+	$3f =? ( drop ncond? 0? ( 2drop ; ) drop 1+ drawsello ; )
+	$26 =? ( drop 1+ drawsello ; )	| & Sello
+	$21 =? ( swap 1+ swap )	| ! anchofijo
+	$23 =? ( swap 1+ swap ) | # memo
+	drop
+	"%a" print ;
+
+:drawcellscr | x y --
+	actpag 1- 2 << 'formularios + @ 'formtext !
+	font-vard-8 rojo
+	'by ! 'bx !
+	ncond
+	0 ( cntcells <? )( drawbox 1+ ) drop ;
+
+:cadacell
+	formtext 0? ( 'formtext ! ; )
+	dup >fld> 'formtext !
+	c@
+	$3f =? ( +cond )
+	drop
+	;
+
+:recorreform
+	actpag 1- 2 << 'formularios + @ 'formtext !
+	condclear
+	0 ( cntcells <? )( cadacell 1+ ) drop ;
+
+#offname )( 255
+
+:loadoff | str --
+	'offname strcpy
+	'xoff 'offname load drop
+	;
+
+:saveoff
+	offname 0? ( drop ; ) drop
+	'xoff 8 'offname save
+	;
+
+:clickpag | nro -- nro
+	mark
+	dup 'actpag !
+	bmppag 12 +
+	over ( 1? )( 1- swap >>0 swap ) drop
+	dup "db/gestofrm/%s.frm"  mprint loadform
+
+	dup "db/%s.off" mprint loadoff
+
+	herebmp 'here !
+	"db/gestobmp/%s" mprint bmp.load 'bmpfondo !	| carga imagen
+	empty
+	recorreform
+	;
+
+:updateventa
+	'fkVenta fkserialice
+	grVenta 'dbVenta dbupdatelog ;
+
+:modoformulario
+	updateventa
+	bmppag
+	@+ 'cntpag !
+	mark
+	@+ exec
+	empty
+	@+ 'sizep !
+	'nform !
+
+	1 clickpag drop
+	400 580 0 0 bmpPT
+	400 580 'hven ! 'wven !
+
+	show titulo
+		360 10 bmpdrawfast
+
+		rojo 'exit "<<" sp sp 2 menur
+		blanco nform " >> Formulario > %s > " print
+		cr cr2 verde
+		0 ( cntpag <? )( 1+
+			actpag =? ( amarillo )( verde )
+			'clickpag over " %d " mprint sp btnt
+			) drop
+		cr cr cr2
+		chome!
+		verde
+		'imprimeh "Imprimir" sp 10 menur cr cr2
+|		'imprimec "Imprimir cruz" sp 10 menur cr cr2
+
+		blanco
+		| informacio
+		0 dbnfld " %a" print cr
+		$56 dbnfld " %a" print cr
+		$57 dbnfld " %a" print cr
+		$5a dbnfld " %a" print cr
+|		cntcells "%d " print cr
+|		formcntcodo "%d " print
+		cr negro
+		xoff " Horizontal:%d " print cyan cr
+		[ 10 'xoff +! saveoff ; ] "+10" sp link
+		[ 1 'xoff +! saveoff ; ] "+1" sp link
+		[ -1 'xoff +! saveoff ; ] "-1" sp link
+		[ -10 'xoff +! saveoff ; ] "-10" sp link cr cr2
+
+		negro
+		yoff " Vertical:%d " print cyan cr
+		[ 10 'yoff +! saveoff ; ] "+10" sp link
+		[ 1 'yoff +! saveoff ; ] "+1" sp link
+		[ -1 'yoff +! saveoff ; ] "-1" sp link
+		[ -10 'yoff +! saveoff ; ] "-10" sp link cr cr2
+
+		botoncond
+		chome negro fonta-arial10
+
+		360 10 drawcellscr
+
+		'exit >esc<
+		cminimano ;
+
+|----------------------------------
+:f01 	'fn01 'bmppag ! modoformulario ;
+:f01n 	'fn01n 'bmppag ! modoformulario ;
+:f01na 	'fn01na 'bmppag ! modoformulario ;
+
+:f02 	'fn02 'bmppag !	modoformulario ;
+:f03 	'fn03 'bmppag !	modoformulario ;
+:f08 	'fn08 'bmppag !	modoformulario ;
+:f12 	'fn12 'bmppag !	modoformulario ;
+:f13	'fn13 'bmppag ! modoformulario ;
+:f13a	'fn13a 'bmppag ! modoformulario ;
+:f59 	'fn59 'bmppag ! modoformulario ;
+:ftit	'fntit 'bmppag ! modoformulario ;
+:fgpa	'fngpat 'bmppag ! modoformulario ;
+:fche	'fnchev 'bmppag ! modoformulario ;
+
+:editformularios
+	cyan
+	sp 'f01 "01" 6 menuc cr cr2
+	sp 'f01n "01N" 6 menuc cr cr2
+	sp 'f01na "01NA" 6 menuc cr cr2
+	sp 'f02 "02" 6 menuc cr cr2
+	sp 'f03 "03" 6 menuc cr cr2
+	sp 'f08 "08" 6 menuc cr cr2
+	sp 'f12 "12" 6 menuc cr cr2
+	sp 'f13 "13" 6 menuc cr cr2
+	sp 'f13a "13A" 6 menuc cr cr2
+	sp 'f59 "59" 6 menuc cr cr2
+	sp 'ftit "Titulo" 6 menuc cr cr2
+	sp 'fgpa "GPAT" 6 menuc cr cr2
+	sp 'fche "CHEV" 6 menuc cr cr2
+	;
+
+|----------------------------------
+|----------------------------------
+|----------------------------------
+#entrada )( 64
+
+:buscardoc
+	0 'entrada !
+	show titulo
+		rojo 'exit "X" sp sp 2 menur
+		blanco 	" >> Buscar Venta" print
+		cr cr
+		negro "Buscar: " sp sp print
+		'entrada 30 input cr cr2
+		amarillo
+		'modoformulario "imprimir" sp btnt cr cr2
+		chome! fonta-arial10
+		blanco "  Ultimas Ventas" print
+		20 'grventa 'dbventa dbgrid
+
+		cmano
+		'exit >esc<
+		;
+
+|--- ALTA/MODIFICACION
+:insregistro
+	exit
+    1 'fkventa fkgetm c@ 0? ( drop ; ) drop
+|  comprobacion
+	'fkVenta fkserialice
+	'dbVenta dbinsertlog ; |**
+
+:nuevadoc
+	'fkventa fkclear
+	show titulo
+		rojo 'insregistro dup >esc< "X" sp sp 2 menur
+		blanco " >> Documentación Venta" print
+		cr cr2 sp sp chome!
+|		editformularios
+		chome negro
+		'fkventa fkeditp
+		cminimano ;
+
+:updregistro
+	exit
+	'fkVenta fkserialice
+	grVenta 'dbVenta dbupdatelog ;
+
+:delregistro
+	exit
+	grVenta 'dbVenta dbdeletelog ;
+
+:editardoc
+	'fkVenta fkclear
+	grVenta 'dbVenta dbgetreg
+	'fkVenta fkdeserialice
+	show titulo
+		rojo 'updregistro dup >esc< "X" sp sp 2 menur
+		blanco " >> Documentación Venta" print
+		sp rojo 'exit "Cancelar" 6 menuc
+		sp verde 'updregistro "Aceptar" 6 menuc
+		sp rojo 'delregistro "Borrar" 6 menuc
+
+		cr cr2 chome!
+		editformularios
+		chome negro
+		'fkventa fkeditp
+		cminimano ;
+
+|----------------------------------
+|----------------------------------
+|----------------------------------
+|---- PRINCIPAL
+:main
+|	1 'dbventa dbsortstr
+	show titulo
+		rojo 'exit "X" sp sp 2 menur
+		blanco " > Menu Principal" print
+		cr cr chome!
+		verde
+		'nuevadoc "Nueva >>" sp 10 menur cr cr2
+		'editardoc "Editar >>" sp 10 menur cr cr2
+
+		'buscardoc "Buscar >>" sp 10 menur cr cr2
+|		'imprimir "Imprimir >>" sp 10 menur cr cr
+
+|		editformularios
+
+		chome fonta-arial10
+		blanco "  Ultimas Ventas" print
+		27 'grventa 'dbventa dbgrid
+
+		cminiflecha
+		'exit >esc<
+		;
+
+:inicio
+	'fkventa fkload
+
+	'dbtvehiculo dbsload
+	'dblocalidad dbsload
+	'dbpais dbsload
+
+	'dbVenta dbload
+
+	here dup 'hereform !
+	$fffff + dup 'herebmp !
+	'here !
+	;
+
+: $999999 paper |$D4D0C8 paper
+	mark
+	"venta.db" "H:\pabloreda\multidb\" "db/gestoria/" dbrepli
+	inicio 33 main
+	"venta.db" "H:\pabloreda\multidb\" "db/gestoria/" dbrepli
+	;

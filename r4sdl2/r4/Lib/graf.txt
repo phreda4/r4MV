@@ -1,0 +1,107 @@
+| libreria de graficos y cursor
+| PHREDA
+|---------------------------------------
+^r4/lib/math.txt
+^r4/lib/colores.txt
+
+|----- figuras geometricas
+::cajau | x2 y2 x1 y1 --
+	ink@ >r
+	oscuro over pick3 op 2dup line pick3 over line
+	r ink claro 2over line drop swap line drop
+	r> ink ;
+
+::cajad | x2 y2 x1 y1 --
+	ink@ >r
+	claro over pick3 op 2dup line pick3 over line
+	r ink oscuro 2over line drop swap line drop
+	r> ink ;
+
+::caja | x2 y2 x1 y1 --
+	over pick3 op 2dup line pick3 over line
+	2over line drop swap line drop ;
+|::caja | x2 y2 x1 y1 --
+|	2over op 2over swap rot line 2swap line line line ;
+
+::cajaf | x2 y2 x1 y1 --
+	over pick3 op 2dup pline pick3 over pline
+	2over pline drop swap pline drop poli ;
+
+
+|---------------------------------
+::hline | x y x --
+	over op line ;
+::vline | x y y --
+	r> over r> op line ;
+
+::box | x y r --
+	>r r - swap r - swap 2dup 2dup op r 2* + 2dup line
+	swap r 2* + swap 2dup line r> 2* - line line ;
+
+::cruz | x y r --
+	>r
+	over r - over op over r + over line
+	2dup r - op r> + line ;
+
+| rectangulo sin fill
+::rect | ancho alto x y --
+        2swap >r >r
+        2dup op over r> + over 2dup line r + line
+        2dup r> + line line ;
+
+::vfill | ancho alto x y --
+	2swap >r >r
+	2dup op over r> + over 2dup pline r + pline
+	2dup r> + pline pline poli ;
+
+::vfill2 | w h x y --
+	rot ( 1? )( 1- >r 2dup setxy
+		1+  pick2 ( 1? )( 1-
+			ink@ px!+ ) drop r> ) 4drop ;
+
+::fbox2 | xc yc r --
+	2/ dup rot swap - | xc r y
+	rot pick2 - swap | r x y
+	rot dup + dup 2swap vfill2
+	;
+
+::fbox | xc yc r --
+	>r r - swap r - swap 2dup 2dup op r 2* + 2dup pline
+	swap r 2* + swap 2dup pline r> 2* - pline pline poli ;
+
+::circle | xc yc r --
+	>r over r - over op
+	2dup r - over r - over curve
+	over r + over 2dup r - curve
+	2dup r + over r + over curve
+	swap r - swap 2dup r> + curve ;
+
+::fcircle | xc yc r --
+	>r over r - over op
+	2dup r - over r - over pcurve
+	over r + over 2dup r - pcurve
+	2dup r + over r + over pcurve
+	swap r - swap 2dup r> + pcurve
+	poli ;
+
+::point
+	4 fcircle ;
+
+::ellipse | xc yc rx ry --
+	2swap
+	2dup pick4 - op
+	over pick4 + over pick4 - over pick3 2swap curve
+	over pick4 + over pick4 + pick3 over 2swap curve
+	over pick4 - over pick4 + over pick3 2swap curve
+	pick2 - over pick4 - over curve
+	2drop ;
+
+::fellipse | xc yc rx ry --
+	2swap
+	2dup pick4 - op
+	over pick4 + over pick4 - over pick3 2swap pcurve
+	over pick4 + over pick4 + pick3 over 2swap pcurve
+	over pick4 - over pick4 + over pick3 2swap pcurve
+	pick2 - over pick4 - over pcurve
+	2drop poli ;
+

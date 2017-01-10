@@ -1,0 +1,29 @@
+|
+| Gestoria para COMAR
+| PHREDA 2009
+|_______________________________
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/fonta.txt
+
+:main
+	show clrscr
+		blanco
+		fonta-arial14b
+		cr cr
+		"Menu principal" printc cr cr cr cr
+		verde
+		[ "gestodoc.txt" run ; ] " gestoria " 10 sp cmenu cr cr cr
+		[ "gestoedit.txt" run ; ] " formularios " 10 sp cmenu cr cr cr
+|		[ "gestodocdata.txt" run ; ] "data" 10 sp cmenu cr cr cr
+
+		rojo
+		'exit "Salir" 10 sp cmenu cr cr
+		blanco
+		fonta-arial10b
+|		docres "impresora: %d %d" print
+		'exit >esc<
+		cminiflecha
+		;
+
+: main ;

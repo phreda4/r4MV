@@ -1,0 +1,174 @@
+|
+| Registro de Cementerio de San Cayetano
+| PHREDA 2011
+|________________________________________
+
+^r4/lib/btn.txt
+^r4/lib/fonta.txt
+
+^r4/lib/grid.txt
+^r4/lib/formkit.txt
+
+|--- DBs
+#dbpaises 0 "db/cementerio/paises.db"
+#dblocalidades 0 "db/cementerio/localidades.db"
+
+#dbficha 0 "db/cementerio/fichas.db"
+
+|--- FK
+#fkficha 0 "db/cementerio/fichas.fk"
+
+|--- GRILLA
+#grficha 0 0
+$10100 $401 $102 $203 $104 $a05 0
+"N.|Lugar|Nro|Secc|Fila|Nombre"
+
+|---- titulo
+:titulo
+	clrscr
+	fonta-Arial14
+	80 gc.top
+	$00528A $10101 hfil
+	blanco
+	cr2
+	" Registro de Cementerio " print
+	" Municipalidad de San Cayetano " printr cr
+|*** DEBUG
+|	dup "(%d)" printc
+|****
+	cr scr ;
+
+|--- ALTA/MODIFICACION
+:insregistro
+	exit
+	1 'fkficha fkgetm c@ 0? ( drop ; ) drop
+	'fkficha fkserialice
+	'dbficha dbinsert
+	1 'dbficha dbsort ;
+
+:ingreso
+	'fkficha fkclear
+ 	show titulo
+		rojo 'exit dup >esc< "<<" sp sp 2 menur
+		blanco " >> Ingreso" print
+		sp rojo 'exit "Cancelar" 6 menuc
+		sp verde 'insregistro "Aceptar" 6 menuc
+		cr cr2 sp
+		negro 'fkficha fkedit
+		cminiflecha ;
+
+:updregistro
+	'fkficha fkserialice
+	grficha 'dbficha dbupdate
+	exit
+	1 'dbficha dbsort ;
+
+:delregistro
+	exit
+	grficha 'dbficha dbdelete
+	1 'dbficha dbsort ;
+
+:edicion
+	'fkficha fkclear
+	grficha 'dbficha dbgetreg
+	'fkficha fkdeserialice
+ 	show titulo
+		rojo 'exit dup >esc< "<<" sp sp 2 menur
+		blanco " >> Edición" print
+		sp rojo 'exit "Cancelar" 6 menuc
+		sp verde 'updregistro "Aceptar" 6 menuc
+		sp rojo 'delregistro "Borrar" 6 menuc
+		cr cr2 sp
+		negro 'fkficha fkedit
+		cminiflecha ;
+
+|--- VER
+:verficha
+	'fkficha fkclear
+	grficha 'dbficha dbgetreg
+	'fkficha fkdeserialice
+ 	show titulo
+		rojo 'exit dup >esc< "<<" sp sp 2 menur
+		blanco " >> Ver Ficha" print
+		cr cr2 sp
+		negro 'fkficha fkedit
+		cminiflecha ;
+
+
+|--- BUSQUEDA
+#entrada )( 256
+
+:testreg | reg -- reg 1/0
+	'entrada over 5 nfld?i ;
+
+:dofilter
+	'entrada c@ 1? ( 'testreg nip ) 'dbficha dbfilterv
+	1 'dbficha dbsort ;
+
+:busqueda
+	0 'entrada !
+	refreshfoco
+	show titulo
+		rojo 'exit dup >esc< "<<" sp sp 2 menur
+		blanco " >> Busqueda" print
+		cr cr
+		chome!
+		blanco "Buscar: " sp sp print
+		'entrada 30 input
+		'dofilter lostfoco
+		sp verde 'verficha "Ver" 6 menuc
+		cr cr2
+		blanco "  Listado de Fichas" print
+		fonta-arial10
+		20 'grficha 'dbficha dbgrid
+		cminiflecha ;
+
+:dobusqueda
+	busqueda
+	0 'dbficha dbfilterv
+	1 'dbficha dbsort ;
+
+:mapai
+	docini
+	"db/cementerio/SCCbig.bmp" 200 100 docbit
+
+	docend ;
+
+|--- PRINCIPAL
+:main
+	1 'dbficha dbsort
+	show titulo
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Menu Principal" print
+
+		cr cr
+		chome!
+
+		verde
+		'verficha "Ver" sp 10 menur cr cr2
+		'dobusqueda "Búsqueda" sp 10 menur cr cr2
+		cyan |oscuro
+		'edicion "Edición" sp 10 menur cr cr2
+		'ingreso "Ingreso" sp 10 menur cr cr2
+
+		'mapai "Mapa" sp 10 menur
+
+		sp chome
+		fonta-arial14
+		blanco "  Listado de Fichas" print
+		fonta-arial10
+		26 'grficha 'dbficha dbgrid
+		'exit >esc<
+		cminiflecha	;
+
+:ini
+	$999999 paper
+	mark
+	'fkficha fkload
+	'dbpaises dbsload
+	'dblocalidades dbsload
+
+	'dbficha dbload
+	;
+
+: ini 33 main ;

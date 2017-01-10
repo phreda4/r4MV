@@ -1,0 +1,77 @@
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/fonta.txt
+^r4/lib/db2.txt
+
+#dbuser "irene"
+#dbnet "D:\work\r4\sistemas\comar-gdnet\"
+
+#dbventa 0 "db\gestoria\pais.db"
+
+|--- listados
+#grVenta 0 0
+$200 $156 $157 $25a $167 0
+"Nombre|N.Fac|Fecha|Vehiculo|Crédito"
+
+|----- memoria db
+:memoria
+	mark 
+	'dbVenta dbload
+	;
+
+:memoriare
+	empty
+	memoria ;
+
+|----- sincro
+#a1
+#a2
+#ar
+
+:syncrodb | "" "" --
+	mark
+	here dup 'a1 ! swap load
+	0 swap !+ 'here !
+	here dup 'a2 ! swap load
+	0 swap !+ 'here !
+	a1 a2
+	mark
+	( c@+ 1? )(
+		,s
+		) 2drop
+	( c@+ 1? )( ,c ) ,c
+	drop
+	"resultado.db"
+	savemem
+	empty
+
+	empty
+	;
+
+:saveenh
+	mark
+	"dbserializada" ,s
+	"H:\pabloreda\dbirene" savemem
+	empty
+	;
+
+:main
+|	saveenh
+	show clrscr cr
+		blanco
+		fonta-arial14b
+		"Archivos de red" printc cr cr
+		'dbnet DIR
+		0 ( file 1? )( print cr 1+ ) drop
+
+		rojo
+		'exit "Salir" 10 sp menur cr cr
+		verde fonta-arial10
+		10 'grventa 'dbventa dbgrid
+
+		'exit >esc<
+		cminiflecha
+		;
+
+
+: memoria main ;

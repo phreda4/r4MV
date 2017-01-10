@@ -1,0 +1,114 @@
+|
+| Gestoria para COMAR
+| Editor de tablas
+| PHREDA 2011
+|_______________________________
+^r4/lib/gui.txt
+^r4/lib/fonta.txt
+^r4/lib/trace.txt
+
+^r4/lib/db2.txt
+^r4/lib/formkit.txt
+
+|--- tablas
+#dbtvehiculo 0 "db/gestoria/tvehiculo.db"
+
+|--- formularios
+#fktvehiculo 0 "db/gestoria/tvehiculo.fk"
+
+|--- listados
+#grtvehiculo 0 0
+$200 $101 $102 0
+"Nombre|Marca|Tipo"
+
+|---- editor variables
+#dbA #fkA #grA
+
+:settvehiculo
+	'dbtvehiculo 'dbA !
+	'fktvehiculo 'fkA !
+	'grtvehiculo 'grA !
+	;
+
+|---- titulo
+:titulo
+	clrscr
+	fonta-Arial14
+	80 gc.top
+	$00528A $10101 vfil
+	blanco
+	" Comar Automotores S.A. - GESTODOC DATA"
+	cr2 print
+|*** DEBUG
+		dup "(%d)" print
+|****
+	cr cr2 scr ;
+
+|----------------------------------
+|----------------------------------
+|----------------------------------
+
+|--- ALTA/MODIFICACION
+:insregistro
+	fkA fkserialice dbA dbinsert exit ;
+
+:updregistro
+	fkA fkserialice grA @ dbA dbupdate exit ;
+
+:ingreso
+	fkA fkclear
+ 	show titulo
+		rojo 'exit "<<" sp sp 2 btntf
+		blanco " >> Ingreso" print
+		sp rojo 'exit " Cancelar " .btnt
+		sp verde 'insregistro " Aceptar " .btnt
+		cr cr sp
+		negro fkA fkedit
+		'exit >esc<
+		cminiflecha ;
+
+:edicion
+	fkA fkclear
+	grA @ dbA dbgetreg
+	fkA fkdeserialice
+ 	show titulo
+		rojo 'exit "<<" sp sp 2 btntf
+		blanco " >> Edición" print
+		sp rojo 'exit " Cancelar " .btnt
+		sp verde 'updregistro " Aceptar " .btnt
+		cr cr sp
+		negro fkA fkedit
+		'exit >esc<
+		cminiflecha ;
+
+|---- PRINCIPAL
+:main
+	show titulo
+		rojo 'exit "X" sp sp 2 btntf
+		blanco " > Menu Principal" print
+		cr cr cr chome!
+		verde
+		'settvehiculo "Vehiculos" sp 10 btntf cr cr cr2
+		cyan
+		'ingreso "Inserta >>" sp 10 btntf cr cr2
+		'edicion "Edita >>" sp 10 btntf cr cr
+
+		chome fonta-arial10
+		blanco "  Tipos de Vehiculos" print
+		20 grA dbA dbgrid
+		negro fonta-arial10b
+
+		cminiflecha
+		'exit >esc<
+		;
+
+:inicio
+	mark
+	'fktvehiculo fkload
+	'dbtvehiculo dbload
+
+	settvehiculo
+	;
+
+: $999999 paper |$D4D0C8 paper
+inicio 33 main ;

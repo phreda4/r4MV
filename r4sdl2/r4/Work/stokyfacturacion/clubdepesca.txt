@@ -1,0 +1,836 @@
+| club de pesca
+| PHREDA 2009
+|-------------------------
+^r4/lib/gui.txt
+^r4/lib/dlg.txt
+^r4/lib/clock.txt
+
+^r4/lib/dbtabla.txt
+
+^r4/lib/fontt.txt
+^r4/lib/trace.txt
+
+^r4/lib/grid.txt
+^r4/lib/form.txt
+^r4/lib/sort.txt
+^r4/lib/printer.txt
+
+#celeste2 $014885
+
+:sps | n --
+	( 1? )( 1- sp ) drop ;
+
+#regp
+
+|-- concurso
+#actcon -1
+#nombrecon )( 64
+#fechacon )( 16
+#filecon )( 32
+#nroins 0
+
+#dataconcurso
+"Nro_4_N|Nombre_32_T|Localidad_20_T|Domicilio_50_T|Lic_8_T|DNI_10|Pago_4|S_2|Categoria_4|Piezas_512~"
+#datalistado
+"Nro_4|Nombre_32_T|Fecha_10_D|db_16_F~"
+
+||||||||||||||||||||||||||||||
+:titulo
+	1.0 0.08 fdim 0 -0.92 fpos
+	0 celeste2 vfil
+	font-vard-8
+	|2 fonth
+	home blanco cr
+	":R4 Sistemas - 2009 - pabloreda@gmail.com" printc
+|**** DEBUG
+|	dup "(%d)" print
+|	regp "regp %d" print
+|    'filecon print
+|**** DEBUG
+	1.0 0.14 fdim 0 0.86 fpos
+	0 celeste2 vfil
+	font-vard-12-quad
+	gc2win
+	home blanco cr
+	"Club de Pesca San Cayetano" printc cr cr
+	'nombrecon
+	dup c@ 0? ( nip "** sin concurso **" swap ) drop
+	printc
+
+	blanco
+	1.0 0.01 fdim
+	0 0.72 fpos gc.fbox
+	0 -0.84 fpos gc.fbox
+
+	0.12 dup fdim
+	0.86 dup fpos
+	clock ;
+
+:papel
+	0.98 0.8 fdim 0 0 fpos
+	font-vard-12-bold home cr cr
+	;
+
+:cancelar
+	"¿ Seguro ?" dlgsino
+	1? ( exit ) drop ;
+
+|------------ categorias
+#opgen
+#op1
+#op2
+#op3
+#categoria 0
+
+
+:resetcat
+	0 'opgen !
+	0 'op1 !
+	0 'op2 !
+	0 'op3 ! ;
+
+:gencat
+    'categoria
+	op1 64 + swap c!+
+	op2 64 + swap c!+
+	op3 64 + swap c!+
+	0 swap c! ;
+
+:op2campo
+	gencat
+	'categoria 8 dbset ;
+
+:campo2op
+	8 dbfld
+	c@+ 64 - -? ( 0 nip ) 'op1 !
+	c@+ 64 - -? ( 0 nip ) 'op2 !
+	c@ 64 - -? ( 0 nip ) 'op3 !
+	;
+
+|************* Competencia
+#cntres
+#resultado
+#indiceres )( 16384
+#indiceres>
+
+:resetindex
+	'indiceres 'indiceres> !
+	0 'cntres ! ;
+
+:addin | adr cnt --
+	indiceres> !+ !+ 'indiceres> !
+	1 'cntres +! ;
+
+:cp; | adr -- adr'
+	( c@+ 1? )(
+		$5f =? ( drop 1- ; )
+		$7c =? ( drop 1- ; )
+		$7e =? ( drop 1- ; ) | ~ registro
+		$3b =? ( drop ; ) |;
+		,c
+		) drop 1- ;
+
+|**** NO USADO
+|-- varias piezas por participante
+:haypiezas
+	1 dbmfld
+	9 dbmfld
+	( dup c@ 1? )( drop
+		over ,s "_" ,s
+		cp; "_" ,s
+		cp; " gr.|" ,s
+		>>s
+		1 'cntres +!
+		) 3drop
+	;
+
+|**** NO USADO
+|-- Una pieza por participante
+:haypiezas1 | adr char -- adr char
+	0 dbmfld ,s "_" ,s
+	1 dbmfld ,s "_" ,s
+	9 dbmfld
+	cp; "_" ,s
+	cp; " gr.|" ,s
+	drop
+	1 'cntres +! ;
+
+|-- Una pieza por participante (el mas grande)
+#mayor
+#valor
+
+:haypiezas2 | adr -- adr
+	here >r
+	0 dbmfld ,s "_" ,s
+	1 dbmfld ,s "_" ,s
+	2 dbmfld ,s "_" ,s | localidad
+	9 dbmfld
+	0 'valor ! dup 'mayor !
+	( dup c@ 1? )( drop
+		dup ( c@+ $3b <>? )( drop ) drop
+		?0int valor >? ( 'valor ! dup 'mayor ! )( drop )
+		>>s
+		) 2drop
+	r> valor neg addin
+	mayor cp; "_" ,s cp; " gr.|" ,s drop
+	;
+
+|----------------------
+:=cat | -- 1/0
+	8 dbmfld
+	c@+ 64 - op1 <>? ( 2drop 0 ; ) drop
+	c@+ 64 - op2 <>? ( 2drop 0 ; ) drop
+	c@ 64 - op3 <>? ( drop 0 ; ) drop
+	1 ;
+
+:filtroypieza
+	9 dbmfld c@ 0? ( drop ; ) drop | no tiene pieza
+	opgen 1? (
+		=cat 0? ( 2drop ; ) drop
+		) drop
+	haypiezas2 ;
+
+#estadob
+#pagcomp
+#cpagcomp
+
+:armatabla
+	resetindex
+|	mark here 'resultado !
+	0 ( cntregs <? )(
+		dup getreg cpyreg filtroypieza
+		1+ ) drop
+	0 ,c
+|	empty
+	cntres 1+ 'indiceres shellsort | len lista --
+	0 'pagcomp !
+	cntres 20 / 'cpagcomp !
+	;
+
+#buscar )( 24
+#nrop )( 16
+#pieza )( 32
+#peso )( 16
+#nombrep )( 32
+#localp )( 32
+#precinto )( 16
+#horac )( 8
+
+#capturas )( 512
+
+:agregapieza
+	|---carga base
+	regp -1 =? ( drop ; )
+
+	'pieza c@ 0? ( 2drop ; ) drop
+	'peso c@ 0? ( 2drop ; ) drop
+	getreg cpyreg
+	mark
+	9 dbmfld dup c@ 0? ( 2drop )( drop ,s "_" ,s )
+	'pieza ,s ";" ,s
+	'peso ,s ";" ,s
+	'precinto ,s ";" ,s
+	'horac ,s
+	0 ,c
+	empty
+	here 9 dbset
+|	here memmap
+	|---actualiza registro
+	dbupdate
+	exit ;
+
+:cargacampos
+	0 dbfld "%a" mprint 'nrop strcpy
+	1 dbfld "%a" mprint 'nombrep strcpy
+	2 dbfld "%a" mprint 'localp strcpy
+	9 dbfld "%p" mprint 'capturas strcpy
+	$7c $5f 'capturas strchg | | por _
+	$5f $3b 'capturas strchg | _ por ;
+	;
+
+:noexiste
+	"no existe" 'nombrep strcpy
+	0 'nrop !
+	0 'localp !
+	0 'capturas !
+	;
+
+:buscanombre
+	'buscar dbsearchall
+	-1 =? ( drop noexiste ; )
+	dup 'regp ! getreg
+	cargacampos ;
+
+:buscatodo
+	'buscar 0 dbsearch
+	-1 =? ( drop buscanombre ; )
+	dup 'regp ! getreg
+	cargacampos ;
+
+:buscaotro
+	'buscar dbsearchnext
+	-1 =? ( drop noexiste ; )
+	dup 'regp ! getreg
+	cargacampos ;
+
+|**** NO USADO
+:buscareg
+	'nrop 0 dbsearch 'regp !
+	regp -1 =? ( drop "no existe" 'nombrep strcpy ; ) getreg
+
+	1 dbfld "%a" mprint 'nombrep strcpy
+	9 dbfld "%p" mprint 'capturas strcpy
+
+	$7c $5f 'capturas strchg | | por _
+	$5f $3b 'capturas strchg | _ por ;
+	;
+|**** NO USADO
+
+#gricap 20 10 10 10 0
+"Pieza" "Peso" "Precinto" "Hora" 0
+
+:ingresopieza
+	'filecon dbload
+	0 'buscar !
+	0 'nrop !
+	0 'pieza !
+	0 'peso !
+	0 'nombrep !
+	0 'localp !
+	0 'capturas !
+	0 'precinto !
+	time "%d:%d" mprint 'horac strcpy drop
+	show clrscr titulo papel
+		"Ingreso de pieza" printc cr cr
+		 blanco
+		"Nro/Nombre" print cr
+
+		'buscar 23 input sp sp
+
+		verde 'buscatodo "BUSCAR" .btnt 'buscaotro "OTRO" sp .btnt
+
+		cr cr
+		blanco
+		"Nro" print 16 col "Nombre" print 50 col "Localidad" print cr
+		'nrop print 16 col 'nombrep print 50 col 'localp print cr cr2
+		"Pieza" print cr
+		'pieza 31 input cr cr2
+		"grs. (ej 1500)" print
+		30 col "Precinto" print
+		50 col "Hora Captura" print cr
+		'peso 15 input
+		30 col 'precinto 10 input
+		50 col 'horac 7 input cr cr cr2
+		'nombrep "Capturas anteriores de %s:" print cr
+
+		negro
+		'capturas 'gricap 0.8 strgrilla
+		| cr 'capturas print
+
+		0 rows 1- gotoxy cr2
+		cyan sp 'agregapieza "Listo" .btnt
+		rojo sp 'exit "Cancelar" .btnt
+		'exit >esc<
+		cmano ;
+
+
+|---------- competencia
+#gridcompetencia 4 5 19 15 8 7
+
+#pcntpag
+#pagact
+#pagreg
+
+:imprimirtitulo
+	doccr
+	"Club de Pesca San Cayetano" docprintc
+	doccr doccr
+	"      Listado - " docprint
+	opgen 0? ( "General" docprint )(
+		"Categoria: " docprint
+		op1 0? ( "Caballero" )( "Dama" ) docprint drop
+		op2 0? ( "/Socio" )( "/No Socio" ) docprint drop
+		op3 0? ( "/Adulto" )( "/Cadete" ) docprint drop
+		) drop
+	doccr doccr
+	;
+
+:imprimepie
+	pcntpag 1 <? ( drop ; ) drop
+	doccr doccr
+	pcntpag 1+ pagact 1+ "Pagina %d de %d" docprintc ;
+
+:imprimecuerpo
+	dup 3 << 'indiceres + swap
+	docrow
+	dup 1+ "%dº" doccellc
+	swap 4+ @+
+	dup "%a" doccellc >>s
+	dup " %a" doccell >>s
+	dup " %a" doccell >>s
+	dup " %a" doccell >>s
+	"%a" doccellr
+	swap doccr drop ;
+
+:imprimegrilla
+	'gridcompetencia 6 0.96 docgrid
+	"Pos" doccellc "Nro" doccellc "Nombre" doccellc "Localidad" doccellc
+	"Pieza" doccellc "Peso" doccellc doccr
+	0 ( cntlinpr 10 - <? )(
+		dup pagreg +
+		cntres <? ( imprimecuerpo )( doccr )
+		drop
+		1+ ) drop
+	doc$grid ;
+
+:imprimireal | imprime listado
+	0 'pagact !
+	0 'pagreg !
+	16 0 "Arial" docajusta
+	cntres cntlinpr 10 - / 'pcntpag !
+
+	0 ( pcntpag <=? )(
+		docini
+		docinicia
+	    imprimirtitulo
+		imprimegrilla
+		imprimepie
+		docend
+		cntlinpr 10 - 'pagreg +!
+		1 'pagact +!
+		1+ ) drop
+	;
+
+|  	'indiceres | ordenado
+|	0 ( cntres <? )(
+|        imprimecuerpo
+|		1+ ) 2drop
+
+
+:imprimirp
+	imprimireal
+	oscurecetodo
+	>xfb
+	show xfb>scr
+		0 0 fpos 0.6 0.5 fdim
+		$ff $11 vbtn
+		0.15 dup fdim -0.2 -0.3 fpos
+		0.5 0.4 fdim 0 0 fpos
+		font-vard-12-quad-out
+		home cr cr cr cr
+		"Imprimiendo..." printc cr cr cr cr
+		"Espere un momento..." printc
+		2 .segs exit ;
+
+|---------------------
+:lineacsv | nro --
+	3 << 'indiceres + 4+ @
+	dup "%a," mprint ,print >>s
+	dup "%a," mprint ,print >>s
+	dup "%a," mprint ,print >>s
+	dup "%a," mprint ,print >>s
+	"%a" mprint  ,print ,cr ;
+
+:imprimircsv
+	$ffff 'here +!
+	mark
+	"Pos,Nro,Nombre,Localidad,Pieza,Peso" ,print ,cr
+	0 ( cntres <? )(
+		dup 1+ "%dº," ,print
+		dup lineacsv
+		1+ ) drop
+
+	'nombrecon "resultados %s.csv" mprint savemem
+	empty
+	-$ffff 'here +!
+	;
+
+|---------------
+:estadoa
+	opgen
+	op1 2 << or
+	op2 4 << or
+	op3 6 << or
+	;
+
+:lineacompetencia | n --
+	rowg $ffffff gfill
+	dup 1+ "%dº" gcellc
+	3 << 'indiceres + 4+ @
+	dup "%a" gcell >>s
+	dup "%a" gcell >>s
+	dup "%a" gcell >>s
+	dup "%a" gcell >>s
+	"%a" gcellr cr
+	;
+
+:competencia
+	actcon -1 =? ( drop ; ) drop
+	'filecon dbload resetcat
+	estadoa 1+ 'estadob !
+	show clrscr titulo papel
+		cr2
+		"  Posiciones - " print
+		sp " General _ Categoria " 'opgen rbtn
+		opgen 1? (
+			sp " Caballero _ Dama " 'op1 rbtn
+			sp " Socio _ No Socio " 'op2 rbtn
+			sp " Adulto _ Cadete " 'op3 rbtn
+			) drop
+		cr cr2
+
+		estadoa estadob <>? ( 'estadob ! armatabla )( drop )
+
+		'gridcompetencia 6 0.95 grid
+		$cccccc gfill negro
+		"Pos" gcellc "Nro" gcellc "Nombre" gcellc "Localidad" gcellc
+		"Pieza" gcellc "Peso" gcellc cr
+		0 ( 20 <? )(
+			dup pagcomp +
+			cntres <? ( lineacompetencia )( drop )
+			1+ ) drop
+		gris $grid
+
+		0 rows 1- gotoxy cr2
+		verde sp [ ingresopieza armatabla ; ] "Ingreso" .btnt
+		amarillo sp 'imprimirp "Imprimir" .btnt
+		cyan sp 'imprimircsv ".CSV" .btnt
+
+		rojo sp 'exit "Salir" .btnt
+		cpagcomp 1? (
+			cyan 6 sps
+			[ pagcomp 20 - -? ( 0 nip ) 'pagcomp ! ; ] " < " btnt
+			cpagcomp 1+ pagcomp 20 / 1+ " %d/%d " print
+			[ pagcomp 20 + cntres >? ( pagcomp nip ) 'pagcomp ! ; ] " > " btnt
+			) drop
+		cmano
+	'exit >esc<
+	;
+
+|		'indiceres | ordenado
+|		0 ( cntres <? )( rowg $ffffff gfill
+|			dup 1+ "%dº" gcellc
+|			swap 4+ @+
+|			dup "%a" gcellc >>s dup "%a" gcell >>s 	dup "%a" gcell >>s
+|			"%a" gcellr
+|			swap cr 1+ ) 2drop
+
+|************* Inscripciocon
+#actinsc
+#paginsc
+#cntpaginsc
+
+:forminscripcion
+	negro 0 3 gotoxy
+	"Nro: " print 0 dbedit cr cr
+	"Nombre y Apellido" print cr cr cr2
+	"Localidad" print cr cr cr2
+	"Domicilio" print cr cr cr2
+	"DNI" print 16 col "Lic. Nro." print 31 col "Pago" print cr cr cr2
+	"Categoria" print
+	0 6 gotoxy
+	1 dbedit cr cr cr2
+	2 dbedit cr cr cr2
+	3 dbedit cr cr cr2
+	5 dbedit 16 col 4 dbedit 31 col 6 dbedit cr cr cr2
+	"Caballero|Dama" 'op1 choice cr cr2
+	"Socio|No Socio" 'op2 choice cr cr2
+	"Adulto|Cadete" 'op3 choice ;
+
+:agregainscripto
+	0 dbmfld 0 dbsearch
+	-1 <>? ( drop ; )
+	drop
+	op2campo dbinsert cntregs 20 / 'cntpaginsc !
+	exit ;
+
+:inscripcion
+	clearreg
+	0 dbmax 1+ "%d" mprint 0 dbset
+	0 'op1 !
+	0 'op2 !
+	0 'op3 !
+	show clrscr titulo papel blanco
+		"Inscripcion" printc cr
+        forminscripcion
+
+		0 rows 1- gotoxy cr2
+		sp verde 'agregainscripto "Agregar" .btnt
+		sp rojo 'cancelar "Cancelar" .btnt
+		cflecha
+		'cancelar >esc<
+		;
+
+:inscripcioned
+	actinsc getreg cpyreg
+	campo2op
+	show clrscr titulo papel blanco
+		"Edita Inscripto" printc cr
+        forminscripcion
+
+		0 rows 1- gotoxy cr2
+		sp verde [ op2campo dbupdate exit ; ] "Actualizar" .btnt
+		sp rojo 'exit "Cancelar" .btnt
+		cflecha
+	'exit >esc<
+		;
+
+#listain 0 1 2 5 4 6
+#listw1 6 $20 $18 12 10 5
+
+:dbfldscell | 'lista cnt --
+	( 1? )( 1- swap
+		@+ dbfld "%a" gcellc
+		swap ) 2drop ;
+
+|---------------------
+:generacsv
+	$ffff 'here +!
+	mark
+	cntregs "Listado de inscriptos - Total: %d" ,print ,cr
+	0 ( 6 <? )(
+		dup dbname "%a;" mprint ,print
+		1+ )
+	dbname "%a " mprint ,print ,cr
+
+	0 ( cntregs <? )(
+		dup getreg
+		0 ( 6 <? )(
+			dup dbfld "%a;" mprint ,print
+			1+ )
+			dbfld "%a" mprint ,print ,cr
+		1+ ) drop
+
+	'nombrecon "listado %s.csv" mprint savemem
+	empty
+	-$ffff 'here +!
+	;
+
+|------------------
+#CNTPAG 20
+
+:=categ | -- 1/0
+	8 dbfld
+	c@+ 64 - op1 <>? ( 2drop 0 ; ) drop
+	c@+ 64 - op2 <>? ( 2drop 0 ; ) drop
+	c@ 64 - op3 <>? ( drop 0 ; ) drop
+	1 ;
+
+
+:escat? | nro -- nro 1/0
+	opgen 0? ( drop 1 ; ) drop
+	=categ
+	;
+
+:inscriptos.filter&sort
+|	'escat? dbfilterv
+	0 'escat? dbfiltersortv ;
+
+:listainsc
+	actcon -1 =? ( drop ; ) drop
+	'filecon dbload
+	cntflds 0? ( 'dataconcurso count 'filecon save 'filecon dbload ) drop
+
+	cntregs CNTPAG / 'cntpaginsc !
+	0 'paginsc !
+	0 'actinsc !
+
+	|-- ordenar por numero
+|	1 0 dbsort
+|	inscriptos.filtra
+
+	estadoa 1+ 'estadob !
+
+	|--
+	show clrscr titulo papel blanco
+		cntregs "Listado de inscriptos - Total: %d" printc cr cr2
+
+		estadoa estadob <>? ( 'estadob ! inscriptos.filter&sort )( drop )
+
+		'listw1 6 0.94 grid
+		$cccccc gfill negro
+		0 dbname "%a" gcellc
+		1 dbname "%a" gcellc
+		2 dbname "%a" gcellc
+		5 dbname "%a" gcellc
+		4 dbname "%a" gcellc
+		6 dbname "%a" gcellc
+		cr
+		0 ( CNTPAG <? )(
+			dup paginsc +
+			cntregs <? ( rowg
+				[ dup 'actinsc ! ; ] onLineMove | 'vec --
+				actinsc =? ( $ff gfill blanco )( $ffffff gfill negro )
+				getreg
+				'listain 6 dbfldscell
+				cr )( drop )
+			1+ ) drop
+		gris $grid
+
+		0 rows 1- gotoxy cr2
+
+		sp sp
+		sp verde [ inscripcion 1 0 dbsort ; ] " Agregar " .btnt
+		sp amarillo 'inscripcioned " Editar " .btnt
+		sp cyan 'generacsv " .CSV " .btnt
+		sp rojo 'exit " Salir " .btnt
+
+		cntpaginsc 1? (
+			cyan sp
+			[ paginsc CNTPAG - -? ( 0 nip ) 'paginsc ! ; ] " < " btnt
+			cntpaginsc 1+ paginsc CNTPAG / 1+ " %d/%d " print
+			[ paginsc CNTPAG + cntregs >? ( paginsc nip ) 'paginsc ! ; ] " > " btnt
+			) drop
+
+		sp verde
+		font-vard-8
+		|fonti
+		chome!
+		sp " General _ Categoria " 'opgen rbtn
+		opgen 1? ( sp sp sp sp
+			" Caballero _ Dama " 'op1 sp rbtn sp
+			sp " Socio _ No Socio " 'op2 rbtn sp
+			sp " Adulto _ Cadete " 'op3 rbtn sp
+			) drop
+
+		cflecha
+		'exit >esc<
+		;
+
+|************* Concurso
+#pagcon
+#cntpagcon
+
+:nuevocon
+	"db/dbpesca/dbcons.txt" dbload
+	clearreg
+
+	0 dbmax 1+ dup "%d" mprint 0 dbset
+	"db/dbpesca/dbcon%h.txt" mprint 3 dbset
+
+	show clrscr titulo papel
+		cr cr cr
+		negro "Nombre del Concurso:" print cr
+		1 dbedit cr cr2
+		negro "Fecha:" print cr
+		2 dbedit cr cr2
+|		"Nro:" print 0 dbprint " File:" print 3 dbprint cr
+		cr cr
+		sp verde [ dbinsert exit ; ] "Agregar" .btnt
+		sp rojo 'cancelar "Cancelar" .btnt
+		cflecha
+ 	'exit >esc<
+		;
+
+:editacon
+	actcon -1 =? ( drop ; )
+	getreg cpyreg
+
+	show clrscr titulo papel
+		cr cr cr
+		negro "Nombre del Concurso:" print cr
+		1 dbedit cr cr2
+		negro "Fecha:" print cr
+		2 dbedit cr cr2
+|		"Nro:" print 0 dbprint " File:" print 3 dbprint cr
+		cr cr
+		sp verde  [ dbupdate exit ; ] "Modificar" .btnt
+		sp rojo 'cancelar "Cancelar" .btnt
+		cflecha
+	'exit >esc<
+		;
+
+:setconcurso | --
+	actcon -1 =? ( drop ; )
+	getreg
+	'nombrecon 1 dbfld dbcpy
+	'fechacon 2 dbfld dbcpy
+	'filecon 3 dbfld dbcpy
+	exit ;
+
+:savecon
+	'actcon 4 "db/dbpesca/main.nom" save ;
+
+:loadcon
+	'actcon "db/dbpesca/main.nom" load drop
+	"db/dbpesca/dbcons.txt" dbload
+	cntflds 0? ( 'datalistado count "db/dbpesca/dbcons.txt" save "db/dbpesca/dbcons.txt" dbload ) drop
+    setconcurso ;
+
+:usar
+	setconcurso
+	savecon ;
+
+||||||||||||||
+#listw2 6 40 20
+#listaco 0 1 2
+
+:concurso
+	"db/dbpesca/dbcons.txt" dbload
+	cntflds 0? ( 'datalistado count "db/dbpesca/dbcons.txt" save "db/dbpesca/dbcons.txt" dbload ) drop
+
+	cntregs 20 / 'cntpagcon !
+	show clrscr titulo papel blanco
+		"Listado de concursos" printc cr cr2
+
+		'listw2 3 0.9 grid
+		$cccccc gfill negro
+		0 dbname "%a" gcellc
+		1 dbname "%a" gcellc
+		2 dbname "%a" gcellc cr
+		0 ( 20 <? )(
+			dup pagcon +
+			cntregs <? ( rowg
+				[ dup 'actcon ! ; ] onLineMove | 'vec --
+				actcon =? ( $ff gfill blanco )( $ffffff gfill negro )
+				getreg
+				'listaco 3 dbfldscell
+				cr )( drop )
+			1+ ) drop
+		gris $grid
+
+
+		0 rows 1- gotoxy cr2
+		sp sp
+		sp azul 'usar " Elegir " .btnt
+		sp verde 'nuevocon " Crear " .btnt
+		sp amarillo 'editacon " Editar " .btnt
+		sp rojo 'exit " Salir " .btnt
+		cntpagcon 1? (
+			cyan 6 sps
+			[ pagcon 20 - -? ( 0 nip ) 'pagcon ! ; ] " < " btnt
+			cntpagcon 1+ pagcon 20 / 1+ " %d/%d " print
+			[ pagcon 20 + cntregs >? ( pagcon nip ) 'pagcon ! ; ] " > " btnt
+			) drop
+
+		cflecha
+	'exit >esc<
+|	[ inimemdb memmap ; ] <f1>
+		;
+
+||||||||||||||||||||||||||||||
+
+|************* menu principal
+:main
+	show clrscr titulo papel
+		0 rows 1- gotoxy cr2
+		rojo sp 'exit dup >esc< "X" .btnt sp
+		blanco "Salir del sistema" print
+
+		celeste2 ink
+		0.3 0.2 fdim -0.6 -0.3 fpos
+       'concurso dup <f1> "F1 - Concurso|Crear_Historico" btnee gc>>
+		'listainsc dup <f2> "F2 - Inscripcion|Alta de Participantes_Listado de Participantes" btnee gc>>
+		'competencia dup <f3> "F3 - Competencia|Comienzo_Parciales_Ingreso de piezas" btnee gc>>
+		cmano ;
+
+: 33
+0 'inkb ! $ffffff 'inka !
+mark
+here 'resultado ! | 1MB resultado
+$fffff 'here +!
+$808080 paper
+loadcon
+main
+;
+

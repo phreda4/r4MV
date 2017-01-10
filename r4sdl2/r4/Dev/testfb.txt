@@ -1,0 +1,30 @@
+^r4/lib/gui.txt
+
+#f
+#fc
+#col
+#tn 
+:fill
+	0 0 setxy
+	sw sh * ( 1? )( 
+		col px!+ 1- ) drop ;
+
+:calcf
+	1 'fc +!
+	msec tn - 1000 <? ( drop ; ) drop
+	msec 'tn !
+	fc 'f !
+	0 'fc !
+	;
+
+:main
+	msec 'tn !
+  show  
+	fill	
+	home f "%d" print
+	calcf
+	msec 'col +!  	
+	'exit >esc<
+	;
+
+: main ;

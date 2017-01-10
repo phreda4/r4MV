@@ -1,0 +1,319 @@
+| jetpack 3d
+| PHREDA 2016
+|
+
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+
+^r4/lib/part16.txt
+^r4/lib/anima.txt
+^r4/3d/octree/iso_13.txt
+
+^r4/lib/trace.txt
+
+
+#ldisparos 0 0
+#lenemigos 0 0
+#lfx 0 0
+
+#xcam #ycam 1.5 #zcam 5.0
+
+#Oshuttle
+#oclon1 #oclon2 #oclon3
+#oclon4 #oclon5 #oclon6
+#oov1 #oov2 #oov3
+#ometeoro
+#obala
+#ovox
+
+#clonrun 0 0 oclon1 5 oclon5 5 oclon1 5 oclon6 5 0
+#clonfly 0 0 oclon2 1 oclon3 1 oclon4 1 0
+
+#ovnirun 0 0 oov1 30 oov2 30 oov3 30 0
+
+|-----------------------------
+:3dop transform p3d op ;
+:3dline transform p3d line ;
+
+#sizx #sizy #sizz
+
+:drawz | z --
+	sizx neg sizy neg pick2 3dop
+	sizx sizy neg pick2 3dline
+	sizx sizy pick2 3dline
+	sizx neg sizy pick2 3dline
+	sizx neg sizy neg rot 3dline ;
+
+:drawl | x1 x2 --
+	2dup sizz neg 3dop sizz 3dline ;
+
+:box3d | sx sy sz --
+	'sizz ! 'sizy ! 'sizx !
+	sizz neg drawz sizz drawz
+	sizx neg sizy neg drawl sizx sizy neg drawl
+	sizx sizy drawl sizx neg sizy drawl
+	;
+
+|---------------------------------------------
+:r0001 rand 0.001 mod ;
+:r001 rand 0.01 mod ;
+:r01 rand 0.1 mod ;
+:r1 rand 1.0 mod ;
+:r10 rand 10.0 mod ;
+:r100 rand 100.0 mod ;
+
+:cosa
+	dup >r
+	mpush
+	r@+ r@+ r@+ mtransi
+	r@+ 1? ( mrotxi )( drop )
+	r@+ 1? ( mrotyi )( drop )
+	r@+ 1? ( mrotzi )( drop )
+|	0.5 0.5 0.5 box3d
+|	ocoso drawoctree
+	'ovnirun seqAnima @ drawoctree
+|	ometeoro drawoctree
+	mpop
+	rdrop
+	24 +
+	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+	drop
+	;
+
+:cosa+xy | x y --
+	'cosa 'lenemigos p!+ >r
+	r!+ 0 r!+ r!+ | x y z
+	0 r!+ 0 r!+ 0 r!+ | rx ry rz
+
+	0 r!+ r0001 r!+ 0 r!+
+	r0001 r!+ r0001 r!+ r0001 r!+
+|	0 r!+ 0 r!+ 0 r!+
+	rdrop ;
+
+|------ fx
+:particula
+	dup @ 1- 0? ( nip ; ) swap !+
+	dup >r
+	mpush
+	r@+ r@+ r@+ mtransi
+	r@+ mrotxi r@+ mrotyi r@+ mrotzi
+	ovox drawoctree
+	mpop
+	rdrop
+	24 +
+	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+	drop
+	;
+
+:humo
+	dup @ 1- 0? ( nip ; ) swap !+
+	dup >r
+	mpush
+	r@+ r@+ r@+ mtransi
+|	r@+ mrotxi r@+ mrotyi r@+ mrotzi
+	ovox drawoctree
+	mpop
+	rdrop
+	24 +
+	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+|	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+	drop
+	;
+
+:+humo | x y z -- x y z
+	rnd $10 and? ( drop ; ) drop	| no todos los puntos
+	'humo 'lfx p!+ >r
+	20 r!+ | tiempo de vida
+	pick2 r!+ over r!+ dup r!+
+	0 r!+ 0 r!+ 0 r!+
+	r001 r!+ r001 r!+ r001 r!+
+	0 r!+ 0 r!+ 0 r!+
+	rdrop ;
+
+|------ disparo
+:bdisparo
+	dup @ 1- 0? ( nip ; ) swap !+ | tiempo de vida
+	dup >r
+	mpush
+	r@+ r@+ r@+ +humo mtransi
+	r@+ 1? ( mrotxi )( drop )
+	r@+ 1? ( mrotyi )( drop )
+	r@+ 1? ( mrotzi )( drop )
+	obala drawoctree
+	mpop
+	rdrop
+	24 +
+	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +!
+|	@+ over 28 - +! @+ over 28 - +! @+ over 28 - +! |no rota
+	drop
+	;
+
+|------ player
+#plx #ply #plz
+#plrx #plry #plrz
+
+#pla	| avance
+#plr #pldr	| rotacion
+#pli	| impulso en z
+#pljet
+
+#oxcam #oycam #ozcam
+#orxcam #orycam #orzcam
+
+:disparo
+	'bdisparo 'ldisparos p!+ >r
+	150 r!+ | tiempo de vida
+	plx r!+ ply r!+ plz r!+
+	plrx r!+ plry r!+ plrz r!+
+	plr sincos 0.3 *. r!+ 0 r!+ 0.3 *. r!+
+	0 r!+ 0 r!+ 0 r!+
+	rdrop ;
+
+:player
+	[ 0.01 'pldr ! ; ] <le>
+	[ -0.01 'pldr ! ; ] <ri>
+	[ 0 'pldr ! ; ] dup >le< >ri<
+
+	[ 0.02 'pla ! ; ] <up> 	| avanzar
+	[ -0.02 'pla ! ; ] <dn>	| retroceder
+	[ 0 'pla ! ; ] dup >up< >dn<
+	[ 1 'pljet ! ;  ] <spc>
+	[ 0 'pljet ! ; ] >spc<
+	'disparo <ctrl>
+
+	pldr 'plr +!
+
+	pla ply 1? ( drop 2* )( drop )
+	plr dup 'plry !
+	sincos pick2 *. 'plx +! *. 'plz +!
+
+	pljet 1? ( -0.01 'pli +! )( 0.01 'pli +! )  drop
+
+	ply pli +
+	0 >? ( 0 nip 0 'pli ! )	| suelo
+	'ply !
+
+	mpush
+	plx ply plz mtransi
+	plrx 1? ( mrotxi )( drop )
+	plry 1? ( mrotyi )( drop )
+	plrz 1? ( mrotzi )( drop )
+
+	pljet 1? ( 'clonfly seqAnima @ )( pla 0? ( oclon1 )( ply 1? ( drop oclon1 )( drop 'clonrun seqAnima @ ) ) nip ) nip
+	drawoctree
+
+	mpop
+	;
+
+:camara
+	plry 0.25 - 'orycam !
+	0 0 'orxcam ! 'orzcam !
+	plry sincos -2.0 *. plx + 'oxcam ! -2.0 *. plz + 'ozcam !
+	ply 1.0 - 'oycam !
+	mpush
+	oxcam oycam ozcam mtransi
+	orxcam 1? ( mrotxi )( drop )
+	orycam 1? ( mrotyi )( drop )
+	orzcam 1? ( mrotzi )( drop )
+	ometeoro drawoctree
+	mpop ;
+
+:nave
+	mpush
+	5.0 -1.0 0 mtransi
+	0.75 mrotxi
+	5.0 Oshuttle drawsoctree
+	mpop
+	;
+
+:grilla
+	-100.0 ( 100.0 <? )(
+		-100.0 ( 100.0 <? )(
+			|over rand 0.5 mod + over rand 0.5 mod +
+			2dup
+			cosa+xy
+			25.0 + ) drop
+		25.0 + ) drop
+	;
+
+:reset
+	'ldisparos p.clear
+	'lenemigos p.clear
+	'lfx p.clear
+
+	0 0 0 'plx ! 'ply ! 'plz !
+	0 0 0 'plrx ! 'plry ! 'plrz !
+
+|	grilla
+	;
+
+|-----------------------------------
+:freelook
+	xymouse
+	sh 2/ - 7 << swap
+	sw 2/ - 7 << swap
+	neg mrotx mroty ;
+
+
+:main
+	reset
+	33
+	show clrscr
+      	dup "%d" print cr
+		zcam "%f" print cr
+
+		matini
+
+		plx neg ply neg plz neg mtrans	| sigue a pl1
+		plry 0.25 - mroty				| atras de el
+        xcam ycam zcam mtrans
+
+		zb.clear
+		player
+
+|		camara
+	    nave
+
+
+		'lenemigos p.draw
+		'ldisparos p.draw
+		'lfx p.draw
+		0 0 zdraw
+
+
+		'exit >esc<
+		cminiflecha  ;
+
+
+:inimem
+	mark
+
+	sw sh ini3do
+
+	"media/3do/jp1.3do" load3do 'Oclon1 !
+
+	"media/3do/jpf1.3do" load3do 'Oclon2 !
+	"media/3do/jpf2.3do" load3do 'Oclon3 !
+	"media/3do/jpf3.3do" load3do 'Oclon4 !
+
+	"media/3do/jpc1.3do" load3do 'Oclon5 !
+	"media/3do/jpc2.3do" load3do 'Oclon6 !
+
+	"media/3do/ovni31.3do" load3do 'Oov1 !
+	"media/3do/ovni32.3do" load3do 'Oov2 !
+	"media/3do/ovni33.3do" load3do 'Oov3 !
+
+	"media/3do/meteoro.3do" load3do 'Ometeoro !
+	"media/3do/shuttle.3do" load3do 'Oshuttle !
+	"media/3do/bala.3do" load3do 'Obala !
+
+	"media/3do/voxel.3do" load3do 'Ovox !
+
+	50 'ldisparos p.ini
+	100 'lenemigos p.ini
+	1000 'lfx p.ini
+	;
+
+: inimem main ;

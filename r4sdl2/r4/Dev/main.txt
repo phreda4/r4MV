@@ -1,0 +1,377 @@
+|	MAIN NUEVO
+|	PHREDA 2013
+|----------------------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/input.txt
+^r4/lib/sort.txt
+^r4/lib/rfont.txt
+^r4/lib/ricons.txt
+
+^r4/lib/3d-escena.txt
+
+^inc/ric/fontawesomewebfont.ric
+^inc/rft/robotoregular.rft
+^inc/rft/robotobold.rft
+
+^r4/system/mem-ed.txt
+
+|^r4/lib/dlgfilea.txt
+|^r4/lib/vkeyboard.txt
+
+^r4/lib/trace.txt
+
+
+#nfiles
+#files )( 1024
+#files> 'files
+#infos )( 1024
+#infos> 'infos
+#filen )( 8192
+#filen> 'filen
+#xypos )( 8192
+#xypos> 'xypos
+
+#actual
+#path )( 1024
+#fileactual )( 32
+
+|---------------------------------------------
+#xcam #ycam #zcam 2.0
+#iconos 0 0
+
+#namesolo )( 64
+
+:getname | nro -- ""
+	2 << 'files + @ ;
+
+:getinfo | nro -- info
+	2 << 'infos + @ ;
+
+:getnamesolo | nro -- ""
+	-? ( "" nip ; )
+	dup getinfo 0? ( drop getname ; ) drop
+	getname 'namesolo strcpyl
+	0 swap 5 - c! | quita ".txt"
+	'namesolo ;
+
+:addpath | nro -- nro
+	 "/" 'path strcat
+    dup getname 'path  strcat
+	;
+
+:clearact
+	-1 'actual ! "" 'fileactual strcpy ;
+
+:rempath
+	'path ( c@+ 1? )( drop ) drop 1-
+	( 'path >? )(
+		dup c@ $2f =? ( drop 0 swap ! ; )
+		drop 1- ) drop
+	;
+
+
+|----------------------------------------
+:clearall
+	clearact
+	"r4" 'path strcpy ;
+
+:loadm
+	'actual "mem/main.mem" load
+	'actual =? ( clearall ) drop
+	actual -? ( drop ; )
+	getnamesolo 'fileactual strcpy
+	;
+
+:savem
+	'actual 8 1024 +
+	"mem/main.mem" save ;
+
+:multip
+|WIN| ;
+|AND|	infoin
+	>r
+	r@+ dup "%d " print cr
+	( 1? )( 1-
+		r@+ r@+ swap r@+ "%d %d %d " print cr
+		) drop
+	rdrop ;
+
+:config
+	show clrscr
+		robotoregular 64 rfont!
+		verde dup " :R%d " print
+		blanco "Info" printc cr
+		robotoregular 40 rfont!
+
+		cyan
+|WIN|	"Windows"
+|AND|	"Android"
+		" Version " print print cr
+		sh sw " Res: %dx%d" print cr
+
+		xymouse swap " MOUSE: %d %d" print cr
+		bmouse " BMOUSE: %d" print cr
+		key " KEY: %d" print
+		multip
+		48 qdim sw 32 - sh 32 - pos
+		verde 'exit btn blanco 'i.ok drawric
+
+		'exit >esc<
+		cflecha
+		;
+
+|--------------------------------------
+#iconcolor $7f7f00 $3f00  $7f7f  $7f007f $7f7f00 $7f0000 $7f00  $ff
+#iconinfo 'i.folder_close_alt 'i.cogs 'i.picture 'i.picture 'i.picture 'i.picture 'i.picture 'i.file
+#tipoext "bmr" "inc" "rmt" "spr" "vsp"
+
+:nrun | act tipo --
+	'tipoext swap 2 - ( 1? )( swap >>0 swap 1- ) drop >r
+	mark
+	getname 'path "%s/%s" ,print
+	r "mem/inc-%w.mem" mprint savemem
+	empty
+	r> "r4/system/inc-%w.txt" mprint run ;
+
+:runfile
+    savem
+	dup getinfo 1 >? ( nrun ; ) drop
+	getname 'path "%s/%s" mprint run ;
+
+:editfile
+	savem
+	actual -? ( drop ; )
+	dup getinfo 1 >? ( nrun ; ) drop
+	getname 'path "%s/%s" mprint 'ed.nombre strcpy
+	0 'ed.ncar ! 
+	ed.save
+|win|	"r4/system/edit-code.txt" run
+|and|	"r4/system/edit-codea.txt" run
+	;
+
+|-----------------------------------------------------
+#newfile
+
+:remaddtxt | --
+	'fileactual ".txt" =pos 1? ( drop ; ) drop
+	".txt" swap strcat ;
+
+:createfile
+	0 'newfile !
+	'fileactual c@
+	0? ( drop actual -? ( drop ; ) getnamesolo 'fileactual strcpy ; ) drop
+	remaddtxt
+	savem
+	mark
+	"^r4/lib/gui.txt" ,ln ,cr
+	":main" ,ln
+	"  show clrscr" ,ln
+	"  	""Hello Human!"" print " ,ln
+	"	'exit >esc<" ,ln
+	"	cminiflecha ;" ,ln
+	,cr
+	": main ;" ,ln
+	'fileactual 'path "%s/%s" mprint savemem
+	empty
+	'fileactual 'path "%s/%s" mprint 'ed.nombre strcpy
+	0 'ed.ncar !
+	ed.save
+|win|	"r4/system/edit-code.txt" run
+|and|	"r4/system/edit-codea.txt" run
+	;
+
+
+|-----------------------------
+:3dop project3d op ;
+:3dline project3d line ;
+
+:grillaxy
+	-5.0 ( 5.0 <=? )( dup -5.0 0 3dop dup 5.0 0 3dline
+		-5.0 over 0 3dop 5.0 over 0 3dline 1.0 + ) drop ;
+:grillayz
+	-5.0 ( 5.0 <=? )( 0 over -5.0 3dop 0 over 5.0 3dline
+		0 -5.0 pick2 3dop 0 5.0 pick2 3dline 1.0 + ) drop ;
+:grillaxz
+	-5.0 ( 5.0 <=? )( dup 0 -5.0 3dop dup 0 5.0 3dline
+		-5.0 0 pick2 3dop 5.0 0 pick2 3dline 1.0 + ) drop ;
+
+|---- caja en normalizado
+:drawboxz | z --
+	-0.05 -0.05 pick2 3dop
+	0.05 -0.05 pick2 3dline
+	0.05 0.05 pick2 3dline
+	-0.05 0.05 pick2 3dline
+	-0.05 -0.05 rot 3dline ;
+
+:drawlinez | x1 x2 --
+	2dup -0.05 3dop 0.05 3dline ;
+
+:draw3dnorm
+	-0.05 drawboxz
+	0.05 drawboxz
+	-0.05 -0.05 drawlinez
+	0.05 -0.05 drawlinez
+	0.05 0.05 drawlinez
+	-0.05 0.05 drawlinez ;
+
+|---------------------------------------------
+:sicon.upd
+	esc.z+ ;
+
+:clickbtn | nro -- nro
+	dup getinfo
+	0? ( drop clearact addpath ; ) | rebuild
+	drop
+	actual =? ( runfile ; )
+	dup 'actual !
+	dup getnamesolo 'fileactual strcpy
+	;
+
+:drawcarta | nro -- nro
+	nfiles >=? ( ; )
+	mpush
+	dup getinfo
+	2 << dup 'iconcolor + @ ink
+	'iconinfo + @ 3ddrawric
+	home blanco
+	dup getnamesolo cr cr printc
+	mpop ;
+
+:sicon.draw
+	mpush
+	esc.pos
+
+|    home 0 0 0 project3d atxy
+|	dup "%h" print
+
+	draw3dnorm
+
+	mpop ;
+
+:sicon.add | z y x --
+	'iconos esc. >r
+	'sicon.upd r!+
+	r!+ r!+ r!+ | x y z
+	0 r!+ 0 r!+ 0 r!+ | rx ry rz
+	0 r!+ 0 r!+
+	'sicon.draw r!+
+
+	rdrop ;
+
+|------------------- OS DEp ---------------------
+:FNAME | adr -- adrname
+|WIN|	44 +
+|AND|	19 +
+	;
+
+:FDIR? | adr -- 1/0
+|WIN|	@ $10
+|AND|	18 + c@ 4
+	=? ( 1 )( 0 ) nip ;
+|----------------------------------------
+
+:FINFO | adr -- adr info
+	dup FDIR? 1? ( 0 nip ; ) drop
+	dup FNAME
+	".txt" =pos 1? ( 2drop 1 ; ) drop
+	".bmr" =pos 1? ( 2drop 2 ; ) drop
+	".inc" =pos 1? ( 2drop 3 ; ) drop
+	".rmt" =pos 1? ( 2drop 4 ; ) drop
+	".spr" =pos 1? ( 2drop 5 ; ) drop
+	".vsp" =pos 1? ( 2drop 6 ; ) drop
+	7 nip ;
+
+:rebuild
+	0 'nfiles !
+	'filen 'filen> !
+	'files 'files> !
+	'infos 'infos> !
+	'path ffirst drop fnext drop | quita . y ..
+	( fnext 1? )(
+		filen> files> !+ 'files> !
+		FINFO infos> !+ 'infos> !
+		FNAME filen> strcpyl 'filen> !
+		) drop
+	files> 'files - 2 >> 'nfiles !
+
+
+	'iconos esc.clear
+	0 nfiles 12 << neg 0
+	nfiles ( 1? )( 1- >r
+		pick2 pick2 pick2 sicon.add
+		swap 0.11 + swap
+		r> ) 4drop
+
+	;
+
+:freelook
+	xymouse
+	sh 2/ - 7 << swap
+	sw 2/ - neg 7 << swap
+	neg mrotx
+	mroty ;
+
+|-----------------------------------------------------
+:printbtns
+	omode
+	freelook
+	xcam ycam zcam mtrans
+
+	esc.zclear
+	'iconos esc.draw
+	esc.zdraw
+	;
+
+
+|--------------------------------------------
+:icono | rojo  "ESC" 'i.off 'exit --
+	guiBtn
+	negro  drawric home blanco print
+	;
+
+:botonera
+	robotobold 24 rfont!
+	32 qdim
+	20 sh 17 - pos
+	rojo "ESC" 'i.off 'exit dup >esc< icono
+	gc>>
+	verde "F1" 'i.bolt [ actual -? ( drop ; ) runfile ; ] dup <f1> icono
+	gc>>
+	verde "F2" 'i.edit 'editfile dup <f2> icono
+	gc>>
+	verde "F3" 'i.light_bulb [ 1 'newfile ! 0 'fileactual ! ; ] dup <f3> icono
+	sw 20 - sh 17 - pos
+	cyan 'config guiBtn 'i.info_sign drawric
+
+|	verde 'i.light_bulb drawric home blanco "ESPACE" print
+	;
+
+|--------------------------------------------
+:main
+	4
+	0 'newfile !
+	$fffff 'iconos esc.create
+	rebuild
+	show clrscr
+		robotoregular 48 rfont!
+		scr 48 gc.top home
+		blanco [ rempath rebuild clearact ; ] ".." link
+
+		80 gc.bottom $777111 gc.hfill
+		home
+		blanco dup ":r%d" print
+		'path "%s/" blanco print
+		newfile 0? ( 'fileactual print )( 'fileactual 32 inputcell 'createfile <enter> ) drop
+		botonera
+		printbtns
+
+		cminimano
+		;
+
+
+: 0 paper mark
+|loadm
+main
+|savem
+;

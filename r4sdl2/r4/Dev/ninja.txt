@@ -1,0 +1,206 @@
+| Juego 2015 - Itineriario
+|------------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/trace.txt
+
+^r4/lib/bmr.txt
+^r4/dev/tiles.bmr
+
+#xp #yp
+#vxp #vyp
+#axp #ayp
+
+#estado
+
+#escalap 5
+#anchomapa 	32
+#altomapa	18
+#anchop #altop
+
+
+|-------------------------------------------------
+#bloques 'tnt 'puerta 'coin1 'escalera 'lava1 'piso 'tierra 'piedra2 'piedra2 'ladrillo 'ladrillo2 'pasto1 'tnt
+
+#enemy1
+1.0 2 13 16 16  	| vel x1 x2 y1 y2 vel
+1.0 19 29 16 16
+0
+
+#mapa1
+1 15 'enemy1
+6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
+6 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6
+6 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6
+6 6 6 0 0 0 6 0 0 0 0 6 3 6 6 6 6 0 0 0 0 0 0 0 0 0 0 0 0 0 1 6
+6 0 0 0 0 0 6 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 5 5 5 6
+6 0 0 0 0 0 6 0 0 0 0 0 3 0 0 0 0 0 0 0 7 7 0 0 0 0 0 0 0 0 0 6
+6 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6
+6 4 4 4 0 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 9 9 0 0 0 0 0 0 6
+6 4 4 4 0 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6
+6 2 2 4 0 0 0 0 6 6 6 6 6 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 6
+6 2 2 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 4 6 4 6 0 0 9 9 0 0 0 0 6
+6 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 6
+6 6 6 6 6 6 0 0 0 0 0 0 0 0 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0 2 6
+6 0 0 0 0 0 0 0 0 0 0 0 0 6 6 6 6 6 0 0 0 0 0 0 0 0 0 0 0 0 8 6
+6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 6
+6 0 0 0 0 0 0 6 8 8 8 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 6
+6 0 0 0 0 0 6 3 3 3 3 3 6 7 7 7 7 7 7 0 0 0 0 0 0 0 0 0 0 0 8 6
+6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 4 6 6 6 6 6 6 6 6 6
+
+#mapa )( 8192
+
+:[mapa]	| x y -- dir
+	swap -? ( 0 nip ) anchomapa >=? ( 0 nip )
+	swap -? ( 0 nip ) altomapa >=? ( 0 nip )
+	anchomapa * + 2 << 'mapa + ;
+
+:dibujotile | n -- dib
+|	2 =? ( drop 'acoin msec 5 >> $1c and + ; )
+|	4 =? ( drop 'alava msec 6 >> $1c and + ; )
+	$ff and 2 << 'bloques + @ ;
+
+:drawtile | x y -- x y
+	over xp escalap >> +
+	over yp escalap >> +
+	[mapa] @ 0? ( drop ; )
+	pick2 escalap << sw 2/ + xp $1f and -
+	pick2 escalap << sh 2/ + yp $1f and -
+	rot dibujotile
+	bmr.draw
+	;
+
+:dibujomapa
+	anchop neg ( anchop <? )(
+		altop neg ( altop <? )(
+        	drawtile
+			1+ ) drop
+		1+ ) drop ;
+
+|-------------------------------------------------
+#scamina 0 0 md1 10 md2 10 md1 10 md3 15 0
+
+:seqani | 'seqani -- 'spr
+	>r r @ 0? ( r 8 + r!+ r!+ r> @ ; )
+	r 4+ @ 1+ over 4+ @ | 'spr cnt max
+	<? ( r> 4+ ! @ ; ) drop
+	8 + dup @ 0? ( 2drop r 8 + dup @ ) | adr spr
+	swap r!+ 0 r> ! ;
+
+
+:ninja
+	vxp 'xp +!
+	vyp 'yp +!
+
+|	xp yp pos
+|	sw 2/ sh 2/ pos
+|	64 qdim
+
+    sw 2/ 32 - sh 2/ 32 -
+	'scamina seqani
+	64 64 bmr.drawscale
+|	bmr.draw
+	;
+
+|---- test
+:test<<
+   	xp vxp + 24 - escalap >> yp escalap >> [mapa] @ ;
+
+:test>>
+   	xp vxp + 24 + escalap >> yp escalap >> [mapa] @ ;
+
+:testup
+   	xp vxp + escalap >> yp 32 - escalap >> [mapa] @ ;
+
+:testdn
+   	xp vxp + escalap >> yp 32 + escalap >> [mapa] @ ;
+
+:teclado
+	[ -1 'axp ! ; ] <le>
+	[ 1 'axp ! ; ] <ri>
+	[ 0 'axp ! ; ] dup >ri< >le<
+
+	vxp
+	axp 0? ( drop 0? ( dup )( sign neg ) ) | desacelera
+	+
+	+? (
+		10 >? ( 10 nip )
+		test>> 1? ( 2drop 0 )( drop )
+	)(
+		-10 <? ( -10 nip )
+		test<< 1? ( 2drop 0 )( drop )
+		)
+    'vxp !
+
+
+	0 'estado !
+	testup 1? ( 0 'vyp ! ayp -? ( 0 'ayp ! ) drop ) drop
+   	testdn 1? ( 0 'vyp ! yp $1f not and 'yp ! 1 'estado ! ) drop
+
+	estado 0? ( 1 'ayp +! ) drop
+	[ estado 1? ( -16 'ayp ! ) drop ; ] <up>
+
+|	'bajar <dn>
+
+	vyp ayp +
+	10 >? ( 10 nip )
+	-10 <? ( -10 nip )
+	'vyp !
+	;
+
+|-------------------------------------------------
+:copianivel | n --
+	12 +
+	'mapa >r
+	anchomapa altomapa *
+	( 1? )( swap
+		@+ r!+ swap
+		1- ) 2drop rdrop ;
+
+:resetjuego
+	0 'estado !
+	0 'vxp !
+	0 'vyp !
+	sw 2/ 'xp !
+	sh 2/ 'yp !
+	'mapa1 copianivel
+	;
+
+:punto
+	setxy
+	blink 1? ( $ffffff )( 0 ) nip
+	px!+ ;
+
+:debug
+	scr verde
+	yp xp "x:%d y:%d " print
+	vyp vxp "vx:%d vy:%d " print
+	ayp axp "ax:%d ay:%d " print cr
+	xp escalap >> yp escalap >> 2dup [mapa] @ " %h %d %d" print
+
+   	sw 2/ 24 - sh 2/ punto
+   	sw 2/ 24 + sh 2/ punto
+   	sw 2/ sh 2/ 32 - punto
+   	sw 2/ sh 2/ 32 + punto
+
+	;
+
+:juego
+	resetjuego
+	show30 clrscr
+		dibujomapa
+		ninja
+		teclado
+
+		debug
+
+		'exit >esc< ;
+
+|-------------------------------------------------
+:inicio
+	mark
+	sw escalap 1+ >> 1+ 'anchop !
+	sh escalap 1+ >> 2 + 'altop !
+	;
+
+: inicio juego ;

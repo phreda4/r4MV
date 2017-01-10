@@ -1,0 +1,281 @@
+| r4-i84opt.txt
+| PHREDA 2015
+|------------------------------------------------
+^r4/lib/gui.txt
+^r4/system/mem-ed.txt
+
+^r4/ide/r4-token.txt
+^r4/ide/r4-post.txt
+^r4/ide/r4-asmdat.txt
+
+^r4/ide/r4-stackana.txt
+^r4/ide/r4-i86.txt
+
+|--- resolver anonimos
+#nroanon 0
+#totoken
+#niva	| nivel de anonimas
+
+#niv )( 1024
+#niv> 'niv
+:+niv	niv> c!+ 'niv> ! ;
+:-niv   'niv 'niv> ! ;
+
+#anonind )( 256
+#anonind> 'anonind
+:+ind 	anonind> !+ 'anonind> ! ;
+:-ind	'anonind 'anonind> ! ;
+
+#anons )( 128
+#anons> 'anons
+:>aa	anons> !+ 'anons> ! ;
+:aa>	-4 'anons> +! anons> @ ;
+:-aa	'anons 'anons> ! ;
+:aa#	anons> 'anons - 2 >> ;
+
+:t[
+	1 'niva +!
+	niv> +ind
+	nroanon dup >aa
+	8 << $14 or pick2 4 - ! | graba en token
+	1 'nroanon +!
+	;
+:t]
+	-1 'niva +!
+	aa> 8 << $15 or pick2 4 - ! | graba en token
+	;
+
+:marcaniveles | nro -- nro
+	-aa -niv -ind
+	0 'niva !
+	dup dic>tok @ 4+ over dic>len@ 1-
+	over 'totoken ! | token definicion sin contar
+	( 1? )( 1-
+		swap @+ $ff and
+		$14 =? ( t[ )
+		$15 =? ( t] )
+		drop
+		niva +niv
+		swap ) 2drop
+	-1 niv> c!
+	;
+
+|--- buffer de codigo
+#buffaux )( 4096
+#buffaux> 'buffaux
+
+:-buff	'buffaux 'buffaux> ! ;
+:+buff  buffaux> !+ 'buffaux> ! ;
+
+|------------------------
+:buscacte | adr+ val -- adr+
+	dup 8 >> dic>inf @
+	%100 and? ( drop +buff ; ) drop
+	8 >> dic>tok @ | token de variable
+	4+ @ dup $ff and
+
+|	2 =? ( 2drop 0 genCTE +buff ; ) | caso #cte #var
+
+	$c =? ( $e nip ) $e =? ( drop $fffffff0 and $e or +buff ; ) | caso #cte 'word
+	$d =? ( $f nip ) $f =? ( drop $fffffff0 and $f or +buff ; ) | caso #cte 'var
+	drop
+	|$fffffff0 and 7 or   |*** copia el mismo token
+	+buff ;
+
+:buscainline | adr+ val -- adr+
+	dup 8 >> dic>inf @
+	$100 nand? ( drop +buff ; ) drop | no es inline
+	8 >> dup dic>tok @ 4+ swap dic>len@ 2 - | no graba ; final
+	( 1? )( 1- swap
+		@+ dup $ff and
+		$c =? ( drop buscainline )( | es word? inline?
+			$d =? ( drop buscacte )(
+				drop +buff ) ) | es var? cte?
+		swap ) 2drop
+	;
+
+:+buffer | adr -- adr++
+	@+ dup $ff and
+	$c =? ( drop buscainline ; )
+	$d =? ( drop buscacte ; )
+	drop +buff ;
+
+|--- Constant Folding
+:genCTE ,cte 8 << 7 or ;
+
+:aa1@ | adr+ -- adr- a
+	4 - dup dup 4+ buffaux> over - 2 >> move | d s c
+	-4 'buffaux> +!
+	aa> ;
+
+:aa2@ | adr+ -- adr- a b
+	8 - dup dup 8 + buffaux> over - 2 >> move | d s c
+	-8 'buffaux> +!
+	aa> aa> swap ;
+
+:aa3@ | adr+ -- adr- a b c
+	12 - dup dup 12 + buffaux> over - 2 >> move | d s c
+	-12 'buffaux> +!
+	aa> aa> aa> rot rot swap ;
+
+:aa1! | adr- v -- adr-
+	dup >aa genCTE over 4 - ! ;
+
+:aa2@! | adr+ -- adr- a b
+	4 - dup dup 4 + buffaux> over - 2 >> move | d s c
+	-4 'buffaux> +!
+	aa> aa> swap ;
+
+:aa2! | adr- a b -- adr-
+	swap dup >aa genCTE pick2 8 - !
+	dup >aa genCTE over 4 - ! ;
+
+| adr+ val -- adr+
+:oAND	| ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ AND aa1! ;
+:oOR    | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ OR aa1! ;
+:oXOR   | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ XOR aa1! ;
+:oNOT   | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ NOT aa1! ;
+:o+		| ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ + aa1! ;
+:o-     | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ - aa1! ;
+:o*     | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ * aa1! ;
+:o/     | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ / aa1! ;
+:o*/    | abc -- d
+	aa# 3 <? ( 2drop -aa ; ) 2drop aa3@ */ aa1! ;
+:o*>>   | abc -- d
+	aa# 3 <? ( 2drop -aa ; ) 2drop aa3@ *>> aa1! ;
+:o/MOD  | ab -- cd
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@! /MOD aa2! ;
+:oMOD   | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ MOD aa1! ;
+:oABS   | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ ABS aa1! ;
+:oSQRT	| a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ SQRT aa1! ;
+:oCLZ	| a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ CLZ aa1! ;
+:o<</	| abc -- d
+	aa# 3 <? ( 2drop -aa ; ) 2drop aa3@ <</ aa1! ;
+:oNEG   | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ NEG aa1! ;
+:o1+    | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ 1+ aa1! ;
+:o4+    | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ 4+ aa1! ;
+:o1-    | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ 1- aa1! ;
+:o2/    | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ 2/ aa1! ;
+:o2*    | a -- b
+	aa# 1 <? ( 2drop -aa ; ) 2drop aa1@ 2* aa1! ;
+:o<<    | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ << aa1! ;
+:o>>    | ab -- c
+	aa# 2 <? ( 2drop -aa ; ) 2drop aa2@ >> aa1! ;
+
+#optim oAND	oOR oXOR oNOT o+ o- o* o/ o*/ o*>> o/MOD oMOD oABS oSQRT oCLZ o<</ oNEG o1+ o4+ o1- o2/ o2* o<< o>>
+
+:optN | adr+ val tok -- adr+
+	57 - 2 << 'optim + @ exec ;
+
+:addN | adr+ val tok -- adr+
+	drop tok>cte >aa ;
+
+:untoken | adr+ val tok -- adr+
+	7 >=? ( 10 <=? ( addN ; ) )		| numero
+	57 >=? ( 80 <=? ( optN ; ) )	| operacion
+	2drop -aa
+	;
+
+|--- optimiza buffer
+:ctefolding
+	'buffaux ( buffaux> <? )(
+		@+ dup $ff and untoken
+		) drop ;
+
+|--- copia y genera
+:copynivl | lugarniv --
+	dup 'niv - 2 << totoken + | niv tok
+	over c@
+:copynivr | lugarniv tok v --
+	-buff
+	swap rot | niv@ tok niv
+	( c@+ pick3 >=? )( | mismo nivel o mayor
+		pick3 >? ( drop swap 4+ )( drop swap +buffer )
+		swap ) 4drop
+ 	ctefolding
+
+	buffaux> 'buffaux stackanalisis
+	buffaux> 'buffaux compilatok
+	;
+
+|------------------------------------
+:gencodigo | nro -- nro
+	dup dic>inf @
+	1 and? ( drop ; )	| solo codigo
+	$100 and? ( drop ; )	| no inline
+	12 >> $fff and          | cnt llamadas
+	0? ( drop ; ) drop
+	marcaniveles
+
+	|-- generar anonimos
+	anonind> ( 'anonind >? )( 4 -
+		";--- Anon ---" ,print ,nl
+		dup @ copynivl
+		) drop
+
+	|-- genera principal
+	cntwords 1- =? ( "inicio: " )( dup "w%h: " ) ,print
+	dup dic>str @ " ; --- %w --- ; " ,print
+	dup dic>mov @ ,printmovword
+	dup dic>inf @
+	12 << 24 >> " (%d) " ,print
+	,nl
+	'niv totoken 0 copynivr
+	,nl ;
+
+:make_cod.asm
+	ini.compila
+	mark
+	";---:r4 compiler cod.asm" ,ln
+	0 ( cntwords <? )(
+		gencodigo
+
+|	"r4asm/cod.asm" savemem	| DEBUG
+
+		1+ ) 2drop
+	0 ,c
+	"r4asm/cod.asm" savemem
+	empty ;
+
+|------------------------------------
+:showprogress
+	fonti
+	show clrscr
+		dumpdic
+		'exit >esc< ;
+
+:main
+	ed.load
+	mark
+	'ed.nombre tokenasm
+	1? ( drop empty ; ) drop
+	tokenpostusa
+
+	make_dat.asm
+	make_cod.asm
+	empty
+
+|	showprogress
+|	"r4fasm.bat" system drop
+
+	;
+
+: mark main ;

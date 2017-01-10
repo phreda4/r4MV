@@ -1,0 +1,232 @@
+| Amapola convierte
+| PHREDA 2011
+|-------------------------------
+^r4/lib/gui.txt
+^r4/lib/grid.txt
+^r4/lib/formkit.txt
+^r4/lib/clock.txt
+
+#dbcliente 0 "db/amapola/cliente.db"
+#dbventa 0 "db/amapola/venta.db"
+#dbmovcli 0 "db/amapola/movcli.db"
+
+#fkcliente 0 "db/amapola/cliente.fk"
+#fkventa 0 "db/amapola/venta.fk"
+#fkmovcli 0 "db/amapola/movcli.fk"
+
+|--- GRILLA
+#grcliente 0 0
+$501 $402 $205 0
+"Nombre|Dirección|Teléfono"
+
+#grventa 0 0
+$400 $401 $203 0
+"Fecha|Nombre|Dirección|Teléfono"
+
+#grmovcli 0 0
+$100 $101 $302 $103 $204 $205 0
+"Codigo|Fecha|Descripcion|DC|Importe|clcofe"
+
+#mensajev 0
+
+|---- titulo
+:titulo
+	clrscr
+	fonta-Arial14
+	64 gc.top
+	gc.all
+	$101010 $ff00ff hfil
+	scr blanco
+|	cr2
+	" Amapola " print
+|*** DEBUG
+	dup "(%d)" print
+|****
+	cr cr2
+	0.09 0.1 fdim
+	0.9 0.88 fpos almanaque
+	fonta-Arial14 scr
+	;
+
+
+|----------------------------------------------------
+:ver
+	show titulo
+		rojo 'exit dup >esc< "X" sp sp 2 menur
+		blanco " >> MovClientes" print
+		violeta
+		cr cr sp chome!
+		blanco "  MovClientes  " print
+		fonta-arial10
+		26 'grmovcli 'dbmovcli dbgrid
+		cminiflecha ;
+
+|----------------------------------------------------
+#saldos )( $ffff
+:saldos.clear
+	'saldos >r
+	0 ( $3fff <? )(
+		0 r!+ 1+ ) drop
+	rdrop ;
+
+#fac.nclie )( 16
+#fac.fecha )( 16
+#fac.detalle )( 1024
+#fac.total )( 16
+#fac.op )( 8
+
+#cpy.nclie )( 16
+#cpy.fecha )( 16
+#cpy.detalle )( 1024
+#cpy.total )( 16
+#cpy.op )( 8
+
+:fac.clear
+	0 'fac.fecha !
+	0 'fac.nclie !
+	0 'fac.detalle !
+	0 'fac.total !
+	0 'fac.op !
+	;
+
+|Fecha|F~ Cliente|A32~ Detalles|M1024|4,60~ Total|N8~ Operación|A64~
+
+:fac.genera
+	'fac.total ?real2 nip 0? ( drop ; ) drop
+	'fac.fecha trim ,s "|" ,s
+	'fac.nclie trim ,s "|" ,s
+
+|	'fac.op trim  ,s "|" ,s
+	'fac.op "2" = 1? ( "-" ,s ) drop
+
+	'fac.total trim  ,s "|" ,s
+	'fac.detalle trim ,s "~" ,s ,cr ;
+
+:copyreg
+	>>..
+	'cpy.nclie fldcpy 	| nrocli
+	'cpy.fecha fldcpy 	| fecha
+	'cpy.detalle fldcpy | descripcion
+	'cpy.op fldcpy 		| valor
+	'cpy.total fldcpy 	| tipo
+	;
+
+:ac.saldo
+|	'fac.fecha str2jul
+	'fac.total ?real2 nip
+	'fac.op ?sint nip 2 =? ( drop neg )( drop )
+	'fac.nclie ?sint nip 2 << 'saldos +
+	+! ;
+
+:cierra
+	ac.saldo
+	fac.genera
+	'fac.nclie 'cpy.nclie  1088 cmove ;
+
+:logica
+	fac.nclie 0? ( drop 'fac.nclie 'cpy.nclie  1088 cmove ; ) drop
+	'fac.nclie 'cpy.nclie = 0? ( drop cierra ; ) drop
+	'fac.op 'cpy.op = 0? ( drop cierra ; ) drop
+	'fac.fecha 'cpy.fecha = 0? ( drop cierra ; ) drop
+	"_" 'fac.detalle strcat
+	'cpy.detalle 'fac.detalle strcat
+
+	'cpy.total ?real2 nip
+	'fac.total ?real2 nip +
+	nro2str
+	'fac.total strcpy
+	;
+
+#cod
+
+:strN | adr -- adr
+	dup	str,trim
+	dup strnorm
+	;
+
+:guardasaldo | reg -- reg
+	dup >>.. dup c@ 0? ( 2drop ; ) drop
+	dup dup ?sint nip 'cod ! "%a|" mprint ,s		| cod
+	>fld> dup "%a" mprint strN ,s "|" ,s | nombre
+	>fld> dup "%a" mprint strN ,s "|" ,s | direccion
+	>fld> dup "%a" mprint strN ,s "|" ,s | localida
+	>fld> dup "%a|" mprint ,s | cuit
+	>fld> dup "%a|" mprint ,s | telefono
+	>fld> dup "%a|" mprint ,s | e-mail
+	>fld>
+	cod 2 << 'saldos + @
+	nro2str ,s
+|dup "%a|" mprint ,s | SALDO
+	>fld> dup "|%a~" mprint ,s | nota
+	drop
+	,cr
+	;
+
+:genera1
+	fac.clear
+	mark
+	0 'dbmovcli dbgetreg
+	( 1? )( copyreg logica >reg> )	drop
+	ac.saldo
+	fac.genera
+	"db/amapola/ventag.db" savemem
+	empty
+|--- actualiza saldos
+	mark
+	0 'dbcliente dbgetreg
+	( 1? )( guardasaldo >reg> ) drop
+	"db/amapola/clienteg.db" savemem
+	empty
+	;
+
+#inis 0
+
+:generar
+	show titulo
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Menu Principal" print
+		cr cr cr
+		sp sp chome!
+
+		'genera1 dup <f1> "genera1" sp 20 btntf cr cr
+|		'generar dup <f2> "F2 - GENERAR" sp 20 btntf cr cr
+		[ 20 'inis +! ; ] <dn>
+		[ -20 'inis +! ; ] <up>
+		0 ( 20 <? )(
+			dup inis + "%d " print
+			dup inis + 2 << 'saldos + @ "%d " print cr
+			1+ ) drop
+		'exit >esc<
+		cminiflecha	;
+
+
+|----------------------------------------------------
+:main
+	show titulo
+		0.4 dup fdim
+		0.6 0.3 fpos clockexp
+
+		rojo 'exit "X" sp sp 2 menur
+		blanco " >> Menu Principal" print
+		cr cr cr
+		sp sp chome!
+
+		$f3468d ink
+		'ver dup <f1> "F1 - Ver MOVCLI" sp 20 btntf cr cr
+		'generar dup <f2> "F2 - GENERAR" sp 20 btntf cr cr
+
+		'exit >esc<
+		cminiflecha	;
+
+:ini
+	mark
+	'fkcliente fkload
+	'fkventa fkload
+	'fkmovcli fkload
+
+	'dbcliente dbload
+	'dbventa dbload
+	'dbmovcli dbload
+	;
+
+: $7e7e7e paper ini 33 main ;

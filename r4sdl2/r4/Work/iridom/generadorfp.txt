@@ -1,0 +1,173 @@
+| PARSE archivos fiestas populares
+| PHREDA 2012
+|--------------------------------------
+^r4/lib/gui.txt
+^r4/lib/trace.txt
+
+#txt
+#$txt
+#salida
+#meses "ENERO" "FEBRERO" "MARZO" "ABRIL" "MAYO" "JUNIO" "JULIO" "AGOSTO" "SEPTIEMBRE" "OCTUBRE" "NOVIEMBRE" "DICIEMBRE"
+#finmes 0
+#mesa
+
+:=p | s1 s2 -- 1/0
+	( c@+ 1? )( rot c@+ rot - 1? ( 3drop 0 ; ) drop swap ) 3drop 1 ;
+
+:find | adr "texto" -- adr'
+	( 2dup =p 0? )( drop swap 1+ $txt >? ( 2drop 0 ; ) swap ) 2drop ;
+
+:findn | adr "texto" -- adr' ; salta la palabra tambien
+	( 2dup =p 0? )( drop swap 1+ $txt >? ( 2drop 0 ; ) swap ) drop
+	count nip + ;
+
+:trim | adr -- 'adr
+	( c@+ 1? )( $ff and
+		32 >? ( drop 1- ; )
+		drop
+		) drop 1- ;
+
+:lastrim | adr --
+	( c@+ 1? )( drop ) drop
+	2 - ( dup c@ $ff and 33 <? )( drop 1- ) drop
+	0 swap 1+ c! ;
+
+:rem1310 | adr --
+	( dup c@ 1? )(
+		13 =? ( 32 nip )
+		10 =? ( 32 nip )
+		swap c!+
+		) 2drop ;
+
+:>>13 | a -- a
+	( $txt <? )( c@+ $ff and
+		14 <? ( drop ; )
+		drop )
+	drop $txt 2 - ;
+
+:cpyline | adr 'var -- adr'
+	swap
+	( c@+ $ff and 14 >? )( rot c!+ swap ) drop
+	0 rot c! ;
+
+:cpylinef | adr 'var 'desde -- adr'
+	swap >r
+	findn trim
+	r>
+	cpyline ;
+
+:cpylinetf | adr 'var 'hasta 'desde -- adr'
+	swap >r
+	swap >r
+	findn trim
+	r>
+	over r> find		| adr 'var fadr
+	swap rot 		| fadr 'var adr
+	( pick2 <? )(
+		c@+ rot c!+ swap ) drop
+	0 swap c!
+	;
+
+:>>, | adr -- adr'
+	( c@+ 1? )(
+		$2c =? ( drop ; )
+		drop
+		) drop 1-
+	;
+|---------------------------------------------
+#nombre )( 256
+#fecha	)( 64
+#lugar	)( 256
+#partido )( 256
+#comentario )( 1024
+#contacto )( 256
+#telefono )( 128
+#prefijo )( 16
+#tel )( 64
+
+#idlocal )( 64
+
+
+:cargacampo | adr -- adr'
+	trim
+	'nombre cpyline
+	'fecha "Fecha:" cpylinef
+	'lugar "Lugar:" cpylinef
+	'comentario "Contacto:" "Comentario:" cpylinetf
+	'contacto "Tel:" "Contacto:" cpylinetf
+	'telefono "Tel:" cpylinef
+
+	'telefono 'prefijo ")" "(" cpylinetf
+	1+ trim 'tel strcpy
+
+	'nombre lastrim
+	'fecha lastrim
+	'lugar lastrim
+
+	'comentario rem1310
+	'comentario lastrim
+	'contacto lastrim
+	'tel lastrim
+
+
+	'lugar >>, 'partido strcpy
+	'lugar >>, 0 swap 1- c!
+
+	"" 'idlocal  strcpy
+|	'nombre memmap
+	;
+
+:generainsert
+	"INSERT INTO guia.DB_datos (id,nombre,idlocal,direccion,localidad,partido,telefono,email,web, fb,tw,actividad,servicios,tags,descripcion,notas,caracteristicas,videos,calificaciones)" ,s
+	" VALUES (" ,ln
+	"NULL, '" ,s 'nombre ,s
+	"', '" ,s |'idlocal ,s
+	"', '', '" ,s 'lugar ,s
+	"', '" ,s 'partido ,s
+	"', '(" ,s 'prefijo ,s ") " ,s 'tel ,s
+	"', '', '', '', '', 'Fiesta populares', '', '" ,s mesa ,s
+	"', '" ,s 'comentario ,s
+	"', '"  ,s 'fecha ,s
+	"', '" ,s 'contacto ,s
+	"', '', '');" ,ln
+	;
+
+:proceso
+	'meses 'mesa !
+	txt
+	mesa find 		| inicio
+	(
+		>>13
+
+		dup mesa >>0 'finmes =? ( $txt nip )( find )
+
+		swap ( over <? )( | fin inicio
+			cargacampo
+			generainsert
+			) drop
+
+		mesa >>0 'mesa ! | mes siguiente
+		$txt =? )
+	drop
+	;
+
+:inicio
+	mark
+	proceso
+	"r4/work/iridom/fiestasinsert.sql" savemem
+	empty
+	show clrscr
+		'exit >esc<
+		cminiflecha
+	;
+
+:m
+	mark
+	here dup 'txt !
+	"r4/work/iridom/fiestas populares.txt" load
+	dup '$txt !
+	0 swap c!+ 'here !
+	here 'salida !
+	;
+
+: m inicio ;

@@ -1,0 +1,67 @@
+|  test de rfont
+|
+|-------------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+
+^r4/lib/rfont.txt
+^r4/lib/ricons.txt
+
+^inc/ric/fontawesomewebfont.ric
+
+|^inc/rft/robotobold.rft
+^inc/rft/gooddog.rft
+^inc/rft/robotoregular.rft
+|^inc/rft/dejavusans.rft
+^inc/rft/architectsdaughter.rft
+
+^inc/rft/comfortaa_bold.rft
+^inc/rft/droidsansbold.rft
+|^inc/rft/dejavuserifbold.rft
+
+|-------------------
+:%SH
+	sh *. ;
+
+|----------------------------------------------------
+:main
+	show clrscr
+		robotoregular 24 rfont!
+		verde
+		"#gfont a0 a1 a2 a3 a4 0 0 0" print cr
+		"#gfont a0 a1 a2 a3 a4 0 0 0" print cr
+		"#gfont a0 a1 a2 a3 a4 0 0 0" print cr
+
+		robotoregular 32 rfont!
+		"#gfont a0 a1 a2 a3 a4 0 0 0" print cr
+		"#gfont a0 a1 a2 a3 a4 0 0 0" print cr
+
+		robotoregular 40 rfont!
+		0 "Boton" btnt
+		"#gfont a0 a1 a2 a3 a4 0 0 0" print cr cr
+
+		gooddog 48 rfont!
+		Blanco
+		0 "Boton" btnt
+		":xypaleta fyc v>rfh ccw 3 >> + ; " print cr
+		":xypaleta fyc v>rfh ccw 3 >> + ; " print cr
+
+		rojo
+		comfortaa_bold 80 rfont!
+		":font comfortaa_bold 80 cambio ;" print cr
+		"centro" printc cr
+
+        architectsdaughter  70 rfont!
+		":definicion 34 22 + acc 0? ( ; ) drop ;" print cr
+		azul
+		sp 0 " Salir " btnt
+
+		200 200 40 fcircle
+		blanco
+		60 dup dim
+		xymouse pos
+		'i.spinner msec 5 << neg
+		rdrawric
+		'exit >esc<
+	;
+: main ;

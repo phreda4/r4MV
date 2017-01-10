@@ -1,0 +1,421 @@
+| close2gl - PHReda
+| :r4 system library
+|-------------------------
+^r4/lib/math.txt
+
+#xf #yf
+#:ox #:oy
+
+#mati | matrix id
+1.0 0 0 0		| 1.0 = $10000
+0 1.0 0 0
+0 0 1.0 0
+0 0 0 1.0
+#mats )( 1280 | 20 matrices
+#:mat> 'mats
+
+::matini
+	'mats dup 'mat> ! 'mati 16 move ;
+
+::mpush | --
+	mat> dup 64 + dup 'mat> ! swap 16 move ;
+
+::mpop | --
+	mat> |'mats =? ( drop ; )
+	64 - 'mat> ! ;
+
+::nmpop | n --
+	6 << mat> swap - |'mats <? ( 'mats nip )
+	'mat> ! ;
+
+|---------------------- matriz multiplication
+:rcmult | m1 m2 -- v
+	>r @+ r@+ *. swap
+	@+ 12 r+ r@+ *. swap
+	@+ 12 r+ r@+ *. swap
+	@ r> 12 + @ *. + + + ;
+
+:mmult | m1 --
+	mat> >r
+	dup r rcmult r!+ dup 16 + r rcmult r!+
+	dup 32 + r rcmult r!+ dup 48 + r rcmult r!+
+	dup r rcmult r!+ dup 16 + r rcmult r!+
+	dup 32 + r rcmult r!+ dup 48 + r rcmult r!+
+	dup r rcmult r!+ dup 16 + r rcmult r!+
+	dup 32 + r rcmult r!+ dup 48 + r rcmult r!+
+	dup r rcmult r!+ dup 16 + r rcmult r!+
+	dup 32 + r rcmult r!+ 48 + r rcmult r> ! ;
+
+|-----------------------------
+::mtrans | x y z --
+	mat> >r
+	pick2 r 48 + @  *. r @ + r!+
+	pick2 r 48 + @  *. r @ + r!+
+	pick2 r 48 + @  *. r @ + r!+
+	rot  r @ + r!+
+	over r 32 + @ *. r @ + r!+
+	over r 32 + @ *. r @ + r!+
+	over r 32 + @ *. r @ + r!+
+	swap r @ + r!+
+	dup r 16 + @ *. r @ + r!+
+	dup r 16 + @ *. r @ + r!+
+	dup r 16 + @ *. r @ + r!+
+	r> +! ;
+
+::mtransi | x y z -- ;pre
+	mat> >r
+	pick2 r@+ *. pick2 r@+ *. + over r@+ *. + r @ + r!+
+	pick2 r@+ *. pick2 r@+ *. + over r@+ *. + r @ + r!+
+	rot r@+ *. rot r@+ *. + swap r@+ *. + r @ + r> ! ;
+
+|-----------------------------
+::mscale | x y z -- ; post
+	mat> >r
+	pick2 r @ *. r!+ pick2 r @ *. r!+ pick2 r @ *. r!+ rot r @ *. r!+
+	over r @ *. r!+ over r @ *. r!+ over r @ *. r!+ swap r @ *. r!+
+	dup r @ *. r!+ dup r @ *. r!+ dup r @ *. r!+ r @ *. r> ! ;
+
+::mscalei | x y z
+	mat> >r
+	pick2 r @ *. r!+ over r @ *. r!+ dup r @ *. r!+ 4 r+
+	pick2 r @ *. r!+ over r @ *. r!+ dup r @ *. r!+ 4 r+
+	rot r @ *. r!+ swap r @ *. r!+ r @ *. r> ! ;
+
+|-----------------------------
+::mrotx | x -- ; posmultiplica
+	mat> 16 + >r
+	dup sin swap cos
+	r @ r 16 + @ | s c e i
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 12 + !
+	r @ r 16 + @ | s c f j
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 12 + !
+	r @ r 16 + @ | s c g k
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 12 + !
+	r @ r 16 + @ | s c h l
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	rot *. >r *. r> +  r> 12 + ! ;
+
+::mrotxi |x -- ; premultiplica
+	mat> 4+ >r
+	dup sin swap cos
+	r @ r 4+ @ | s c b c
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+ | s c b c
+	pick2 *. >r pick2 *. r> +  r!+ 8 r+
+	r @ r 4+ @ | s c f g
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	pick2 *. >r pick2 *. r> +  r!+ 8 r+
+	r @ r 4+ @ | s c j k
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	pick2 *. >r pick2 *. r> +  r!+ 8 r+
+	r @ r 4+ @ | s c m o
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	rot *. >r *. r> +  r> ! ;
+
+|-----------------------------
+::mroty | y  --
+	mat> >r
+	dup sin swap cos
+	r @ r 32 + @ 	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 28 + ! r @ r 32 + @
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 28 + !
+	r @ r 32 + @  pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 28 + ! r @ r 32 + @
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	rot *. >r swap neg *. r> +  r> 28 + ! ;
+
+::mrotyi | y --
+	mat> >r
+	dup sin swap cos
+	r @ r 8 + @ | s c a c
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 4+ ! 12 r+
+	r @ r 8 + @ | s c a c
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 4+ ! 12 r+
+	r @ r 8 + @ | s c a c
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 4+ ! 12 r+
+	r @ r 8 + @ | s c a c
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	rot *. >r swap neg *. r> +  r> 4+ ! 	;
+
+|-----------------------------
+::mrotz | z --
+	mat> >r
+	dup sin swap cos
+	r @ r 16 + @ | s c e i
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 12 + !
+	r @ r 16 + @ | s c e i
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 12 + !
+	r @ r 16 + @ | s c e i
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	pick2 *. >r pick2 neg *. r> +  r 12 + !
+	r @ r 16 + @ | s c e i
+	pick2 pick2 *. pick4 pick2 *. +  r!+
+	rot *. >r *. r> +  r> 12 + ! ;
+
+::mrotzi | z --
+	mat> >r
+	dup sin swap cos
+	r @ r 4+ @ | s c a b
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	pick2 *. >r pick2 *. r> +  r!+ 8 r+
+	r @ r 4+ @ | s c a b
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	pick2 *. >r pick2 *. r> +  r!+ 8 r+
+	r @ r 4+ @ | s c a b
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	pick2 *. >r pick2 *. r> +  r!+ 8 r+
+	r @ r 4+ @ | s c a b
+	pick2 pick2 *. pick4 neg pick2 *. +  r!+
+	rot *. >r *. r> +  r> ! ;
+
+|-----------------------------
+:invierte
+	over @ over @ swap rot ! swap ! ;
+
+::matinv
+	mat> >r
+	r 12 + @  neg r 28 + @  neg r 44 + @  neg | tx ty tz
+	r 4+ dup 12 + invierte r 8 + dup 24 + invierte r 24 + dup 12 + invierte
+	pick2 r @  *. pick2 r 4+ @  *. + over r 8 + @  *. + r 12 + !
+	pick2 r 16 + @  *. pick2 r 20 + @  *. + over r 24 + @  *. + r 28 + !
+	rot r 32 + @  *. rot r 36 + @  *. + swap r 40 + @  *. + r 44 + !
+	rdrop ;
+
+::transform | x y z -- x y z
+	mat> >r pick2 r@+ *. pick2 r@+ *. + over r@+ *. + r@+ +
+	r> swap >r >r pick2 r@+ *. pick2 r@+ *. + over r@+ *. + r@+ +
+	r> swap >r >r rot r@+ *. rot r@+ *. + swap r@+ *. + r> @ +
+	r> r> swap rot ;
+
+::transformr | x y z -- x y z
+	mat> >r pick2 r@+ *. pick2 r@+ *. + over r@+ *. + 4 r+
+	r> swap >r >r pick2 r@+ *. pick2 r@+ *. + over r@+ *. + 4 r+
+	r> swap >r >r rot r@+ *. rot r@+ *. + swap r@+ *. + rdrop
+	r> r> swap rot ;
+
+::ztransform | x y z -- z
+	mat> 32 + >r
+	rot r@+ *. rot r@+ *. + swap r@+ *. + r> @ + ;
+
+::oztransform | -- z
+	mat> 44 + @ ;
+
+::oxyztransform | -- x y z
+	mat> >r r 12 + @ r 28 + @ r> 44 + @ ;
+
+
+|-----------------------------
+::2dmode | --
+	sw 2/ 'ox !
+	sh 2/ 'oy !
+	;
+
+::3dmode | fov --
+	sh *. dup 'yf ! 'xf !
+	sw 2/ 'ox !
+	sh 2/ 'oy !
+	matini
+	;
+
+
+|----------------------------
+::Omode | --
+	sw dup 2/ 'ox !
+	sh dup 2/ 'oy !
+	min dup 'xf ! 'yf !
+	matini
+	;
+
+|----------------------------
+::o3dmode | w h --
+	dup 2/ 'oy !
+	over 2/ 'ox !
+	min dup 'xf ! 'yf !
+	matini ;
+
+::p3d | x y z -- x y
+	dup >r
+	yf swap */ oy + swap
+	xf r> */ ox + swap ;
+
+::p3dz | x y z -- x y z
+	rot xf pick2 */ ox + | y z x'
+	rot yf pick3 */ oy +
+	rot ;
+
+::p3di | x y z -- z y x
+	swap yf pick2 */ oy +	| x z y'
+	rot xf pick3 */ ox + ;	| z y' x'
+
+::p3ditest | x y z -- z y x
+	xf over 20 <</ >r | 20 bits
+	swap r 20 *>> oy +
+	rot r> 20 *>> ox + ;
+
+::p3dizb | x y z -- z y x
+	swap over 20 *>> oy +
+	rot pick2 20 *>> ox + ;
+
+::p3dcz | z -- 1/z
+	0? ( 1 nip )
+	xf swap 20 <</ ;
+
+|----------------------------
+
+::p3d1 | x y z -- x y
+	dup >r
+	9 <</ oy + swap
+	r> 9 <</ ox + swap ;
+
+::p3di1 | x y z -- z y x
+	swap over 9 <</ oy +	| x z y'
+	rot pick2 9 <</ ox + ;	| z y' x'
+
+::project3d | x y z -- u v
+	transform
+	0? ( 3drop ox oy ; )
+	>r
+	yf r */ oy + swap
+	xf r> */ ox + swap ;
+
+::projectdim | x y z -- u v
+	transform
+	0? ( 3drop 0 0 ; )
+	>r
+	yf r */	swap
+	xf r> */ swap ;
+
+::project | x y z -- u v
+	0? ( 3drop ox oy ; )
+	rot xf pick2 */ ox +
+	rot rot yf swap */ oy +
+	;
+
+::projectv | x y z -- u v
+	rot xf pick2 */ ox +
+	rot rot yf swap */ oy +
+	;
+
+::inscreen | -- x y
+	oxyztransform
+	0? ( 3drop ox oy ; )
+	>r
+	yf r */ oy + swap
+	xf r> */ ox + swap ;
+
+::proyect2d | x y z -- x y
+	drop oy + swap ox + swap ;
+
+::aspect | --
+	sw 16 << sh / ;
+
+|------------- divisionless
+::3dini
+	1024 sw - 2/ neg 'ox !
+	1024 sh - 2/ neg 'oy !
+	matini ;
+
+:c10 | x z -- x'
+	2/ 0 swap over | x 0 z 0
+	pick3 >? ( over - rot )( over + rot 512 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 256 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 128 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 64 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 32 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 16 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 8 + ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 4+ ) rot 2/ rot
+	pick3 >? ( over - rot )( over + rot 2 + ) rot 2/ rot
+	pick3 >? ( 2drop )( 2drop 1+ )
+	nip ;
+
+::3dproject | x y z -- x y
+	rot over c10 ox + rot rot c10 oy + ;
+
+::3dproj | x y z -- x y
+	rot over c10 rot rot c10 ;
+
+|------- vectores
+::normInt2Fix | x y z -- xf yf zf
+	pick2 dup * pick2 dup * + over dup * + sqrt
+	1? ( 1.0 swap /. ) >r rot r *. rot r *. rot r> *. ;
+
+::normFix | x y z -- x y z
+	pick2 dup *. pick2 dup *. + over dup *. + sqrt.
+	1? ( 1.0 swap /. ) >r rot r *. rot r *. rot r> *. ;
+
+|-------- vectores en memoria
+::v3len | v1 -- l
+	>r r@+ dup *. r@+ dup *. + r> @ dup *. + sqrt. ;
+
+::v3nor | v1 --
+	>r r@+ dup *. r@+ dup *. + r@+ dup *. + sqrt.
+	1? ( 1.0 swap /. ) -12 r+
+	r @ over *. r!+ r @ over *. r!+ r @ swap *. r> ! ;
+
+::v3nor | v1 --
+	>r r@+ dup *. r@+ dup *. + r@+ dup *. + sqrt.
+	0? ( rdrop drop ; ) -12 r+ 1.0 swap /.
+	r @ over *. r!+ r @ over *. r!+ r @ swap *. r> ! ;
+
+::v3ddot | v1 v2 -- r ; r=v1.v2
+	>r @+ r@+ *. swap @+ r@+ *. swap @ r> @ *. + +  ;
+
+::v3vec | v1 v2 -- ; v1=v1 x v2
+	>r dup @ r 4+ @ *. over 4+ @ r @ *. -
+	over 8 + @ r @ *. pick2 @ r 8 + @ *. -
+	pick2 4+ @ r 8 + @ *. pick3 8 + @ r> 4+ @ *. -
+	>r rot r> swap !+ !+ ! ;
+
+::v3- | v1 v2 -- ; v1=v1-v2
+	>r dup @ r@+ - swap !+ dup @ r@+ - swap !+ dup @ r> @ - swap ! ;
+
+::v3+ | v1 v2 -- ; v1=v1+v2
+	>r dup @ r@+ + swap !+ dup @ r@+ + swap !+ dup @ r> @ + swap ! ;
+
+::v3* | v1 s -- ; v1=v1*s
+	>r dup @ r *. swap !+ dup @ r *. swap !+ dup @ r> *. swap ! ;
+::v3= | v1 v2 --
+	3 move ;
+
+|-------------- rota directo -----------------------------
+#cox #coy #coz
+#six #siy #siz
+
+::calcrot | rx ry rz --
+	sincos 'coz ! 'siz !
+	sincos 'coy ! 'siy !
+	sincos 'cox ! 'six !
+	;
+
+::makerot | x y z -- x' y' z'
+	rot rot | z x y
+	over cox *. over six *. +	| z x y x'
+	rot six *. rot cox *. - 	| z x' y'
+	swap rot 					| y' x' z
+	over coy *. over siy *. +	| y' x' z x''
+	rot siy *. rot coy *. -		| y' x'' z'
+	rot							| x'' y' z'
+	over coz *. over siz *. +	|  x'' y' z' y''
+	rot siz *. rot coz *. -		| x'' y'' z''
+	;
+
+#oh #ow
+::3dnorm | w h xc yc --
+	rot 'oh !
+	rot 'ow !
+	'oy !
+	'ox !
+	;
+
+::3dpp | x y z -- x y
+	rot over / ox + >r / oy + r> ;
+

@@ -1,0 +1,594 @@
+| gestoedit.txt
+| PHREDA 2011
+|-----------------------
+| res1:		4950x7000 	1.41..
+| scan		21.6 29.7	1.375
+| 600dpi:	5076x7019	1.382
+|
+|
+^r4/lib/btn.txt
+^r4/lib/input.txt
+
+^r4/lib/dlgfile.txt
+
+^r4/lib/fonth.txt
+^r4/lib/fontt.txt
+
+^r4/lib/leebmp.txt
+^r4/lib/trace.txt
+
+#factual )( 64
+
+#dom
+#$dom
+#bmpfondo 0
+
+|--- posicion y tam ventana
+#xi 0 #yi 0
+#wi 0 #hi 0
+
+|--- tam impresora
+#wpr #hpr
+
+|--- tam ventana
+#xv #yv
+#wven #hven
+#ww 0 #hw 0	| ventana por pantalla
+
+|--- miniatura
+#wm #hm | total
+#wc #hc | cursor en miniatura
+
+|--- elemento de posicion
+#ccx #ccy
+#ccw #cch
+| fuente de letra, tamaño (orientacion?)
+#ncmp #nrep
+#pad
+
+|--- campos  x y | w h
+#cell )( 8192
+#cell> 'cell
+|--- info | tipo+3param
+#info )( 8192
+#info> 'info
+|--- a str | string..
+#index )( 8192
+#index> 'index
+
+|--- cursor de elemento
+#cursor 0
+#cursore -1
+
+:cntcells
+	cell> 'cell - 3 >> ;
+
+|----- Conversiones
+:r2m | x y -- xm ym	; de real a miniatura
+	swap wm wpr */ swap hm hpr */ ;
+:m2r | x y -- xm ym ; miniatura a real
+	swap wpr wm */ swap hpr hm */ ;
+
+:v2m | x y -- xm ym ; ventana a miniatura
+	swap wm wven */	swap hm hven */ ;
+:m2v | x y -- xm ym ; miniatura a ventana
+	swap wven wm */	swap hven hm */ ;
+
+:r2v | x y -- xv yv ; de real a ventana
+	swap wven wpr */ swap hven hpr */ ;
+:v2r | xv yv -- x y ; de ventana a real
+	swap wpr wven */ swap hpr hven */ ;
+
+:b2r | x y -- xp yp ; de bmp a real
+	swap wpr bmp.ancho */ swap hpr bmp.alto */ ;
+:r2b | x y -- xp yp ; de real a bmp
+	swap bmp.ancho wpr */ swap bmp.alto hpr */ ;
+
+:b2v | x y -- xp yp ; de bmp a ventana
+	swap wven bmp.ancho */ swap hven bmp.alto */ ;
+:v2b | x y -- xp yp ; de real a bmp
+	swap bmp.ancho wven */ swap bmp.alto hven */ ;
+
+|----- zoom
+:partemin
+	wi wm wven */ 'wc !
+	hi hm hven */ 'hc !			| miniatura de pantalla
+	wi hi v2r 'hw ! 'ww !		| ancho de ventana
+	|---- ajustes de bmp
+	wi hi v2b bmpWH | de ventana a real y luego a bmp
+	;
+
+:zoom1
+	wpr 'wven ! hpr 'hven ! partemin ;
+:zoom2
+	wpr 2/ 'wven ! hpr 2/ 'hven ! partemin ;
+:zoom4
+	wpr 2 >> 'wven ! hpr 2 >> 'hven ! partemin ;
+:zoom8
+	wpr 3 >> 'wven ! hpr 3 >> 'hven ! partemin ;
+:zoomf
+	wi 'wven ! hi hpr wpr */ 'hven ! partemin ;
+
+|-- Formulario
+:+cell | --
+	ccx ccy v2r 16 << or
+	ccw cch v2r	16 << or
+	cell> !+ !+ 'cell> ! ;
+
+:cell.clear
+	'cell 'cell> ! ;
+
+:cell.dellast
+	cell> 'cell =? ( drop ; ) drop
+	-8 'cell> +! ;
+
+:cell.in | dir -- dir nro/-1
+	dup 4+ @ >uv
+	swap xi - swap yi -
+
+	r2v | x y dir x0 y0
+	pick3 >? ( 2drop -1 ; )
+	swap pick4 >? ( 2drop -1 ; ) | x y dir y0 x0
+	pick2 @ >uv r2v | y0 x0 w0 h0
+	>r + swap r> + | x1 y1
+	pick3 <? ( 2drop -1 ; ) drop
+	pick3 <? ( drop -1 ; ) drop
+	dup 'cell - 3 >>
+	;
+
+:cell.search | x y -- nro/-1
+	'cell
+	( cell> <? )(
+		cell.in
+		0 >=? ( nip nip nip ; ) drop
+		8 +	) 3drop
+	-1 ;
+
+:cell.move | dx dy nro --
+	3 << 'cell + 4+ >r
+	v2r
+	r @ >uv | dx dy x y
+	rot + >r + r> 16 << or
+	r> ! ;
+
+|--- Tipo de campos
+| Alfanumerico
+| Texto Normalizado
+| Fecha	(dia)
+| Memo	(ancho,alto)
+| Precio (digitos,decimal)
+| Numero (digitos)
+| Radio (lista)
+| Lista	(lista)
+| Combo (lista o texto)
+| Grilla (tabla)
+| eXtendido
+| Etiqueta
+#tcampos "ATFMPNRLCGXE"
+
+:nrocampo | car -- nro/-1
+    'tcampos ( c@+ 1? )( | car tt c
+		pick2 =? ( drop 1- 'tcampos - nip ; )
+		drop ) 3drop
+	-1 ;
+
+|----- load txt sin cell
+:escape
+	over index> !+ 'index> !
+	over c@ nrocampo $f and
+	info> !+ 'info> !
+	+cell
+	cch 2 + 'ccy +!
+	;
+
+:loadtxt
+	dom swap load 0 swap !+ '$dom !
+	cell.clear
+	dom ( c@+ 1? )(
+		$7e =? ( escape )
+		drop )
+	2drop ;
+
+|---- load &save
+:makeindex
+	'index 'index> !
+	dom ( c@+ 1? )(
+		$7e =? ( over index> !+ 'index> ! )
+		drop )
+	2drop ;
+
+:loadform | "name" --
+	mark
+	here dup rot load
+	=? ( drop empty ; )
+	@+ 'cell swap | adr 'cell cant
+	( 1? )( 1- >r
+		swap @+ rot !+
+		r> ) drop 'cell> !
+	@+ 'info swap
+	( 1? )( 1- >r
+		swap @+ rot !+
+		r> ) drop 'info> !
+|	dom ( swap c@+ 1? )( rot c!+ ) rot c!+ '$dom !
+	drop
+|	makeindex
+	empty ;
+
+:saveform | "name" --
+	mark
+	'cell cell> over - 2 >> ,
+	( cell> <? )( @+ , ) drop
+	'info info> over - 2 >> ,
+	( info> <? )( @+ , ) drop
+|	dom ( c@+ 1? )( ,c ) ,c drop
+	savemem
+	empty ;
+
+
+:load.form
+|	'factual dlgfile
+	"db\gestobmp" "*.bmp" dlgfileload 0? ( drop ; ) drop
+	dlgfilename dup dup 'factual strcpy
+	"db\gestobmp\%s" mprint bmp.load 'bmpfondo !
+	"db\gestofrm\%s.frm" mprint loadform
+    zoomf ;
+
+
+:save.form
+	'factual "db/gestofrm/%s.frm" mprint saveform
+	;
+
+|---------
+:boxx | w h x y --
+	2dup atxy
+	2dup op
+	pick3 pick2 + over line
+	pick3 pick2 + pick3 pick2 + line
+	over pick3 pick2 + line
+	line 2drop ;
+
+|---- tipo de cell
+|#bx #by
+#bh #bw
+
+:drawbox | nro -- nro
+	cursor =? ( rojo )( azul )
+	dup 3 << 'cell + >r
+	r@+ >uv r2v
+	2dup 'bh ! 'bw !
+	r> @ >uv
+	swap xi - swap yi -
+	r2v
+	2dup atxy |'bx ! 'by !
+	boxx
+	bh 0? ( drop ; ) fonthex
+	dup "%d" print
+	;
+
+:sf
+	drop CYAN
+	over drawbox
+|	bh 0? ( drop ; ) fonthex
+	over 2 << 'index + @ 0? ( drop ; ) "%a" print ;
+
+:drawcellscr | --
+	rojo
+	0 ( cntcells <? )(
+		drawbox 1+ ) drop ;
+
+|---- info de cel
+:draw1cell | nro --
+	cntcells >=? ( drop ; )
+	3 << 'cell + >r
+	r@+ >uv r> @ >uv "[%d %d - %d %d]" print cr
+	;
+
+|	dup 3 << 'cell + >r
+|	r@+ >uv r> @ >uv "[%d %d - %d %d]" print cr
+|	dup 2 << 'info + @ "%h" print cr
+|	2 << 'index + @ "%a" print cr
+|	;
+
+|----------- mover cursor y cambiar limites
+:cursormov | x y --
+	mshift 1? ( drop 3 << )( drop ) 'ccy +!
+	mshift 1? ( drop 3 << )( drop ) 'ccx +!
+
+	ccx -? ( 0 'ccx ! )
+	wpr ccw - swap <? ( 'ccx ! )( drop )
+	ccy -? ( 0 'ccy ! )
+	hpr cch - swap <? ( 'ccy ! )( drop )
+	;
+
+:ven.move | dx dy --
+	'yi +! 'xi +!
+	xi -? ( 0 'xi ! ) ww + wpr >? ( wpr ww - 'xi ! ) drop
+	yi -? ( 0 'yi ! ) hw + hpr >? ( hpr hw - 'yi ! ) drop
+
+	xi yi r2v 'yv ! 'xv !
+	xi yi r2b bmpXY
+	;
+|------------- en impresora
+|    case DOCMOVE: // x y --
+|    case DOCLINE: // x y --
+|    case DOCTEXT: // "tt" --
+|    case DOCSIZE: // "tt" -- w h
+|    case DOCFONT: // size angle "font" --
+
+:boxprint | w h x y --
+	2dup docat
+	pick3 pick2 + over docline
+	pick3 pick2 + pick3 pick2 + docline
+	over pick3 pick2 + docline
+	docline 2drop ;
+
+:labelprint | x y w h
+|	8 >> 'cursoraux +
+	swap >uv
+|	14 0
+	"Arial" docfont
+	doctext ;
+
+:drawcellprint
+	'cell
+	( cell> <? )( >r
+		r@+ >uv r@+ >uv boxprint
+		r> ) drop ;
+
+:imprimir
+	docini
+
+	10 0 "Arial" docfont
+	0 0 docat
+	"texto de prueba" doctext
+
+	drawcellprint
+	docend
+	;
+
+|--------------
+|  DOCUMENTO MODELO
+|--------------
+:editdo
+	show clrscr
+		"Documento Modelo" print cr
+		sp
+		dom 63 80 20 inputm
+		'exit >esc<
+		;
+
+|----- miniatura
+:drawcampominiatura
+	rojo
+	'cell
+	( cell> <? )( >r
+		r@+ >uv r2m
+		r@+ >uv r2m
+		swap wi +
+		swap
+		boxx
+		r> ) drop
+	;
+
+:fboxx | w h x y --
+	2dup op
+	pick3 pick2 + over pline
+	pick3 pick2 + pick3 pick2 + pline
+	over pick3 pick2 + pline
+	pline 2drop poli ;
+
+:miniatura
+	negro wm sh wi 0 fboxx
+	verde wm hm wi 0 boxx
+	wc hc xi yi r2m swap wi + swap boxx
+	drawcampominiatura
+	;
+
+|----- CURSOR mueve ventana
+#dx #dy
+
+#vecmove 0 |
+
+:onmovev	| mueve ventana
+	xymouse
+	over dx - over dy - m2r
+	ven.move
+	'dy ! 'dx ! ;
+
+:onmovee
+	xymouse
+	over dx - over dy -
+	cursor cell.move
+	'dy ! 'dx ! ;
+
+:onmoven
+	xymouse
+	yv + ccy - 'cch ! xv + ccx - 'ccw ! ;
+
+:ondnn
+	'onmoven 'vecmove !
+	xymouse
+	yv + 'ccy ! xv + 'ccx !
+	0 dup 'cch ! 'ccw ! ;
+
+:ondnv
+	'onmovev 'vecmove !
+	'dy ! 'dx ! ;
+
+:ondne
+	xymouse
+	over wi >? ( drop ondnv ; ) drop
+	cell.search -? ( drop ondnn ; ) 'cursor !
+	xymouse 'dy ! 'dx !
+	'onmovee 'vecmove !
+	;
+
+|----- CURSOR dibuja
+:dven yi + 'ccy ! xi + 'ccx ! 0 dup 'cch ! 'ccw ! ;
+:mven yi + ccy - 'cch ! xi + ccx - 'ccw ! ;
+
+:ondn
+	xymouse
+	over wi <? ( drop dven ; ) drop
+	swap wi - swap m2v
+	'ccy ! 'ccx ! 0 dup 'cch ! 'ccw ! ;
+
+:onmove
+	xymouse
+	over wi <? ( drop mven ; ) drop
+	swap wi - swap m2v
+	ccy - 'cch ! ccx - 'ccw ! ;
+
+|---------
+#edcw )( 8
+#edch )( 8
+#edcx )( 8
+#edcy )( 8
+
+:editc
+	cursor cntcells >=? ( drop ; )
+	dup 'cursore !
+	3 << 'cell +
+	@+ >uv
+	"%d" mprint 'edch strcpy
+	"%d" mprint 'edcw strcpy
+	@ >uv
+	"%d" mprint 'edcy strcpy
+	"%d" mprint 'edcx strcpy
+	;
+
+:okedit
+	'edcx ?0int 'edcy ?0int 16 << or
+	'edcw ?0int 'edch ?0int 16 << or
+	cursore 3 << 'cell + !+ !
+	-1 'cursore !
+	;
+
+:editcc
+	cursore -? ( drop ; ) drop
+	blanco
+	"cx:" print 'edcx 8 input cr cr2
+	"cy:" print 'edcy 8 input cr cr2
+	"cw:" print 'edcw 8 input cr cr2
+	"ch:" print 'edch 8 input cr cr2
+	'okedit "ok" verde link
+	[ -1 'cursore ! ; ] "cancel" rojo link
+	;
+
+:upcel
+	cursor cntcells >=? ( drop ; )
+	1 <? ( drop ; )
+	-1 'cursor +!
+	3 << 'cell + 8 -
+:change
+	dup >r
+	@+ swap @+ swap @+ swap @
+	swap r!+ r!+ swap r!+ r> ! ;
+
+:dncel
+	cursor cntcells 1- >=? ( drop ; )
+	1 'cursor +!
+	3 << 'cell + change ;
+
+:delcel
+	cntcells 0? ( drop ; ) drop
+	cursor 3 << 'cell +
+	dup 8 +
+	cntcells cursor - 2*
+	move | d s c
+	-8 'cell> +! ;
+
+|--------------
+|  EDITANDO
+|--------------
+:main
+	show clrscr
+		bmpfondo 1? ( 0 0 bmpdrawfast ) drop
+		drawcellscr
+		miniatura
+	|----- cursores
+		blink 1? ( negro )( azul ) drop
+		ccw cch ccx xv - ccy yv - boxx
+		ccw cch v2m ccx ccy v2m swap wi + swap boxx
+	|-----
+		scr
+|		'onDn 'onMove guiDnMove
+		'onDne vecmove guiDnMove
+
+		48 gc.top |$00000f gc.hfill
+		font-vard-8-bold home cr2
+		rojo sp 'exit dup >esc< "esc-Exit" btnt
+		verde
+		sp '+cell dup <f1> "f1-add" btnt
+
+		amarillo
+		sp 'load.form dup <f5> "f5-Load" btnt
+		sp 'save.form dup <f6> "f6-Save" btnt
+		sp 'imprimir dup <f7> "f7-Print" btnt
+|		sp [ "r4/work/carnet-form.txt" loadtxt ; ] dup <f8> "f8-LoadTxt" btnt
+
+		rojo
+		sp 'cell.clear dup <f9> "f9-Clear" btnt
+		sp 'cell.dellast dup <del> "DEL-Last" btnt
+		cyan
+|		sp 'zoom1 "ZoomX1" btnt
+		sp 'zoom2 "X2" btnt
+		sp 'zoom4 "X4" btnt
+		sp 'zoom8 "X8" btnt
+		sp 'zoomf "Full" btnt
+
+		scr wm gc.right hm gc.bottom home
+		fonti verde
+		'factual print cr
+		dup "(%d)" print cr
+		blanco
+		cntcells "cell:%d " print cr
+		[ 0 'cursor ! ; ] "|<" link
+		[ cursor 1- -? ( 0 nip ) 'cursor ! ; ] "<" link
+		cursor " %d " print
+		[ cursor 1+ cntcells >=? ( cntcells 1- nip ) 'cursor ! ; ] ">" link
+		[ cntcells 1- 'cursor ! ; ] ">|" link cr
+
+		verde
+		'editc "E" link
+		'upcel "<<" link
+		'dncel ">>" link
+		rojo
+		'delcel "X" link cr cr2
+
+		blanco
+		cursor draw1cell
+		editcc
+
+		cminiflecha ;
+:a
+		hpr wpr "prn %d %d " print cr
+		yi xi "xi:%d yi:%d " print hi wi "wi:%d hi:%d " print cr
+		hven wven "wven:%d hven:%d" print cr
+		wi hi v2r r2b "%d %d " print cr
+		ccx ccy "ccx:%d ccy:%d " print
+		ccw cch "cch:%d cch:%d " print cr
+		ccw cch v2r "h:%d w:%d " print cr
+		ncmp nrep "nrep:%d ncmp:%d " print cr
+		bmpfondo "BMP:%d" print cr ;
+
+:init
+	cell.clear
+|	docres 0? ( 2drop "sin impresora" print redraw ; )
+	4950 7000
+	'hpr ! 'wpr !							| tam. impresora
+	sw 2/ dup 2/ + 'wi ! sh 4 - 'hi !  			| tam. pantalla (px)
+	sw wi - dup 'wm ! hpr wpr */ 'hm !				| tam. miniatura
+
+	wi hi xi yi bmpPT
+	xi yi r2b bmpXY |16 << 'ya1 ! 16 << 'xa1 !
+	zoomf
+
+	0 'ccx ! 0 'ccy ! 50 'ccw ! 50 'cch ! 		| cursor
+
+	here dup 'dom ! '$dom !
+	0 dom !
+	$ffff 'here +!
+	;
+
+: mark 33 init main ;

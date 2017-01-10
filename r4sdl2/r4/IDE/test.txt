@@ -1,0 +1,34 @@
+^r4/lib/gui.txt
+
+#var 4
+#coso 7
+#a 1
+#b 1 2 3
+#c 'a
+#d 'a 'b
+
+:cuad
+	0? ( ; )
+	dup * + ;
+
+
+:testr
+	[ 1 'a +! ; ] <f1>
+	[ -1 'a +! ; ] <f2>
+	;
+
+
+:main
+	a c drop
+	'b 'd 2drop
+	3 cuad
+	var 1 + coso + 5 *
+	testr
+	show clrscr
+	  	"Hello Human!" print
+		testr
+		'exit >esc<
+		cminiflecha
+		;
+
+: main ;

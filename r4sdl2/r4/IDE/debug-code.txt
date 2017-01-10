@@ -1,0 +1,372 @@
+| debug code
+| PHREDA 2015
+|--------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/input.txt
+
+^r4/lib/parse.txt
+
+|^r4/lib/fontm.txt
+|^inc/fntm/droidsans13.txt
+
+^r4/system/mem-ed.txt
+
+^r4/ide/r4-token.txt
+^r4/ide/r4-tokenrun.txt
+^r4/ide/r4-stackana.txt
+|^r4/ide/r4-info.txt
+^r4/ide/r4-tokenprint.txt
+
+^r4/lib/codecolor.txt
+
+^r4/lib/trace.txt
+
+#pantaini>	| comienzo de pantalla
+#pantafin>	| fin de pantalla
+#prilinea	| primera linea visible
+#cntlinea
+
+#fuente  	| fuente editable
+#fuente> 	| cursor
+#$fuente	| fin de texto
+
+#wlist
+#wnow
+
+#initok
+#initok>
+#nowtok>
+#cnttok
+
+|--------------------------------------------------------------------
+:drawline | nro tok -- nro tok'
+	tokencolor sp
+	tokenstr print sp
+	20 col
+	over initok> initok - 2 >> + printstack
+	cr ;
+
+:drawword | --
+	initok>
+	0 ( cntlinea <? )(
+		cnttok >=? ( 2drop ; ) -? ( 2drop ; )
+		swap
+		nowtok> =? ( blanco ">>" )( "  " ) print
+		@+ drawline
+		swap 1+ ) 2drop ;
+
+:searchw | adr -- pal
+	1+ indicepal<
+	( indicepal> <? )(	| adr ind
+		swap over @ <? ( drop 16 - ; )
+		swap 16 + ) nip
+	16 - ;
+
+:setword | --
+	fuente> searchw
+	dup 4+ @		| token
+	dup 'initok ! dup 'initok> ! dup 'nowtok> !
+	swap
+	| no analiza dato!
+	dup 8 + @ 1 and? ( drop 12 + @ 20 >> $fff and 'cnttok ! drop ; ) drop
+	12 + @ 20 >> $fff and dup 'cnttok !
+	2 << over +	| token+len
+	swap stackanalisisa
+	;
+
+:nowtok>+!
+	nowtok> +
+	initok <? ( 4+ )
+	dup initok - 2 >> cnttok >=? ( drop 4 - )( drop )
+	'nowtok> !
+
+	nowtok>
+	( initok> <? )( -4 'initok> +! )
+	cntlinea 1- 2 << -
+	( initok> >? )( 4 'initok> +! )
+	drop
+	;
+
+|------------- INFOCODE
+:insideword
+	setword
+	show clrscr
+		$6600 ink 1 linesfill blanco
+		'ed.nombre " %s " print
+		cyan
+
+		0 rows 1- gotoxy
+		$2200 ink 1 linesfill blanco
+		verde dup ":R%d" print
+		blanco "dEBUG " printx
+		" |ESC-exit " print
+
+		0 1 gotoxy chome!
+	    drawword
+		30 0 gotoxy chome!
+		verde
+		stackadump
+
+		[ -4 nowtok>+! ; ] <up>
+		[ 4 nowtok>+! ; ] <dn>
+
+		'exit >esc<
+		cminiflecha
+		;
+
+|---------------------------------
+:<<13 | a -- a
+	( fuente >=? )( dup c@
+		13 =? ( drop ; )
+		drop 1- ) ;
+
+:>>13 | a -- a
+	( $fuente <? )( dup c@
+		13 =? ( drop 1- ; ) | quitar el 1-
+		drop 1+ )
+	drop $fuente 2 - ;
+
+:scrollup | 'fuente -- 'fuente
+	pantaini> 1- <<13 1- <<13  1+ 'pantaini> !
+	prilinea 1? ( 1- ) 'prilinea !
+	;
+
+:scrolldw
+	pantaini> >>13 2 + 'pantaini> !
+	pantafin> >>13 2 + 'pantafin> !
+	1 'prilinea +! ;
+
+:drawcur | com -- com
+	blink 1? ( drop ; ) drop
+	fuente> >? ( ; )
+	dup	( fuente> <? )( c@+ 13 =? ( 2drop ; ) gemit )
+	$ffffff ink
+	printcur drop ;
+
+:barv
+	$333333 ink
+	0 0 op 0 sh pline
+	ccw 2 << 0 op ccw 2 << sh pline
+	poli ;
+
+:viewscreen
+	xfb> show 'exit dup <f5> >esc< ;
+
+:karriba
+	fuente> fuente =? ( drop ; )
+	dup 1- <<13 swap over - swap
+	dup 1- <<13 swap over - rot min + fuente max
+	'fuente> ! ;
+
+:kabajo
+	fuente> $fuente >=? ( drop ; )
+	dup 1- <<13	over swap - swap >>13 1+
+	dup 1+ >>13 1+ over - rot min +
+	'fuente> ! ;
+
+:kder fuente> $fuente <? ( 1+ 'fuente> ! ; ) drop ;
+:kizq fuente> fuente >? ( 1- 'fuente> ! ; ) drop ;
+:kpgup  20 ( 1? )( 1- karriba ) drop ;
+:kpgdn	20 ( 1? )( 1- kabajo ) drop	;
+
+|------------- DRAWCODE
+:gotosrc
+	<<ip 0? ( drop ; )
+	tok>src 'fuente> ! ;
+
+|------------ +info
+:nocr | adr adr· -- 1/0
+	over @ ( over <?  )(
+		c@+ 13 =? ( 3drop 0 ; ) drop
+		) drop ;
+
+:cadalinea
+	( " " ,s dup ,printinfoword " " ,s
+		dup 16 + @ nocr 1? )( drop 16 + ) drop
+	0 ,c
+	;
+
+:buildinfo
+	here 'wlist !
+	indicepal<
+	( indicepal> <? )(	| adr ind
+		dup
+		@ ,				| graba posicion de palabra
+		cadalinea
+		16 + ) drop
+	0 ,
+	;
+
+:inwlist | adr -- adr
+	wlist ( @+ 1? )(
+		pick2 >? ( drop 4 - 'wnow ! ; ) drop
+        >>0 ) 2drop
+	wlist 'wnow ! ;
+
+:wline
+	wnow 4+
+	dup
+	blanco fillpr negro printr
+	>>0
+	'wnow ! ;
+
+#varlist )( $fff
+#varlistc
+
+:prevars
+	'varlist >r
+	indicepal< ( indicepal> <? )(
+		dup 8 + @ 1 and? ( over 'indicepal - 4 >> r!+ ) drop
+		16 + ) drop
+	r> 'varlist - 2 >> 'varlistc ! ;
+
+:showvars
+	0 ( 14 <? )(
+		varlistc >=? ( drop ; )
+		dup 2 << 'varlist + @
+		dup dic>str @ "%w = " violeta print
+		nro>mem @ "%d" blanco print
+		cr
+		1+ ) drop
+	;
+
+:drawcode
+
+	barv
+	0 1 gotoxy
+	sw ccw 5 << - 'tx2 !
+	pantaini>
+	inwlist
+	0 ( cntlinea <? )(
+		gris
+		dup prilinea + "%d" print
+       	ccw 2 << dup 'tx1 ! 'ccx !
+		swap
+		drawcur lf
+		>>lineacolor0
+		wnow @ >? ( wline )
+		0 'tx1 !
+		0? ( 2drop cntlinea $fuente )( cr )
+		swap 1+ ) drop
+	$fuente <? ( 1- ) 'pantafin> !
+	fuente>
+	( pantafin> >? )( scrolldw )
+	( pantaini> <? )( scrollup )
+	drop
+
+	sw 'tx2 !
+	showvstack
+
+	sw ccw 5 << - 'tx1 !
+	0 1 gotoxy
+	showvars
+
+	[ fuente> breakpoint playvm gotosrc ; ] <f1>
+	[ stepvm gotosrc ; ] <f2>
+	[ stepvmn gotosrc ; ] <f3>
+|	[ fuente> breakpoint ; ] <f4>
+	[ resetvm gotosrc ; ] <f5>
+	[ viewscreen ; ] <f6>
+
+	keypad
+	'karriba <up>	'kabajo <dn>
+	'kder <ri>		'kizq	<le>
+	'kpgup <pgup>	'kpgdn	<pgdn>
+
+	;
+
+|------------------------------------------------
+:drawstatus
+	home
+	$6600 ink 1 linesfill blanco
+	'ed.nombre " %s " print
+	cyan
+	indiceinc> 'indiceinc - 3 >> "| %d Includes | " print
+|	cntwords "%d Words | " print
+	cntuwords "%d Used Words | " print
+	cntuvars  "%d Used Vars" print
+
+	0 rows 1- gotoxy
+	$2200 ink 1 linesfill blanco
+|	blanco "> " print 'pad 255 inputcr 'compila&run <enter> cr
+|	dumpvstack cr
+	verde dup ":R%d" print
+	blanco "dEBUG " printx
+
+|	<<ip 1? ( @ ) "%h " print
+
+	" |F1-play2c|F2-step|F3-stepn||F5-reset|F6-view " print
+	amarillo
+	"|      D       |      R         " printr
+	;
+
+:debugcode
+	resetvm
+	prevars
+|	'fontdroidsans13 fontm
+	fonti
+	clrscr
+	rows 2 - 'cntlinea !
+	4
+	gotosrc
+	show clrscr |xfb>scr oscurecetodo
+		drawcode
+    	drawstatus
+		'exit >esc<
+		'insideword <enter>
+		cminiflecha ;
+
+|-----------------------------
+:ram
+	mark
+	here	| --- RAM
+	dup 'fuente !
+	dup 'fuente> !
+	dup '$fuente !
+	$3ffff +			| 256kb texto
+	'here  ! | -- FREE
+	;
+
+:loadtxt | -- cargar texto
+	ed.load
+	mark
+	here 'ed.nombre load 0 swap c!
+
+	|-- queda solo cr al fin de linea
+	fuente dup 'pantaini> !
+	here ( c@+ 1? )(
+		13 =? ( over c@ 10 =? ( drop swap 1+ swap )( drop ) )
+		10 =? ( drop c@+ 13 <>? ( drop 1- 13 ) )
+|		$3A =? ( pick2 'fuente> ! )
+		rot c!+ swap ) 2drop
+	0 swap c!+ '$fuente !
+
+	ed.ncar 'fuente> +!
+	;
+
+
+:errortok
+	mark
+	'ed.nombre ,s
+	errorlincar "|%d|%d|" ,print
+	errormsg ,s
+	nroerror 3 <? ( poserror " '%w'" ,print ) drop
+	"debug.err" savemem
+	empty
+	;
+
+:main
+	0 paper
+	ram
+	loadtxt
+	fuente tokeniza 1? ( errortok ; ) drop
+	tokenpostusa
+	buildinfo
+	tokenmem
+	debugcode
+	fuente> fuente - 'ed.ncar !
+	ed.save
+	;
+
+: main ;

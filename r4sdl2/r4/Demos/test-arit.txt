@@ -1,0 +1,22 @@
+| test aritmetico
+|--------------------
+^r4/lib/gui.txt
+^r4/lib/parse.txt
+
+:basico
+	show clrscr
+		32 fonti blanco home
+		8 4 2 */ "8 4 2 */ = %d%." print
+		8 2 4 */ "8 2 4 */ = %d%." print
+		8 16 2 *>> "8 16 2 *>> = %d%." print
+		-8 4 2 */ "-8 4 2 */ = %d%." print
+		-8 4 * "-8 4 * = %d%." print
+		-8 3 / "-8 3 / = %d%." print
+		-86 13 3 *>> "-86 13 3 *>> = %d%." print
+		-13 5 mod "%d%." print cr
+		"-1.51632e-14" dup "%s " print
+		getfenro "%f" print drop
+	'exit >esc<
+		;
+
+: 0 paper 33 basico ;

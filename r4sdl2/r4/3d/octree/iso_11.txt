@@ -1,0 +1,487 @@
+| iso test 11
+| PHREDA 2015
+| bbox correcto en 3d
+|---------------------
+^r4/lib/gui.txt
+^r4/lib/morton.txt
+^r4/lib/mfbuffer.txt
+
+^r4/lib/trace.txt
+
+#$base
+#$magic
+#:$octree
+#:$pixels
+#$paleta
+
+#ymin #xmin
+#ymax #xmax
+
+#nzmin
+#zlen
+
+#octvert )( 4096
+#octvert> 'octvert
+#ilevel 0
+
+#ivecpos )( 32
+#iwhlevel )( 64
+
+#ilevelm $fffff $7fdff $3fcff $1fc7f $0fc3f $07c1f $03c0f $01c07 $00c03 $00401 $00000
+
+#x0 #y0 #z0	| centro
+#x1 #y1 #z1	| Nx
+#x2 #y2 #z2	| Ny
+#x4 #y4 #z4	| Nz
+
+:calcmask | -- mask
+	x1 x0 * y1 y0 * + z1 z0 * + +? ( 1 )( 0 ) >r drop
+	x2 x0 * y2 y0 * + z2 z0 * + +? ( 2 r+ ) drop
+	x4 x0 * y4 y0 * + z4 z0 * + +? ( 4 r+ ) drop
+	r> ;
+
+|-------------------------------
+::octcolor | oct -- color
+    $octree - $pixels + @ ;
+
+:octcolor3 | oct -- color
+	$octree - 2 >> dup 2* + 1- $pixels + @ $ffffff and ;
+
+:octcolor8 | oct -- color
+	$octree - 2 >> $pixels + c@ $ff and 2 << $paleta + @ ;
+
+:octcolor16 | oct -- color
+	$octree - 2/ $pixels + w@ ; |16to32 ;
+
+
+|-------------------------------
+
+:deltaxy | -- dxy
+	ilevel 2 << 'ilevelm + @ ;
+
+:sizexy | -- swh
+	ilevel 2 << 'iwhlevel + @ ;
+
+:10>32 | xy -- x y
+	dup 10 >> swap $3ff and ;
+
+:32>10 | x y -- xy
+	swap 10 << or ;
+
+|---- quad cube
+:drawbox | xy oct --
+	octcolor ink dup 10>32 rot sizexy + 10>32 maskfpxy ;
+
+|---- real cube
+#faces (
+0 1 3 2 0 2 6 4 0 1 5 4
+1 3 2 0 1 3 7 5 1 0 4 5
+2 3 1 0 2 0 4 6 2 3 7 6
+3 1 0 2 3 1 5 7 3 2 6 7
+4 5 7 6 4 6 2 0 4 5 1 0
+5 4 6 7 5 1 3 7 5 1 0 4
+6 4 5 7 6 2 0 4 6 2 3 7
+7 6 4 5 7 5 1 3 7 3 2 6
+)
+
+:getn | xy a id -- xy a xy
+	2 << 'ivecpos + @
+	ilevel >> ilevel 2 << 'ilevelm + @ and
+	pick2 + ;
+
+:aclara
+    ink@ $f0f0f colavg ink ;
+
+:dface | adr -- adr'
+	c@+ getn dup >r 10>32 maskop
+	c@+ getn 10>32 maskline
+	c@+ getn 10>32 maskline
+	c@+ getn 10>32 maskline
+	r> 10>32 maskline
+	maskpoly ;
+
+:drawboxd | xy oct --
+	octcolor ink
+	nzmin 2 << dup 2* + 'faces +
+	dface aclara dface aclara dface
+	2drop ;
+
+
+:getf | adr -- adr' xy xy
+	c@+ getn dup ;
+
+:dfaces  |  adr' xy -- adr'
+	>r
+	c@+ getn 10>32 maskline
+	c@+ getn 10>32 maskline
+	c@+ getn 10>32 maskline
+	r> 10>32 maskline ;
+
+:drawboxc | xy oct --
+	octcolor ink
+	nzmin 2 << dup 2* + 'faces +
+	getf 10>32 maskop dfaces
+	getf 10>32 maskop2 dfaces
+	getf 10>32 maskop2 dfaces
+	maskpoly
+	2drop ;
+
+|-------- octree in octree
+#dbox 'drawbox
+
+::adjustmem | octree --
+	dup '$base !
+	dup 28 + '$octree !
+	@+ '$magic !
+	@ $octree + '$pixels !
+	;
+
+#opila )( 1024
+#opila> 'opila
+
+:getoct | octree -- octree
+	$base opila> !+ 'opila> !
+	$octree - $pixels + @
+	2 << $base +
+	adjustmem
+	$octree
+	;
+
+:getocti | --
+	-4 'opila> +! opila> @
+	adjustmem
+	;
+
+::oct++ | adr -- adr bitmask
+|	@ dup 8 >> 2 << $octree + swap $ff and	| adr bitmask	| absoluto
+	@+ dup 8 >> 2 << rot + swap $ff and 	| adr bitmask	| relativo
+	;
+
+|.............................................................
+:ichild | xy node bitm nro place -- xy node bitm chid.xy child.node
+	1- pick2 and popcnt 2 << pick3 +
+ 	>r
+	2 << 'ivecpos + @ ilevel >>
+	ilevel 2 << 'ilevelm + @ and
+	pick3 +
+	r> ;
+
+:drawpoint | xy oct --
+	octcolor swap 10>32 maskpxyo ;
+
+:drawpoint1 | xy oct xy2 --
+	0? ( drop drawpoint ; )
+	swap octcolor ink 	| xy xy2
+	swap 10>32 rot $3ff and over +
+	maskfpy ;
+
+:drawpoint2 | xy oct xy2 --
+	swap octcolor ink
+	swap 10>32 rot 10 >> pick2 +
+	maskfpx ;
+
+:isod | xy node --
+	$pixels >=? ( $magic $100 nand? ( drop dbox exec ; ) drop getoct isod getocti ; )
+
+	sizexy		| xy node wh
+	$ffc00 nand? ( drawpoint1 ; )
+	$3fe nand? ( drawpoint2 ; )
+|	$401 not nand? ( drop drawpoint ; )
+	pick2 + pick2		| xy node wh xy
+
+	10>32 rot 10>32 	| xy node x y w h
+	maskb.rget 0? ( 3drop ; ) drop 	| xy node
+
+
+	oct++				| xy node bitmask
+	1 'ilevel +!
+	nzmin 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 1 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 2 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 4 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 3 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 5 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 6 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	nzmin 7 xor 1 over << pick2 nand? ( 2drop )( ichild isod )
+	3drop
+	-1 'ilevel +!
+	;
+
+
+|-----------------------
+:id3di | x y z -- xy
+	3dproj | x y
+	dup 'ymin ! dup 'ymax !
+	swap
+	dup 'xmin ! dup 'xmax !
+	10 << or ;
+
+:id3d | x y z -- xy
+	3dproj | x y
+	ymin <? ( dup 'ymin ! )
+	ymax >? ( dup 'ymax ! )
+	swap
+	xmin <? ( dup 'xmin ! )
+	xmax >? ( dup 'xmax ! )
+	10 << or ;
+
+:isonow | oct --
+	>r
+	octvert> 96 - dup 'octvert> ! >r
+	r@+ r@+ r@+ id3di 'ivecpos !+
+	r@+ r@+ r@+ id3d swap !+
+	r@+ r@+ r@+ id3d swap !+
+	r@+ r@+ r@+ id3d swap !+
+	r@+ r@+ r@+ id3d swap !+
+	r@+ r@+ r@+ id3d swap !+
+	r@+ r@+ r@+ id3d swap !+
+	r@+ r@+ r> @ id3d swap !
+	xmin xmax over -
+	ymin ymax over -	|  xmin w ymin h
+	rot 10 << or		| xmin ymin wh
+	'iwhlevel >r
+	dup r!+
+	10 ( 1? )( 1- swap
+		dup $401 + 2/ $7fdff and r!+
+		2/ $7fdff and
+		swap ) 2drop rdrop
+    swap 10 << or	| xy
+	'ivecpos >r
+	r @ over - r!+
+	r @ over - r!+
+	r @ over - r!+
+	r @ over - r!+
+	r @ over - r!+
+	r @ over - r!+
+	r @ over - r!+
+	r @ over - r> !
+	r>	| octree
+	isod
+	;
+
+|---------------- search iso ratio
+:getz | nro -- Z
+	2 << dup 2* + 88 - octvert> + @ ;
+
+:addchildr | id --
+	octvert> dup >r 96 -
+	swap 2 << dup 2* +	| 12*
+	over + swap >r >r | prev pivot
+	r@+ r@+ r> @ r> | x y z pri
+	@+ pick4 + 2/ dup 'x0 ! r!+ @+ pick3 + 2/ dup 'y0 ! r!+ @+ pick2 + 2/ dup 'z0 ! r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ dup x0 + 2/ 'x0 ! r!+ @+ pick3 + 2/ dup y0 + 2/ 'y0 ! r!+ @ + 2/ dup z0 + 2/ 'z0 !
+	r> !+ 'octvert> !
+	2drop ;
+
+:childr | node bitm nro -- node bitm
+	swap addchildr
+	1- over and popcnt 2 << pick2 +    | node bitm node'
+	;
+
+:viewr | node --
+	calcmask dup 'nzmin !
+	getz clz zlen <=? ( drop isonow ; ) drop
+	$pixels >=? ( $magic $100 nand? ( drop isonow ; ) drop getoct viewr getocti ; )
+
+	oct++
+	1 'zlen +!
+	nzmin >r
+	r 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r 1 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r 2 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r 4 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r 3 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r 5 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r 6 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	r> 7 xor 1 over << pick2 nand? ( 2drop )( childr viewr )
+	2drop
+	-96 'octvert> +!
+	-1 'zlen +! ;
+
+|----------- search cube in screen
+:culling | xyz -- cull
+	1 <? ( $10 )( 0 ) >r
+	swap -? ( neg <? ( $1 r+ ) )( <? ( $2 r+ ) )
+	swap -? ( neg <? ( $4 r+ ) )( <? ( $8 r+ ) )
+	drop r> ;
+
+:cull1 | xyz -- cull
+	culling dup 8 << or ;
+
+:culln | xyz -- cull
+	culling dup 8 << $ff or rot and or ;
+
+:cullingcalc | -- aocull
+					|.. agegar test por esfera
+	octvert> 96 - >r
+	r@+ r@+ r@+ cull1
+	r@+ r@+ r@+ culln
+	r@+ r@+ r@+ culln
+	r@+ r@+ r@+ culln
+	r@+ r@+ r@+ culln
+	r@+ r@+ r@+ culln
+	r@+ r@+ r@+ culln
+	r@+ r@+ r> @ culln ;
+
+:addchildo | id --
+	octvert> dup >r 96 -
+	swap 2 << dup 2* + | 12*
+	over + swap >r >r | prev pivot
+	r@+ r@+ r> @ r> | x y z pri
+	@+ pick4 + 2/ dup 'x0 ! r!+ @+ pick3 + 2/ dup 'y0 ! r!+ @+ pick2 + 2/ dup 'z0 ! r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ dup x0 + 2/ 'x0 ! r!+ @+ pick3 + 2/ dup y0 + 2/ 'y0 ! r!+ @ + 2/ dup z0 + 2/ 'z0 !
+	r> !+ 'octvert> !
+	2drop ;
+
+:childo | node bitm nro -- node bitm
+	swap addchildo
+	1- over and popcnt 2 << pick2 +    | node bitm node'
+	;
+
+:viewo | node --
+	cullingcalc
+	0? ( drop viewr ; )
+	$ff00 and? ( 2drop -96 'octvert> +! ; )
+	drop
+
+	$pixels >=? ( $magic $100 nand? ( drop isonow ; ) drop getoct viewo getocti ; )
+
+	1 'zlen +!
+	oct++
+	calcmask >r
+	r 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r 1 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r 2 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r 4 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r 3 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r 5 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r 6 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	r> 7 xor 1 over << pick2 nand? ( 2drop )( childo viewo )
+	2drop
+	-96 'octvert> +!
+	-1 'zlen +! ;
+
+|--------- inicializo
+:fillstart | --
+	1.0 clz 4 - 'zlen !
+
+	'octvert >r
+	0.5 0.5 0.5 transform swap rot r!+ r!+ r!+ | 111
+	0.5 0.5 -0.5 transform swap rot r!+ r!+ r!+ | 110
+	0.5 -0.5 0.5 transform swap rot r!+ r!+ r!+ | 101
+	0.5 -0.5 -0.5 transform swap rot r!+ r!+ r!+ | 100
+	-0.5 0.5 0.5 transform swap rot r!+ r!+ r!+ | 011
+	-0.5 0.5 -0.5 transform swap rot r!+ r!+ r!+ | 010
+	-0.5 -0.5 0.5 transform swap rot r!+ r!+ r!+ | 001
+	-0.5 -0.5 -0.5 transform swap rot r!+ r!+ r!+ | 000
+	r> 'octvert> !
+
+	0 0 0 transform	| origen
+	0 0 255 transform pick3 - 'z1 ! pick3 - 'y1 ! pick3 - 'x1 !
+	0 255 0 transform pick3 - 'z2 ! pick3 - 'y2 ! pick3 - 'x2 !
+	255 0 0 transform pick3 - 'z4 ! pick3 - 'y4 ! pick3 - 'x4 !
+	'z0 ! 'y0 ! 'x0 !
+	;
+
+|--------- exportadas
+
+::drawoctree | moctree --
+	adjustmem
+	fillstart
+	$octree viewo ;
+
+::load3do | "" -- moctree
+	here dup rot load 'here ! ;
+
+::voxelcuad 'drawbox 'dbox ! ;
+::voxelbox 'drawboxd 'dbox ! ;
+::voxelboxc 'drawboxc 'dbox ! ;
+
+
+
+|-------------
+#xcam 0 #ycam 0 #zcam 1.6
+
+|-------------
+:freelook
+	xymouse
+	sh 2/ - 7 << swap
+	sw 2/ - neg 7 << swap
+	neg mrotx mroty
+	;
+
+|-------------
+#Ocaballo
+#Omario
+#Oluigi
+#Oearth
+
+#Onow
+
+#fps
+#fpsc
+#mseca
+
+:main
+	3dini
+	mark
+    maskb.ini
+	"media/3do/horse.3do" load3do 'Ocaballo !
+	"media/3do/earth.3do" load3do 'Omario !
+	"media/3do/map.3do" load3do 'Oluigi !
+	"media/3do/horse1.3do" load3do 'Oearth !
+|	"media/3do/luigi.3do" load3do 'Oearth !
+
+	Ocaballo 'oNow !
+	33
+	$8800 paper
+	show clrscr
+
+		3dini
+|		freelook
+		xcam ycam zcam mtrans
+
+		maskb.clear
+		oNow drawoctree
+
+		1 'fpsc +!
+
+		verde fonti
+		dup "%d " print cr
+		msec fps over mseca - "%d ms fps:%d" print cr 'mseca !
+
+		[ -0.01 'zcam +! ; ] <up>
+		[ 0.01 'zcam +! ; ] <dn>
+		[ -0.01 'xcam +! ; ] <le>
+		[ 0.01 'xcam +! ; ] <ri>
+		[ -0.01 'ycam +! ; ] <pgup>
+		[ 0.01 'ycam +! ; ] <pgdn>
+
+		[ Oluigi 'Onow ! ; ] <f1>
+		[ Omario 'Onow ! ; ] <f2>
+		[ Ocaballo 'Onow ! ; ] <f3>
+		[ Oearth 'Onow ! ; ] <f4>
+
+		'voxelcuad <f5>
+		'voxelbox <f6>
+		'voxelboxc <f7>
+
+		'exit >esc< cminiflecha
+		1000 .mseg .restart
+		fpsc 'fps ! 0 'fpsc !
+		;
+
+: main ;
+

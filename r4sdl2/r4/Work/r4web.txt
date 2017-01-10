@@ -1,0 +1,25 @@
+|--------------------------
+^r4/lib/gui.txt
+^r4/lib/parse.txt
+^r4/lib/trace.txt
+
+#netmem
+:ram
+	mark
+	here dup 'netmem !
+	$ffff + 'here ! ;
+
+:main
+	mark
+	"http://localhost/r4web/out.php?t=editor" 0 netmem openurl 0 swap c!
+	fonti
+	show clrscr home blanco
+		netmem print
+		cminimano
+		'exit >esc<
+		;
+
+
+: 0 paper
+	ram
+	33 main ;
