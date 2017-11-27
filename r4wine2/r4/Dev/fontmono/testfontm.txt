@@ -1,0 +1,47 @@
+| test fontm
+| PHREDA 2014
+|-------------------
+^r4/lib/gui.txt
+^r4/lib/fontm.txt
+^inc/fntm/sourcecode13.txt
+^inc/fntm/inconsolata13.txt
+^inc/fntm/ubuntumon13.txt
+^inc/fntm/droidsans13.txt
+
+:main
+	show clrscr
+		'fontSourceCode13 fontm
+		VERDE
+		"#xy 23 :dibuja show dup ;" print cr
+		blanco
+		" 10 goto 10! " print cr
+		":define dup * ;" print cr
+		'fontInconsolata13 fontm
+		verde
+		"#xy 23 :dibuja show dup ;" print cr
+		blanco
+		" 10 goto 10! " print cr
+		":define dup * ;" print cr
+		'fontUbuntuMon13 fontm
+		verde
+		"#xy 23 :dibuja show dup ;" print cr
+		blanco
+		" 10 goto 10! " print cr
+		":define dup * ;" print cr
+		'fontDroidSans13 fontm
+		verde
+		"#xy 23 :dibuja show dup ;" print cr
+		blanco
+		" 10 goto 10! " print cr
+		":define dup * ;" print cr
+		fonti
+		verde
+		"#xy 23 :dibuja show dup ;" print cr
+		blanco
+		" 10 goto 10! " print cr
+		":define dup * ;" print cr
+
+		'exit >esc<
+		cminiflecha ;
+
+: main ;

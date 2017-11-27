@@ -1,0 +1,332 @@
+| new frame buffer
+| PHREDA 2010
+|---------------
+^r4/lib/gui.txt
+^r4/lib/color.txt
+^r4/lib/leebmp.txt
+^r4/lib/trace.txt
+
+|-------------------------------
+| formato de scanline 2
+| $0 cnt de pixels a llenar (*cnt)
+| $1 UUU VVV v1 v2
+| $2 RGB RGB col1 col2 (*v1)
+| $3 RRGGBB Entrada a paleta (*1)
+| $4 dire cant ? (*cnt)
+| $5 direcc ct ? (*cnt)
+| $6
+| $7 fin de linea
+|
+
+#v1 #v2 #y
+
+:r0	$ffff and ( 1? )( 1- ink@ px!+ ) drop  ;
+:r1 dup $fff and 'v1 ! 12 >> $fff and 'v2 ! ;
+:r2 v1 swap degrade! v2 ( 1? )( 1- deg@+ px!+ ) drop ;
+:r3	$ffffff and dup ink px!+ ;
+:r4 drop ;
+:r5 drop ;
+:r6 drop ;
+:r7 drop
+	0 y 1+ dup 'y ! setxy ;
+
+#xscan r0 r1 r2 r3 r4 r5 r6 r7
+:frameline | 'scanline --
+	0 'y !
+	( @+ 1? )(
+		dup 22 >> $1c and 'xscan + @ exec
+		) 2drop ;
+
+|---------------------------------
+| scanline
+
+#scanline |)( 16384 | 16k
+#scanline> 'scanline
+:,scanline scanline> !+ 'scanline> ! ;
+:scanline# scanline> scanline ; |- 2 >> ;
+:clscanline scanline 'scanline> ! ;
+
+|-----------------------------------
+:render
+	100 $000f00 degrade!
+	100 100 .at 100 100 .fboxdh
+	100 $fff0f0 degrade!
+	200 100 .at 100 100 .fboxdh
+	100 $c00ccc degrade!
+	300 100 .at 100 100 .fboxdh
+
+	100 $000fff degrade!
+
+	100 400 .at 100 100 .fboxdv
+	azul 200 400 .at 100 100 .fbox
+	;
+
+
+|	$00 cnt de pixels a llenar
+|	01 UUU VVV v1 v2
+|   10 RGB RGB col1 col2
+|	11 RRGGBB Entrada a paleta
+|-------------------------------------
+| comprime runlength
+#cnt
+#colact
+
+:px2tracer | adr+ val --
+|	$f0f0f0 and
+	$ffffff and | full
+	colact =? ( 1 'cnt +! drop ; )
+	colact $3000000 or ,scanline
+	cnt 1 >? ( dup 12 << over $fff and or $1000000 or ,scanline dup ,scanline ) drop
+:scanini | color --
+|	$f0f0f0 and
+	$ffffff and 'colact ! 1 'cnt ! ;
+
+:scanlast
+	colact $3000000 or ,scanline
+	cnt 2 <? ( drop ; )
+	,scanline ;
+
+|-------------------------------------
+:px2tracer2
+	$ffffff and $3000000 or ,scanline ;
+
+#imagen1
+
+:testcomprime
+	here 'scanline !
+	clscanline
+	imagen1 dup @ scanini 0 'cnt !
+	>r bmp.ancho bmp.alto
+	( 1? )( 1-
+		over ( 1? )( 1-
+			r@+ px2tracer
+			) drop
+|		r @ scanlast
+		$7000000 ,scanline
+		)
+	2drop rdrop
+	scanlast
+	0 ,scanline ;
+
+#miny #maxy
+#minco #maxco
+#mincg #maxcg
+#matcolor )( $3ffff
+
+:inistat
+	0 'miny ! 0 'maxy !
+	0 'minco ! 0 'maxco !
+	0 'mincg ! 0 'maxcg !
+	'matcolor >r
+	$ffff ( 1? )( 0 r!+ 1- ) drop rdrop
+	;
+:addstat
+	rgb2ycc
+	2dup $ff and swap $ff and 8 << or 2 << 'matcolor + 1 swap +!
+	mincg <? ( dup 'mincg ! )
+	maxcg >? ( dup 'maxcg ! ) drop
+	minco <? ( dup 'minco ! )
+	maxco >? ( dup 'maxco ! ) drop
+	miny <? ( dup 'miny ! )
+	maxy >? ( dup 'maxy ! ) drop
+	;
+:endstat
+
+	;
+|-----------------------------------
+#matcol )( $ffff
+
+:rescol
+	'matcol >r 0 0 ( $fff <? )( 1+ over r!+ ) 2drop rdrop ;
+
+:to12+ | rgb -- ; matcol(rgb12)++
+	dup 4 >> $f and over 8 >> $f0 and or swap 12 >> $f00 and or
+	2 << 'matcol + 1 swap +! ;
+
+:histogramacolor
+	rescol
+:h2
+	imagen1 >r
+	bmp.ancho bmp.alto
+	inistat
+	( 1? )( 1-
+		over ( 1? )( 1-
+			r@+ dup addstat to12+
+			) drop
+		) 2drop
+	rdrop
+	;
+
+:noceros | -- cntceros
+	'matcol >r
+	0 0 ( $fff <? )( 1+
+		r@+ 0? ( drop swap 1+ swap )( drop )
+		) drop rdrop
+	;
+
+|-----------------------------------
+#yrenglon
+
+:view8bit | 8 bit/canal
+	2dup 0 >> $ff and 300 + setxy $ff px!+
+	2dup 8 >> $ff and 300 + setxy $ff00 px!+
+	2dup 16 >> $ff and 300 + setxy $ff0000 px!+
+	;
+
+:view4bit | 4 bit/canal
+	2dup 4 >> $f and 300 + setxy $ff px!+
+	2dup 12 >> $f and 300 + setxy $ff00 px!+
+	2dup 20 >> $f and 300 + setxy $ff0000 px!+
+	;
+
+:viewycc
+	2dup rgb2ycc 2drop $ff and 300 + setxy $ffff px!+
+	2dup rgb2ycc xor nip $ff and 300 + setxy $ff00ff px!+
+	;
+
+:viewmatcol
+	'matcol >r
+	$7f ( 1? )(
+		500 over setxy
+		$7f ( 1? )( 1-
+			r@+ px!+
+			) drop
+		1- ) drop rdrop
+	;
+
+#buff2
+
+#ys
+#cod
+#cgd
+
+:copynew
+	buff2 >r
+	0 ( bmp.alto <? )(
+		0 ( bmp.ancho <? )(
+			2dup swap bmp.get
+			rgb2ycc
+			2drop
+			|$55 and swap $aa and or nip
+			dup 8 << or dup 8 << or
+
+			r!+
+			1+ ) drop
+		1+ ) drop
+	rdrop ;
+
+:copynewm
+	buff2 >r
+	0 ( bmp.alto <? )(
+		0 ( bmp.ancho <? )(
+			2dup swap bmp.get
+			rgb2ycc
+
+			cgd + | varia cg
+			$55 and swap
+			cod +
+			$aa and or nip
+			dup 8 << or dup 8 << or
+
+			r!+
+			1+ ) drop
+		1+ ) drop
+	rdrop ;
+
+:viewbuff2
+	400 0 setxy
+	buff2 >r
+	0 ( bmp.alto <? )(
+		0 ( bmp.ancho <? )(
+			r@+ px!+ | al sal anch
+			1+ ) drop
+		sw bmp.ancho - px+!
+		1+ )  drop
+	rdrop ;
+
+:lineahisto
+	2dup * 2 << imagen1 + >r
+|	inistat
+	( 1? )( 1-
+		bmp.ancho over -
+		r@+ |dup addstat
+		view8bit
+		viewycc
+		2drop
+		) drop
+	rdrop
+|	endstat
+	;
+
+:main
+|	"media/bmp/pasto.bmp" bmp.load 'imagen1 !
+	"media/bmp/cerezop.bmp" bmp.load 'imagen1 !
+| 	"media/bmp/mandel.bmp" bmp.load 'imagen1 !
+	here 'buff2 !
+
+
+	histogramacolor
+
+|	testcomprime
+	0 'yrenglon !
+	copynew
+
+	show clrscr
+		0 0 bmp.xyreal
+|		200 0 setxy scanline frameline
+
+
+		0 rows 1- gotoxy
+		dup "(%d) " print
+		verde scanline# "%d " print
+		$fff noceros - "Colores:%d " print
+
+		0 0 gotoxy
+		miny maxy minco maxco mincg maxcg "%d %d %d %d %d %d" print
+
+
+		yrenglon
+		bmp.ancho
+		2dup * 2 << imagen1 + >r
+		0 bmp.alto 4+ setxy
+		dup ( 1? )( 1- r@+ px!+ ) drop
+		rdrop
+
+		0 bmp.alto 5 + setxy
+		2dup * 2 << imagen1 + >r
+		dup ( 1? )( 1- r@+ px!+ ) drop
+		rdrop
+
+		lineahisto
+
+		'matcolor >r
+		$ff ( 1? )( 1-
+			400 over 300 + setxy
+			$ff ( 1? )( 1-
+				r@+ 7 << px!+
+				) drop
+			) drop rdrop
+
+		bmp.ancho over op
+		sw swap line
+
+|        viewmatcol
+		viewbuff2
+|		trace
+|		 h2
+		cflecha
+
+
+	'exit >esc<
+
+	[ yrenglon 0? ( drop ; ) 1- 'yrenglon ! ; ] <up>
+	[ yrenglon 1+ 'yrenglon ! ; ] <dn>
+
+|	[ 1 'cgd +! copynewm ; ] <le>
+|	[ -1 'cgd +! copynewm ; ] <ri>
+|	[ 1 'cod +! copynewm ; ] <up>
+|	[ -1 'cod +! copynewm ; ] <dn>
+
+;
+
+: mark 33 main  ;

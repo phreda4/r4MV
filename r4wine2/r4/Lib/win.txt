@@ -1,0 +1,60 @@
+|----------- win
+#varwin
+#ya #xa
+
+:movewin | dy dx --
+	tx1 over + -? ( 3drop ; ) drop
+	tx2 over + sw >? ( 3drop ; ) drop
+	swap
+	ty1 over + -? ( 3drop ; ) drop
+	ty2 over + sh >? ( 3drop ; ) drop
+	varwin 8 + +!
+	varwin 4+ +!
+	;
+
+::guiWin | 'acc 'aw -- ; aw= tipo x0 y0 w h titulo
+	[ dup @ 1 xor over ! ; ] over 20 + "%s" sp link
+	@+ 1 nand? ( 3drop ; ) drop
+	dup 4 - 'varwin !
+	tgc.push
+
+	>r r@+ r@+ r@+ r@+ rot	| x0 w h y0
+	dup 'ty1 ! over 2/ over + 'yc ! over 'h ! + 'ty2 !
+	over 'tx1 ! dup 2/ pick2 + 'xc ! dup 'w ! + 'tx2 !
+	r>
+|--- mueve la ventana donde no hay otro btn
+|	[ xymouse 'ya !+ ! ; ]
+|	[ xymouse 2dup ya - swap xa - movewin 'ya !+ ! ; ]
+|	guiDnMove
+|	guiEmpty |--- no mueve ventana
+
+	ink@ >r
+	gris gc.fbox
+|	tx1 ty1 tx2 ty2 cajau
+
+	home cr2
+	r> ink
+	linefill
+	[ 0 varwin ! ; ] "x" sp rojo btnt
+	" %s" blanco print cr cr2
+	exec
+	tgc.pop
+	;
+
+::filewin | 'filename --
+	dup 4+ "%s " print
+	[ dup @ 1 xor over ! ; ] ".." btnt
+	@+ 1 nand? ( 2drop ; ) drop
+	tgc.push
+	ccx 400 ccy 200
+	dup 'ty1 ! over 2/ over + 'yc ! over 'h ! + 'ty2 !
+	over 'tx1 ! dup 2/ pick2 + 'xc ! dup 'w ! + 'tx2 !
+	ink@ >r
+	gris gc.fbox
+	home cr2
+	r> ink
+
+
+	"ahora" print
+	tgc.pop
+	;

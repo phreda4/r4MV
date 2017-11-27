@@ -1,0 +1,204 @@
+| colorpicker
+| PHREDA 2006-2015
+|---------------------------------------
+^r4/lib/gui.txt
+^r4/lib/color.txt
+^r4/lib/ricons.txt
+^inc/ric/fontawesome.ric
+
+#:coloractual
+
+#vhue #yluma #xluma
+#alp
+#colorrampa $ff0000
+#cx1 #cy1
+#xo #yo
+
+|---- Dialogo Color
+:setcol | color --
+	alp 24 << or
+	'coloractual ! ;
+
+:vhue! | nro --
+	dup 'vhue !
+	8 << 1.0 1.0 hsv2rgb 'colorrampa !
+	cx1 xluma + cy1 yluma + getpixel setcol ;
+
+:xyluma! | x y --
+	cy1 26 + <? ( cy1 26 + nip )
+	cy1 255 + 26 + >? ( cy1 255 + 26 + nip )
+	swap
+	cx1 6 + <? ( cx1 6 + nip )
+	cx1 255 + 6 + >? ( cx1 255 + 6 + nip )
+	swap
+	2dup
+	getpixel setcol
+	cy1 - 'yluma ! cx1 - 'xluma ! ;
+
+:lumagrid
+	cx1 6 + cy1 26 +
+	256 ( 1? )( 1-
+		dup 0 colorrampa lerpcol
+		over dup 8 << dup 8 << or or
+		degrade32!
+		>r 2dup setxy
+		255 ( 1? )( 1- deg@+ px!+ ) drop
+		1+ r> ) drop
+	setxy 255 ( 1? )( 1- 0 px!+ ) drop
+
+	cx1 6 + cy1 26 + 255 dup gc.xywh
+    [ xymouse xyluma! ; ] guiMove
+
+	cx1 xluma + cy1 yluma + pos
+	6 qdim blanco gc.box
+	;
+
+:drawcromaline
+	cx1 278 + cy1 26 + | ini croma
+	256 ( 1? )( 1-
+		255 over - 8 <<  1.0 1.0 hsv2rgb ink
+		pick2 pick2 over 16 + over op line
+		swap 1+ swap ) drop
+	2drop ;
+
+:cromaline
+	cx1 270 + cy1 26 + vhue +
+	over 32 + over op line
+	drawcromaline
+	cx1 270 + cy1 26 + 32 256 gc.xywh | x y w h
+    [ xymouse nip cy1 26 + - vhue! ; ] guiMove
+	;
+
+:setvxy | color --
+	dup setcol
+	rgb2hsv
+	neg $ff and 26 + 'yluma !
+	$fe clampmax 6 + 'xluma !
+	$ff $600 */ dup 8 << 1.0 1.0 hsv2rgb 'colorrampa !
+	'vhue ! ;
+
+|---------------------------------------------------------
+#paleta
+$000000 $C0C0C0 $808080 $FFFFFF
+$800000 $FF0000 $800080 $FF00FF
+$008000 $00FF00 $808000 $FFFF00
+$000080 $0000FF $008080 $00FFFF
+
+:addpaleta | color --
+	'paleta >r
+	16 ( 1? )( 1-
+		r@+ pick2 =? ( rdrop 3drop ; ) drop
+		) drop rdrop
+	'paleta dup 4+ swap 15 move>
+	'paleta !
+	;
+
+:colbox	ink gc.fbox gcdn ;
+:colcr  9 gcupn gc>> ;
+
+:collin
+	dup 1.0 0.2 hsv2rgb colbox
+	dup 1.0 0.4 hsv2rgb colbox
+	dup 1.0 0.6 hsv2rgb colbox
+	dup 1.0 0.8 hsv2rgb colbox
+	dup 1.0 1.0 hsv2rgb colbox
+	dup 0.8 1.0 hsv2rgb colbox
+	dup 0.6 1.0 hsv2rgb colbox
+	dup 0.4 1.0 hsv2rgb colbox
+	dup 0.2 1.0 hsv2rgb colbox
+	colcr ;
+
+:minipaleta
+	cx1 9 + cy1 312 + pos
+	6 qdim
+	0.0 ( 1.0 <? )( collin 0.016 + ) drop
+	;
+
+:btnp | var color --
+	blanco
+	[ dup pick2 ! dup 24 >> $ff and 'alp ! ; ] btne
+	ink 2-gc gc.fbox 2+gc ;
+
+:alp! | nro --
+	-? ( 0 nip ) $ff >? ( $ff nip )
+	dup 'alp !
+	24 << coloractual $ffffff and or 'coloractual !
+	;
+
+:alphaline
+	blanco
+	cx1 310 + cy1 26 + alp +
+	over 24 + over op line
+	blanco
+	cx1 312 + cy1 26 + | ini alp
+	2dup op
+	over 20 + over pline
+	over 10 + over 256 + pline pline poli
+	cx1 310 + cy1 26 + 24 256 gc.xywh | x y w h
+	[ xymouse nip cy1 26 + - alp! ; ] guiMove
+	;
+
+:npaleta
+	'coloractual
+	48 qdim
+	[ coloractual addpaleta exit ; ] btne
+	dup @ ink 2-gc gc.fbox 2+gc
+	gcdn
+    24 qdim
+	-12 -12 +pos
+	'paleta >r
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	rdrop drop ;
+
+::dlgcolora | --
+	oscurecetodo
+	xc 'xo ! yc 'yo !
+	xc sw 2/ >? ( sw 402 - )( 0 ) nip 'cx1 !
+	cx1 yo 36 - 400 380 gc.xywh
+	$f0f7f ink gc.fbox $ff ink gc.box
+
+	minipaleta
+	coloractual setvxy
+	>xfb fonti
+	show xfb>scr home
+		xo yo pos
+    	npaleta
+
+		lumagrid
+		cromaline
+		alphaline
+
+       	cx1 6 + cy1 309 +
+       	cx1 383 + cy1 362 +
+		gcxyxy
+		[ xymouse setxy px@ setvxy ; ] guiBtn
+
+		cx1 6 + cy1 290 + atxy
+		coloractual "%h" blanco print
+		'exit >esc<
+		cminimano ;
+
+::btncol | 'color --
+	48 qdim
+	[ dup @ 'coloractual ! dlgcolora coloractual over ! ; ] btne
+	dup @ ink 2-gc gc.fbox 2+gc
+	gcdn
+    24 qdim
+	-12 -12 +pos
+	'paleta >r
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	r@+ btnp gc>> r@+ btnp gc<< gcdn
+	rdrop drop ;

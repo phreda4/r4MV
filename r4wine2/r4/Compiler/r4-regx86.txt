@@ -1,0 +1,346 @@
+| registros para x86
+| PHREDA 2017
+|--------------------------------
+^r4/lib/gui.txt
+^r4/lib/print.txt
+^r4/lib/trace.txt
+
+^r4/compiler/r4-cellana.txt
+
+|-------- constantes del sistema
+#syscons "XRES" "YRES" "FREE_MEM" "SYSFRAME" "XFB"
+"SYSPAPER" "SYSXYM" "SYSBM" "SYSKEY" | []
+
+#sysregs "eax" "ebx" "ecx" "edx" "edi" "esi" "ebp"
+#sysregw "ax" "bx" "cx" "dx" "di" "si" "bp"
+#sysregb "al" "bl" "cl" "dl" "*" "*" "*"
+
+|------ Celda de la pila
+| $0 nro
+| $1 cte
+| $2 str
+| $3 cod
+| $4 dat
+| $5 reg
+| $10 mem[]
+| $20 2*
+| $40 4*
+| $80 8*
+| $100 +
+|-------- tipos de celdas
+#cellt )( 1024	| tipo
+#cellv )( 1024	| valor
+#cella )( 1024  | suma
+
+:value	over 2 << 'cellv + @ ;
+:suma	over 2 << 'cella + @ ;
+
+|---- imprime celda
+:list2str swap ( 1? )( 1- swap >>0 swap ) drop ;
+
+:mt0 value "$%h" ,print ;			|--	0 nro 	33
+:mt1 value 'syscons list2str ,s ;	|--	1 cte	XRES
+:mt2 value "str%h" ,print ;			|--	2 str   "hola"
+:mt3 value "w%h" ,print ;			|--	3 cod  'func		4 dat  'var
+:mt5 value 'sysregs list2str ,s ;	|-- 5 reg 	eax
+:mt6 value 2 << "dword[ebp" ,s +? ( "+" ,s ) ,d "]" ,s ; |-- 6 stack
+
+#tiposrm mt0 mt1 mt2 mt3 mt3 mt5 mt6 0 0
+
+:,reg | nro --
+	'sysregs list2str ,s ;
+
+:,cell | nro -- nro
+	dup 2 << 'cellt + @
+	$10 and? ( "dword[" ,s )
+	dup $7 and 2 << 'tiposrm + @ exec
+	$e0 and? ( "*" ,s dup 4 >> $e and ,d )
+	$100 and? ( suma +? ( "+" ,s ) ,d )
+	$10 and? ( "]" ,s )
+	drop ;
+
+:mt5b value 'sysregb list2str ,s ;
+#tiposrmb mt0 mt1 mt2 mt3 mt3 mt5b mt6 0 0
+
+:,cellb | nro -- nro
+	dup 2 << 'cellt + @
+	$10 and? ( "byte[" ,s )
+	dup $7 and 2 << 'tiposrmb + @ exec
+	$e0 and? ( "*" ,s dup 4 >> $e and ,d )
+	$100 and? ( suma +? ( "+" ,s ) ,d )
+	$10 and? ( "]" ,s )
+	drop ;
+
+:mt5w value 'sysregw list2str ,s ;
+#tiposrmw mt0 mt1 mt2 mt3 mt3 mt5w mt6 0 0
+
+:,cellw | nro -- nro
+	dup 2 << 'cellt + @
+	$10 and? ( "word[" ,s )
+	dup $7 and 2 << 'tiposrmw + @ exec
+	$e0 and? ( "*" ,s dup 4 >> $e and ,d )
+	$100 and? ( suma +? ( "+" ,s ) ,d )
+	$10 and? ( "]" ,s )
+	drop ;
+
+|-----------------
+:cell.ini | nro --
+	2 <<
+	0 over 'cellt + !
+	0 over 'cellv + !
+	0 swap 'cella + ! ;
+
+:cell.t | val type nro --
+	2 <<
+	swap over 'cellt + !
+	swap over 'cellv + !
+	0 swap 'cella + ! ;
+
+:cell.val! 0 swap cell.t ;
+:cell.cte! 1 swap cell.t ;
+:cell.str! 2 swap cell.t ;
+:cell.wor! 3 swap cell.t ;
+:cell.reg! 5 swap cell.t ;
+:cell.stk! 6 swap cell.t ;
+
+|-----------------
+:cellt? | nro -- cellt
+	2 << 'cellt + @ ;
+
+:cellreg? | nro -- nro reg/-1
+	dup cellt? 5 <>? ( drop -1 ; ) drop
+	dup 2 << 'cellv + @ ;
+
+:cellregu? | nro -- nro reg/-1
+	dup cellt? $f and 5 <>? ( drop -1 ; ) drop
+	dup 2 << 'cellv + @ ;
+
+:cell0? | nro -- nro 1/0=si
+	dup cellt? 1? ( ; ) drop
+	dup 2 << 'cellv + @ ;
+
+:cellm? | nro -- nro 1/0
+	dup cellt? $10 and ;
+
+:cell.add? | nro -- nro 1/0=se puede
+	dup 2 << 'cellt + @ $f0 and ;
+
+:cell.shf? | nro -- nro 1/0=se puede
+	dup 2 << 'cellt + @ $1f0 and ;
+
+
+:cell.add | val nro --
+	2 << swap over 'cella + +!
+	'cellt + dup @ $100 or swap ! ;
+
+:cell.shf | val nro -- ; 2,4,8
+	2 << 'cellt + dup
+	@ rot 4 << or swap ! ;
+
+:cell.mem | nro --
+	2 << 'cellt + dup
+	@ $10 or swap ! ;
+
+|--------------------------
+#registros	| registros usados
+
+:emptyReg
+	%1000000 | ebp ocupado
+	'registros ! ;
+
+:reg! | nro --
+	1 swap << registros or 'registros ! ;
+
+:reg!! | nro --
+	1 swap << not registros and 'registros ! ;
+
+:newReg | -- reg | busca un registro libre
+	0 registros
+	( 1? )( 1 nand? ( drop ; ) | libre?
+		2/ $7fffffff and
+		swap 1+ swap )
+	drop ;
+
+|-----------------
+:cell2stkp
+	"mov [ebp" ,s over 2 << +? ( "+" ,s ) ,d "]," ,s ,cell ,cr
+    cell.stk! ;
+
+:cell2stk | nro reg --
+	swap
+	cell.shf? 0? ( drop cell2stkp ; ) drop
+	newReg >r
+	cellm? 1? ( drop
+		"mov " ,s r ,reg "," ,s ,cell ,cr
+		)( drop
+		"lea " ,s r ,reg ",[" ,s ,cell "]" ,s ,cr
+		)
+	"mov [ebp" ,s over 2 << +? ( "+" ,s ) ,d "]," ,s
+	r> ,reg ,cr
+    cell.stk! ;
+
+:cellval0 | reg nro --
+	"xor " ,s over ,reg "," ,s over ,reg ,cr
+|	"movzs " ,s over ,reg ",0" ,s ,cr | mov usa flags!
+	cell.reg! ;
+
+:cellmem | reg nro --
+	"mov " ,s over ,reg "," ,s ,cell ,cr
+	cell.reg! ;
+
+:cell2reg | reg nro --
+	cellreg? pick2 =? ( 3drop ; ) drop
+	cell0? 0? ( drop cellval0 ; ) drop
+	cellm? 1? ( drop cellmem ; ) drop
+	"lea " ,s over ,reg ",[" ,s ,cell "]" ,s ,cr
+	cell.reg! ;
+
+
+|-----------------
+:needreg | nro --
+	dup cellflag
+	$4 and? ( drop ; )	| entrada palabra
+	$8 and? ( drop ; )	| salida palabra
+	$1000 and? ( drop ; )	| eax
+	$2000 and? ( drop ; )	| ecx
+	drop ;
+	;
+
+::inputcells
+	| inicializa todas las celdas
+	0 ( cntvreg 1- <? )(
+		dup cell.ini
+		1+ ) drop
+
+	cntvreg ( 1? )( 1-
+		needreg
+		) drop
+	;
+
+
+|--- token a cte
+:c7 tok>cte "$%h"  ;
+:cB 8 >> "str%h" ;
+:cC 8 >> "w%h" ;
+
+#codeisa 0 0 0 0 0 0 0 c7 c7 c7 c7 cB cC cC cC cC
+
+::tokencte | a -- mem
+	dup $ff and 2 << 'codeisa + @ 0? ( trace 2drop ; ) exec ;
+
+:registro
+	cellreg
+	1- ,cell | registro virtual
+	drop ;
+
+::emitcell | cell --
+	dup cellreg? 1? ( drop registro ; ) drop
+	celltok
+	256 <? ( registro ; ) |,sp "copia" ,s ,d ; ) | copia
+	@ tokencte ,print
+	;
+
+::cellvalue? | cell -- token/0
+	celltok
+	256 <? ( ; ) | copia
+	@ dup $ff and
+	7 10 between +? ( drop ; )
+	2drop 0 ;
+
+
+
+|-----------------
+:dumpcel
+	mark
+	0 ( cntvreg <? )(
+		dup ,d ,sp ,cell ,cr
+		1+ ) drop
+	0 ,c
+	empty
+	here print ;
+
+::,dumpcel
+	0 ( cntvreg <? )(
+		dup ,d ,sp ,cell
+		dup cellregu? " %d" ,print
+		,cr
+		1+ ) drop ;
+
+:dumpm | adr
+	c@+
+	( 1? )( 1- swap
+		c@+ "%d " print
+		swap ) 2drop ;
+
+|---test
+:cellresolve
+	swap -? ( cell2stk ; ) swap
+	cell2reg ;
+
+:cellregmark | cell --
+	-? ( drop ; )
+	cellregu? -? ( 2drop ; )
+	reg!
+	drop
+	;
+
+:markregused | mask --
+	emptyReg
+	c@+ ( 1? )( 1- swap c@+
+		cellregmark
+		swap ) 2drop ;
+
+:stackconvert | mask --
+	dup markregused
+	c@+
+	( 1? )( 1- swap
+		c@+ pick2
+|		2dup "%d -> %d " ,print
+		cellresolve
+|		,cr
+		swap ) 2drop ;
+
+#testr ( 5 -2 -1 3 2 0 )
+#log
+
+:main
+	mark
+	here 'log !
+	0 here !
+	5 'cntvreg !
+
+	0 0 cell.reg!
+	15 0 cell.add
+	4 0 cell.shf
+
+	0 1 cell.val!
+	2 2 cell.str!
+
+	3 3 cell.wor!
+	16 3 cell.add
+	2 3 cell.shf
+
+	4 4 cell.cte!
+	4 cell.mem
+
+	,dumpcel ,cr
+
+
+    'testr stackconvert ,cr
+
+	registros "%b" ,print ,cr
+
+	,dumpcel
+
+	0 ,c
+	33
+	show clrscr
+		blanco
+		dup "%d - " print
+		cntvreg "%d cells" print
+		cr cr verde
+		log print
+		'exit >esc<
+		cminiflecha ;
+
+: main ;

@@ -1,0 +1,640 @@
+| analisis de pila estatico
+| PHREDA 2015
+|------------------------------------
+^r4/ide/r4-dicc.txt
+
+#lastdircode
+
+#dstack )( 256
+#dstack> 'dstack
+#rstack )( 128
+#rstack> 'rstack
+
+|------ Celda de la pila
+| T Tipo (NUMERO CONSTANTE 'STRING CODIGO DATO REGISTRO ANONIMA)
+| M Indireccion de memoria
+| shift 00-1 01-2 10-4 11-8
+| >> SSMTTTT
+
+#:nreg
+#:reg )( 2048 | 256 registros
+#:regt )( 2048 | origen tipo
+#:regv )( 2048 | valor
+#:regs )( 2048 | suma
+
+
+| cstkR cstkD lugar
+|----------------------
+#:stkidx )( 2048
+#stkidx> 'stkidx
+#:stkmem )( 2048
+#stkmem> 'stkmem
+
+|----- pila para condicionales
+#sst )( 1024 | pila de pilas
+#sst> 'sst
+#ssc )( 8192
+#ssc> 'ssc
+
+|---- BLOQUES
+#:blockn 0
+#block )( 1024	| tipo+info
+#blocks )( 1024 | celda comienzo
+#blocke )( 1024 | celda fin
+#blocki )( 1024 | celda medio
+
+|----- pila para bloques
+#pilab )( 256	#pilab> 'pilab
+
+:newreg
+	nreg
+	0 over 2 << 'reg + !
+	0 over 2 << 'regt + !
+	0 over 2 << 'regv + !
+	1 'nreg +!
+	;
+
+:dpush	dstack> !+ 'dstack> ! ;
+:dpop	-4 'dstack> +! dstack> @ ;
+
+:d.TOS   dstack> 4 - @ ;
+:d.NOS   dstack> 8 - @ ;
+:d.PK2   dstack> 12 - @ ;
+:d.PK3   dstack> 16 - @ ;
+:d.PK4   dstack> 20 - @ ;
+
+:rpush	rstack> !+ 'rstack> ! ;
+:rpop	-4 'rstack> +! rstack> @ ;
+:rcnt	rstack> 'rstack - ;
+:r.TOS  rstack> 4 - @ ;
+
+|----------------------------------------
+:regR	2 << 'reg + dup @ $1 + swap ! ;
+:regW	2 << 'reg + dup @ $100 + swap ! ;
+:regM	2 << 'reg + dup @ $10000 or swap ! ;	| direccion de memoria dato
+:regX	2 << 'reg + dup @ $20000 or swap ! ;	| direccion de memoria codigo
+:regP	2 << 'reg + dup @ $40000 or swap ! ;	| parametro en pila
+:regA	2 << 'reg + dup @ $80000 or swap ! ;	| transpasa una palabra
+:regB	2 << 'reg + dup @ $100000 or swap ! ;	| transpasa un bloque
+:regI	2 << 'reg + dup @ $200000 or swap ! ;	| parametro IN
+:regO	2 << 'reg + dup @ $400000 or swap ! ;	| parametro OUT
+
+:regAD	2 << 'reg + dup @ $1000000 or swap ! ;	| uso eax,edx
+:regC	2 << 'reg + dup @ $2000000 or swap ! ;	| uso ecx
+
+:regPALset
+	'dstack ( dstack> <? )( @+ regA ) drop ;
+
+:regBLOset
+	'dstack ( dstack> <? )( @+ regB ) drop ;
+
+|----------------------------------------
+:,drop	-4 'dstack> +! ;
+:,4drop ,drop
+:,3drop ,drop
+:,2drop ,drop ,drop ;
+:,swap	dstack> 8 - >a a@+ a@+ a 8 - !+ ! ;
+:,nip	,swap ,drop ;
+:,rot	dstack> 12 - >a a@+ a@+ a@+ swap a 12 - !+ !+ ! ;
+:,2swap	dstack> 16 - >a a@+ a@+ swap a@+ a@+ swap a 16 - !+ !+ !+ ! ;
+
+:,dup	d.TOS regR newreg dpush ;
+:,over	d.NOS regR newreg dpush ;
+:,pk2	d.PK2 regR newreg dpush ; |PICK2  abc -- abca
+:,pk3	d.PK3 regR newreg dpush ; |PICK3  abcd -- abcda
+:,pk4	d.PK4 regR newreg dpush ; |PICK4  abcde -- abcdea
+:,2dup	,over ,over ; |2DUP   ab -- abab
+:,2over	,pk3 ,pk3 ; |2OVER  abcd -- abcdab
+
+:,uso6 d.TOS regR ,drop d.TOS regR ,drop
+:,uso4 d.TOS regR ,drop
+:,uso3 d.TOS regR ,drop
+:,uso2 d.TOS regR ,drop
+:,uso1 d.TOS regR ,drop ;
+
+:,uso11 d.TOS regR ;
+:,uso21 d.TOS regR ,drop d.TOS regR ;
+
+:,1cte	newreg dpush ;
+:,3v	newreg dpush
+:,2v	newreg dpush
+:,1v	newreg dpush ;
+
+:,lit   newreg dpush ;
+:,str   newreg dpush ;
+
+
+:,var	| vv
+	dup 4 - @ 8 >> 'lastdircode !
+	newreg dpush d.TOS regM ;
+:,dvar	| 'v
+	dup 4 - @ 8 >> 'lastdircode !
+	newreg dpush ;
+:,dwor	| 'w
+	dup 4 - @ 8 >> 'lastdircode !
+	newreg dpush d.TOS regX ;
+
+:,wor	| ww
+	dup 4 - @ 8 >> dic>mov @
+	dup 16 << 24 >> | uso
+	dup ( 1? )( 1+ d.TOS regR ,drop ) drop
+	swap 24 << 24 >> - abs
+	( 1? )( 1- newreg dup regW dpush ) drop ;
+
+|------- condicionales
+
+:sst!   sst> !+ 'sst> ! ;
+:sst@   -4 'sst> +! sst> @ ;
+
+:pushvar
+	ssc> dup sst!
+	>a
+	'dstack ( dstack> <? )( @+ a!+ ) drop
+	-1 a!+
+	'rstack ( rstack> <? )( @+ a!+ ) drop
+	-1 a!+ a 'ssc> !
+	;
+
+:popvar
+    sst@ dup 'ssc> !
+	'dstack 'dstack> !
+	( @+ -1 >? )( dpush ) drop
+	'rstack 'rstack> !
+	( @+ -1 >? )( rpush ) 2drop
+	;
+
+:pop2var
+	sst> 8 - @	| no recupera la memoria
+	'dstack 'dstack> !
+	( @+ -1 >? )( dpush ) drop
+	'rstack 'rstack> !
+	( @+ -1 >? )( rpush ) 2drop
+	sst> 4 - dup @ swap 4 - !+ 'sst> !
+	;
+
+:dropvar
+	sst@ 'ssc> ! ;
+
+:convar | conver to var
+	sst@ dup 'ssc> !
+
+|	'dstack ( dstack> <? )( @+ "%h " ,print ) drop " : " ,s
+|	'rstack ( rstack> <? )( @+ "%h " ,print ) drop " -> " ,s
+
+	'dstack 'dstack> !
+	( @+ -1 >? )( dpush ) drop
+	'rstack 'rstack> !
+	( @+ -1 >? )( rpush ) 2drop
+	;
+
+
+::block.new blockn pilab> !+ 'pilab> ! 1 'blockn +! ;
+::block.end -4 'pilab> +! ;
+
+:block.now pilab> 4 - @ ; | -- nblo
+:block.cnt pilab> 'pilab - 2 >> ;
+
+:block.start!	stkidx> 'stkidx - 2 >> block.now 2 << 'blocks + ! ;
+:block.mid!     stkidx> 'stkidx - 2 >> block.now 2 << 'blocki + ! ;
+:block.end!     stkidx> 'stkidx - 2 >> block.now 2 << 'blocke + ! ;
+
+:blocka		block.now 2 << 'block + ;
+
+::blINFO	blocka @ ;
+::blSIZE	block.now 2 << dup 'blocke + @ swap 'blocks + @ - ;
+
+:blCLEAR	0 blocka ! ;
+:blIF		blocka dup @ 0 or swap ! ;
+:blELSE  	blocka dup @ 1 or swap ! ;
+:blWHILE	blocka dup @ 2 or swap ! ;
+:blUNTIL  	blocka dup @ 3 or swap ! ;
+:blREPEAT  	blocka dup @ 4 or swap ! ;
+
+::blINI		block.now 2 << 'blocks + @ ;
+::blMID     block.now 2 << 'blocki + @ ;
+::blEND     block.now 2 << 'blocke + @ ;
+
+:salto? | adr -- adr 1/0
+	dup 8 - @ $ff and $16 >? ( $23 <? ( drop 1 ; ) ) drop 0 ;
+
+:;?	| adr xx -- adr xx 1/0
+	over 8 - @ $ff and $10 =? ( drop 1 ; ) drop 0 ;
+
+:,(
+	block.new blCLEAR
+	block.start!
+	pushvar salto? sst! ;
+
+:,)(
+	block.mid!
+	sst@ drop
+	salto? 1? ( drop dropvar pushvar 3 sst! ; )	drop	| while
+	pushvar pop2var 2 sst!			| else
+	;
+
+:,)
+	sst@
+	0? ( dropvar swap salto? 1? ( blUNTIL )( blREPEAT ) drop swap )        | until/repeat
+	1 =? ( ;? 1? ( popvar )( convar ) drop blIF )      | if
+	2 =? ( convar blELSE )         | else
+	3 =? ( popvar blWHILE )        | while
+	drop
+	block.end!
+	block.end ;
+
+:,;
+	;
+| anonimas
+:,[	;
+:,]	newreg dpush d.TOS regX ;
+
+:,c0 | 0? 1? ..
+	d.TOS regR ;
+
+:,c1 | =? <? ..
+	d.TOS regR ,drop d.TOS regR ;
+
+:,exec
+	regPALset d.TOS regX ,drop
+	lastdircode
+
+	dup dic>str @ "%w -" ,print
+	dic>mov @
+
+	dup 16 << 24 >> |uso
+	dup ( 1? )( 1+ d.TOS regR ,drop ) drop
+	swap 24 << 24 >>
+	- abs
+	( 1? )( 1- newreg dup regW dpush ) drop ;
+
+:,>r	dpop rpush ;
+:,r>	rpop dpush ;
+:,r		rcnt 0? ( drop newreg dpush ; ) drop	| show consume R, no dR for now!
+		r.TOS regR newreg dpush ;			|R		-- a R: a -- a
+:,r+	r.TOS regW ,drop ;				|R+		a -- R: b -- c
+:,r@+	r.TOS dup regM regW newreg dpush ;	|R@+	-- a R: b -- c
+:,r!+	r.TOS dup regM regW ,drop ;			|R!+	a -- R: b -- c
+:,rdrop	rpop drop ;
+
+|--- aritmeticas y logicas
+:op1a1	d.TOS regW ; | neg not 1+ 4+ 1- 2/ ..
+:vop1a1 d.TOS regW ; | abs  clz  ..
+:op2a1	d.TOS regR ,drop d.TOS regW ; | + - * and or xor ..
+:vop2a1 d.TOS regR ,drop d.TOS regW ; | / mod
+:xop2a1	d.TOS regR ,drop d.TOS regW ; | << >>
+:op3a1	d.TOS regR ,drop d.TOS regR ,drop d.TOS dup regAD regW ; | */
+:vop3a1	d.TOS regR ,drop d.TOS regR ,drop d.TOS dup regAD regW ; | *>> /<<
+
+:op2a2	d.TOS regW d.NOS regW ; | mod/
+
+:1@	| @ c@ w@
+	d.TOS dup regM regW ;
+:1!	| ! c! w!
+	d.TOS dup regM regR ,drop d.TOS regR ,drop ;
+:2@	| @+ c@+ w@+
+	d.TOS dup regM regW newreg dup regW dpush ;
+:2!	| !+ c!+ w!+
+	,swap d.TOS regR ,drop d.TOS dup regM regW ;
+:2+!	| +! c+! w+!
+	d.TOS dup regM regR ,drop d.TOS regR ,drop ;
+
+:,>a	dpop drop ;
+:,a		newreg dpush ;
+:,a@    newreg dpush ;
+:,a!	dpop drop ;
+:,a+	dpop drop ;
+:,a@+	newreg dpush ;
+:,a!+	dpop drop ;
+|----------------------------------------
+#usostack 0
+0 0 0 0 0 0 |,: ,:: ,# ,#: ,| ,^
+,lit ,lit ,lit ,lit ,str
+,wor ,var ,dwor ,dvar
+,; ,( ,)( ,) ,[ ,] ,exec
+,c0 ,c0 ,c0 ,c0 |,0? ,+? ,-? ,1?
+,c1 ,c1 ,c1 ,c1 ,c1 ,c1 ,c1 ,c1 |,=? ,<? ,>? ,<=? ,>=? ,<>? ,and? ,nand?
+,dup ,drop ,over ,pk2 ,pk3 ,pk4
+,swap ,nip ,rot ,2dup ,2drop ,3drop ,4drop
+,2over ,2swap
+,>r ,r> ,r |,r+ ,r@+ ,r!+ ,rdrop
+op2a1 op2a1 op2a1 op1a1 |,and ,or ,xor ,not
+op2a1 op2a1	|,+ ,-
+op2a1 op2a1 |,* ,/
+
+op3a1 vop3a1 |,*/ ,*>>
+
+op2a2 vop2a1 |,/mod ,mod
+vop1a1 op1a1 vop1a1 vop3a1 |,abs ,sqrt ,clz ,<</
+op1a1 op1a1 op1a1 op1a1 op1a1 op1a1 |,neg ,1+ ,4+ ,1- ,2/ ,2*
+xop2a1 xop2a1 |,<< ,>>
+1@ 1@ 1@        |,@ ,c@ ,w@
+1! 1! 1!	|,! ,c! ,w!
+2+! 2+!	2+!	|,+! ,c+! ,w+!
+2@ 2! 2@ 2! 2@ 2!       |,@+ ,!+ ,c@+ ,c!+ ,w@+ ,w!+
+
+,>a ,a ,a@ ,a! ,a+ ,a@+ ,a!+
+
+,uso3	|MOVE  abc --       a,b es ddat
+,uso3	|MOVE> abc --		a,b es ddat
+,uso3	|FILL  abc --       a,b es ddat
+,uso3	|CMOVE abc --		a,b es ddat
+,uso3	|CMOVE> abc --		a,b es ddat
+,uso3	|CFILL  abc --       a,b es ddat
+,1cte |MEM	-- a		a es ddat
+,uso11	|FFIRST    a -- b
+,1v		|FNEXT  -- a
+,uso21	|LOAD   ab -- c
+,uso3	|SAVE   abc --
+,uso3	|APPEND   abc --
+,uso11	|UPDATE  a -- a
+,2v	|XYMOUSE -- ab
+,1v	|BMOUSE  -- a
+,uso1	|IKEY!  a --
+,1v	|KEY     -- a
+,1v	|CNTJOY  -- a
+,1v	|GETJOY  -- a
+
+,1v	|MSEC    -- a
+,3v	|TIME    -- abc
+,3v	|DATE    -- abc
+0	|END     --
+,uso1	|RUN    a --
+,1cte	|SW      -- a
+,1cte	|SH      -- a
+0	|REDRAW  --
+,1v	|FRAMEV  -- a
+
+,uso1	|INK    a --
+,1v		|INK@    -- a
+,uso1	|ALPHA  a --
+,uso2	|OP     ab --
+,uso2	|LINE   ab --
+,uso4	|CURVE  abcd --
+,uso6	|CURVE3  abcdef --
+,uso2	|PLINE  ab --
+,uso4	|PCURVE abcd --
+,uso6	|PCURVE3 abcdef --
+0		|POLI    --
+,uso2	|FCOL   ab --
+,uso2	|FCEN   ab --
+,uso2	|FMAT   ab --
+0	|SFILL   --
+0	|LFILL   --
+0	|RFILL   --
+,uso1	|TFILL  a --
+
+,uso11	|SLOAD   a -- a
+,uso1	|SPLAY  a --
+,uso11	|SINFO   a -- a
+,uso4	|SISET  a a a a --
+0
+0 0 0 0
+0 0 0 0 0
+,uso11 | SYSTEM a -- a
+
+|----------------------------------------
+:stackini | deep --
+	'pilab 'pilab> !
+	0 'nreg !
+	0 'blockn !
+	'stkidx 'stkidx> !
+	'stkmem 'stkmem> !
+
+	'dstack 'dstack> !
+	'rstack 'rstack> !
+	'ssc 'ssc> !
+	'sst 'sst> !
+	( 1? )( 1- newreg dup regI dpush ) drop
+	;
+
+:markregout
+	'dstack ( dstack> <? )( @+ regO ) drop ;
+
+:calcstack | cod --
+	$ff and 2 << 'usostack + @
+	0? ( drop ; )
+    exec ;
+
+:smem!+
+	stkmem> c!+ 'stkmem> ! ;
+
+:storestack
+	stkmem> 'stkmem -
+    dstack> 'dstack - 2 >> 10 << or
+	rstack> 'rstack - 2 >> -? ( 0 nip ) | puede ser negativo!! SHOW
+	16 << or
+	stkidx> !+ 'stkidx> !
+	'dstack ( dstack> <? )( @+ smem!+ ) drop
+	'rstack ( rstack> <? )( @+ smem!+ ) drop
+	;
+
+::stackanalisisa | end ini --
+	2dup getusedstack neg
+	stackini ( over <? )( @+ calcstack storestack ) 2drop
+	markregout
+	;
+
+:printstat | nro val --
+	$ff00 nand? ( cyan )( blanco )
+	over 65 + " %k." print
+	dup $ff and "%d " print
+	dup 8 >> $ff and "%d " print
+	16 >> "%b " print
+|	dup 2 << 'regt + @  " %h " print
+|	dup 2 << 'regv + @  "%h " print
+|	mark here over ,cellv 0 ,c printx empty
+	;
+
+::stackadump
+	'reg
+	"   R  W  OIBAPXM" print cr
+	0 ( nreg <? )( swap
+		@+ printstat cr allowchome
+		swap 1+ ) 2drop
+	;
+
+:.reg | nro --
+	dup 2 << 'reg + @
+	$ff00 nand? ( cyan )( blanco )
+	drop
+	65 + emit ;
+
+::printstack | nro --
+	2 << 'stkidx + @
+	dup $3ff and 'stkmem +
+	over 10 >> $3f and
+	( 1? )( 1- swap c@+ .reg swap ) drop
+	swap 16 >> $3f and
+	1? ( ":" print )
+	( 1? )( 1- swap c@+ .reg swap )
+	2drop
+	;
+
+
+:,reg | nro --
+	65 + ,c ;
+
+::,printstack | nro --
+	2 << 'stkidx + @
+	dup $3ff and 'stkmem +
+	over 10 >> $3f and
+	( 1? )( 1- swap c@+ ,reg swap ) drop
+	swap 16 >> $3f and
+	1? ( ":" ,s )
+	( 1? )( 1- swap c@+ ,reg swap )
+	2drop
+	;
+
+|--------------
+::getstk | lin --stk
+	2 << 'stkidx + @ ;
+::getstkcnt | lin -- stk cnt
+	getstk dup $3ff and 'stkmem + swap 10 >> $3f and ;
+::getrstkcnt | lin -- rstk cnt
+	getstk dup $3ff and 'stkmem + over 10 >> $3f and + swap 16 >> $3f and ;
+
+
+::gettos | nro -- reg
+	getstkcnt + 1- c@ $ff and ;
+::getnos | nro -- reg
+	getstkcnt + 2 - c@ $ff and ;
+::getpk2 | nro -- reg
+	getstkcnt + 3 - c@ $ff and ;
+::getpk3 | nro -- reg
+	getstkcnt + 4 - c@ $ff and ;
+::getpk4 | nro -- reg
+	getstkcnt + 5 - c@ $ff and ;
+::getpk5 | nro -- reg
+	getstkcnt + 6 - c@ $ff and ;
+
+::getrtos | nro -- reg
+	getrstkcnt + 1- c@ $ff and ;
+
+
+::regR?	| nro -- nro/-1
+	2 << dup 'regt + @ $f and 5 <>? ( 2drop -1 ; ) drop
+	'regv + @ ;
+
+::regC? | nro -- 0/1 es nro cte
+	2 << 'regt + @ $f and 0? ( 1+ )( 0 nip ) ;
+
+::regM? | nro -- 0/1 es [mem]
+	2 << 'regt + @ $10 and ;
+
+::regW? | nro -- 1/0  tiene w?
+	2 << 'reg + @ $ff00 and ;
+
+::regAD? | nro -- 1/0 necesita A?
+	2 << 'reg + @ $1000000 and ;
+
+::reg*? | nro -- 1/0
+	2 << 'reg + @ $60 and ;
+
+::reg+? | nro -- valor
+	2 << 'regs + @ ;
+
+::reg.cl | nro --
+	dup 2 << 'reg + dup @ $60 not and swap !
+	0 swap 2 << 'regs + ! ;
+
+#mask
+:setreg | reg --
+	2 << dup 'regt + @ $f and 5 <>? ( 2drop ; ) drop
+	'regv + @ 1 swap << 'mask +!
+	;
+
+::getregmask | linea -- mask
+	0 'mask !
+	2 << 'stkidx + @
+	dup $3ff and 'stkmem +
+	over 10 >> $3f and
+	( 1? )( 1- swap c@+ setreg swap ) drop
+	swap 16 >> $3f and
+	( 1? )( 1- swap c@+ setreg swap )
+	2drop
+	mask ;
+
+
+::maskregfree | mask -- nreg
+	0 swap ( 1 pick2 << and? )( swap 1+ swap ) drop ;
+
+::copyregreg | from to --
+	over 2 << 'regt + @ over 2 << 'regt + !
+	over 2 << 'regv + @ over 2 << 'regv + !
+	swap 2 << 'regs + @ swap 2 << 'regs + !
+	;
+
+::swapregreg | from to --
+	over 2 << 'regt + over 2 << 'regt + over @ over @ swap rot ! swap !
+	over 2 << 'regv + over 2 << 'regv + over @ over @ swap rot ! swap !
+	swap 2 << 'regs + swap 2 << 'regs + over @ over @ swap rot ! swap !
+	;
+
+::setREG | val r reg --
+	2 << dup >r 'regt + ! r 'regv + ! 0 r> 'regs + ! ;
+
+::set+	| suma reg --
+	2 << 'regs + +! ;
+::set*	| value reg --
+	2 << 'reg + >r
+	5 << r @ or r> ! ;
+
+
+::dumpstk | lin --
+	getstkcnt ( 1? )( 1- swap c@+ 65 + ,c swap ) 2drop ;
+
+
+::setTOS | val t nro --
+	gettos setREG ;
+
+|------------ print
+:fixtokenstr | cod -- ; fix width op print
+	tokenstr
+	mprint count swap ,s
+	neg 16 + clamp0 ( 1? )( 1- ,sp ) drop
+	;
+
+:sdump
+	block.cnt ( 1? )( 1- "|" ,s ) drop
+    " " ,s
+	'dstack ( dstack> <? )(
+		@+ "%h " ,print ) drop
+	" : " ,s
+	'rstack ( rstack> <? )(
+		@+ "%h " ,print ) drop ;
+
+:printstat | val --
+	dup $ff and ,d ,sp
+	dup 8 >> $ff and ,d ,sp
+	16 >> ,b
+	;
+
+:dumpregs
+	'reg
+	";--- Nro: R  W  OIBAPXM" ,s ,cr
+	0 ( nreg <? )(
+		"; " ,s dup 65 + ,c " : " ,s
+		swap @+ printstat swap
+		" | " ,s
+|		dup ,cell |
+|		dup 2 << 'regt + @ "%h " ,print
+|		dup 2 << 'regv + @ "%h " ,print
+		,cr
+		1+ ) 2drop ;
+
+::stackanalisis | end ini --
+	2dup getusedstack neg
+	stackini
+	storestack
+	( over <? )(
+		@+
+		" ; " ,s dup fixtokenstr
+		calcstack
+		storestack
+		sdump ,cr "r4asm/cod.asm" savemem	| DEBUG
+		) 2drop
+	markregout
+	dumpregs
+|	"r4asm/cod.asm" savemem
+	;
+

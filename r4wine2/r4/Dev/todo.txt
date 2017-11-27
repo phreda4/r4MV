@@ -1,0 +1,192 @@
+| MC 2013
+| -------
+
+^r4/lib/gui.txt
+^r4/lib/math.txt
+^r4/lib/mouse.txt
+^r4/lib/graf.txt
+^r4/lib/rfont.txt
+^r4/lib/formkit.txt
+^inc/rft/robotoregular.rft
+
+#under.mouse -1
+#objs )( 20000
+#pad 4
+#buffer )( 64
+#dragging? 0
+#dx 0
+#dy 0
+#obj.sel -1
+
+:s!+ | ( mem val -- mem+4 )
+swap !+ ;
+
+| objects :         nobjs, [ x, y, len, chars ] * nobjs
+
+:dummy.data
+	5 'objs !+
+	200 s!+ 110 s!+ 3 s!+ "abc" swap strcpyl
+	300 s!+ 410 s!+ 6 s!+ "123456" swap strcpyl
+	600 s!+ 410 s!+ 8 s!+ "________" swap strcpyl
+	20  s!+ 410 s!+ 2 s!+ "mM" swap strcpyl
+	230 s!+ 510 s!+ 27 s!+ "A longer string -_98+mMjJkK" swap strcpyl ;
+|       x       y       len   str
+
+:next.obj | ( mem -- mem.next ) returns pointer to next object
+8 + dup @ 1+ 4 + + ;
+
+:n.objs | ( -- nobjs )
+'objs @ ;
+
+:get.ptr | ( obj.num -- ptr.mem ) pointer to object obj.num
+'objs 4 + >r 1- ( +? )( r> next.obj >r 1- ) drop r> ;
+
+:get.size | ( obj.num -- size ) size in bytes of object obj.num
+get.ptr 8 + @ 13 + ;
+
+:get.total.size | ( -- total.size ) total size occupied by all objects
+0 >r n.objs ( +? )( dup get.size r> + >r 1- ) drop r> ;
+
+:get.next.obj.ptr | ( -- ptr ) ptr where to store the next object
+'objs get.total.size 4 + + ;
+
+:add.obj
+get.next.obj.ptr 270 s!+ 580 s!+ 3 s!+ "aha" swap strcpyl drop
+1 'objs +! ;
+
+:dec.n.objs 'objs @ 1- 0 max 'objs ! ;
+
+| calculate real size here
+:del.obj | ( ** )
+obj.sel -1 <>? ( n.objs <>? ( dup >r get.ptr r> 1+ get.ptr 10000 cmove )( drop ) dec.n.objs
+-1 'obj.sel ! )( drop ) ;
+
+:load.objs | ( -- )
+'objs "mem/todo.mem" load drop ;
+
+:save.objs | ( -- )
+'objs 10000 "mem/todo.mem" save ;
+
+:rot- | ( a b c -- c a b )
+rot rot ;
+
+:3dup | ( a b c -- a b c a b c )
+pick2 pick2 pick2 ;
+
+:4dup | ( a b c d -- a b c d a b c d )
+pick3 pick3 pick3 pick3 ;
+
+:add.padding | ( h w x y -- hh ww xx yy )
+pad neg dup 2d+ 2swap pad 2* dup 2d+ 2swap ;
+
+:debug 
+dup rojo "[%d]" print ;
+
+:pcr print cr ;
+
+:i@+ | ( mem -- @mem mem+4 )
+@+ swap ;
+
+:get.xy.ndrag
+get.ptr i@+ @ ;
+
+:get.xy.drag
+under.mouse -1 =? ( drop get.xy.ndrag dx dy 2d+ )( | canvas move
+=? ( get.ptr i@+ @ dx dy 2d+ )( get.ptr i@+ @ ) ) ; | single object move
+
+#get.xy.vector 'get.xy.ndrag 'get.xy.drag
+
+:get.xy 'get.xy.vector dragging? 4 * + @ exec ;
+
+:ini.dx.dy 
+0 dup 'dx ! 'dy ! ;
+
+:calc.wh | ( str -- w h )
+sizeprint nip cch ;
+
+:draw | ( x y str ** )
+>r 2dup r calc.wh 2swap add.padding 4dup vfill negro rect atxy r> print ;
+
+:get.str | ( n -- mem )
+get.ptr 12 + ;
+
+:get.obj.attr | ( n -- x y str ) returns attributes of object #n 
+dup >r get.xy r> get.ptr 12 + ;
+
+| ---------------------------------------------------------------
+| put in math.txt
+
+::inf | ( x y -- 0/1 ) 1 if x < y
+      <? ( 1 )( 0 ) nip ;
+
+::sup | ( x y -- 0/1 ) 1 if x > y
+      >? ( 1 )( 0 ) nip ;
+
+| ---------------------------------------------------------------
+
+:inside.screen | ( x y str -- 0/1 ) is the object inside the screen ? SW/SH
+3dup calc.wh 2d+ 0 inf >r 0 inf >r drop sh sup >r sw sup r> r> r> or or or 1 xor ;
+
+:draw.arrow drop op sw 2/ sh 2/ line ;
+
+:draw.obj | ( n -- )
+dup >r get.obj.attr 3dup inside.screen 1 =? ( drop
+r obj.sel =? ( drop verde draw )( drop draw )
+)( drop draw.arrow ) rdrop ;
+
+:draw.list.objs | ( -- )
+n.objs ( +? )( dup amarillo under.mouse =? ( oscuro ) draw.obj 1- ) drop ;
+
+:txtin 
+azul 'buffer 64 input ;
+
+:new.obj ;
+
+:screen.setup 
+$cccccc paper robotoregular 0.1 %s rfont! rojo 'exit "Exit" 1 menur
+ 'add.obj "New" 1 menur
+ 'del.obj "Del" 1 menur
+sp sp negro debug cr cr handle.mouse cr cr ;
+
+:get.wh.xy | ( n -- w h x y )
+dup get.str calc.wh rot get.xy add.padding ;
+
+| ne pas recalculer si un seul obj est en cours de drag
+:under.mouse.object  | returns first object under the mouse
+dragging? +? ( drop under.mouse +? ( drop ; )( drop ) )( drop )
+n.objs ( +? )( dup get.wh.xy mouse.on.rect? 1 =? ( drop 'under.mouse ! ; )( drop ) 1- ) drop -1 'under.mouse ! ;
+
+:shift.obj | ( n ** )
+dup >r get.xy swap r> get.ptr !+ ! ;
+
+:shift.objects | shift all objects by (dx, dy)
+n.objs ( +? )( dup shift.obj 1- ) drop ini.dx.dy ;
+
+:drag.on | ( ** )
+dragdx dragdy 'dy ! 'dx ! 1 'dragging? ! ;
+
+:drag.off | ( ** )
+dragging? 1? ( shift.objects 0 'dragging? ! ) drop ;
+
+#drag.vector 'drag.off 'drag.on
+
+:handle.dragging
+'drag.vector mdrag 4 * + @ exec ;
+
+:edit.objs
+	screen.setup
+	0 'buffer !
+	show clrscr
+	     screen.setup
+	     amarillo
+	     360 460 'buffer draw
+	     360 460 atxy txtin
+	     under.mouse.object
+	     draw.list.objs
+	     handle.dragging
+	     cminiflecha
+	     bmouse 1 =? ( under.mouse +? ( 'obj.sel ! )( drop ) ) drop
+	     'exit >esc< ;
+
+: dummy.data save.objs | <---------- make sure new format is used, to be removed.....
+  load.objs 33 edit.objs save.objs ;

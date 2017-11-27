@@ -1,0 +1,167 @@
+| Dynamic Memory Management
+| Based on http://www.bradrodriguez.com/papers/ms/pat4th-c.html
+| Uses first fit.
+| tag : 30 bits size + 1 bit last? block + 1 bit used? block
+| each block is : [4 bytes tag]< size bytes of memory>[4 bytes tag]
+| --------------------------------------------------------------------
+| Exported :
+| dmms pointer to heap
+| dmminit ( n -- ) initializes heap
+| alloc ( n -- ptr/-1 ) allocates a block
+| release ( ptr -- ) releases a block
+| bsize ( ptr -- size ) size of block ptr points to
+
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+
+#:dmms -1 | pointer to start of dynamic memory system
+
+| write the tags for a block ( size ptr bits -- )
+:wtags! pick2 2 << or         | size ptr flag
+	2dup >r 4 - r> swap ! | write tag 1
+	>r + r> swap ! ;      | write tag 2
+
+| ( size -- ) initializes the dmm memory	  
+::dmminit dup mark here 4 + dup dup 'dmms ! rot + 4 + 'here ! %10 wtags! ;
+
+:t 4 - @ ;
+:d>u dup t 1 and ;
+:d>l dup t %10 and 1 >> ;
+:d>s dup t 2 >> ;
+:np d>s + 8 + ;
+:nextptr dup np ;
+:prevptr dup dup 8 - @ 2 >> - 8 - ;
+
+::bsize t 2 >> ;
+
+| -- ALLOC CODE --
+
+| allocates full existing free block ( n ptr -- ptr )
+:full nip dup d>s swap d>l 1 << 1 or wtags! ;
+
+| splits existing free block into 2 ( n ptr -- ptr )
+| 1st block: n               ptr      (l=0,u=1)
+| 2nd block: (btagsize-n-8) (ptr+n+8) (l=btaglast,u=0,)
+:split 2dup >r r
+       d>s rot - 8 - swap d>l 1 << swap pick4 + 8 + swap wtags! | 1st block
+       %01 wtags! r> ;                                          | 2nd block
+
+:trynext d>l 1 =? ( 3drop -1 ; ) drop np
+:allocrec d>u 1 =? ( drop trynext ; ) drop         | used ?
+	  d>s rot swap >? ( swap trynext ; ) swap  | fits ?
+:allochere d>s pick2 - 16 >? ( drop split ; ) drop full ;
+
+| Memory allocating word ( n -- ptr/-1 )
+::alloc dmms allocrec ;
+
+| -- RELEASE CODE --
+
+| Release block ( ptr -- )
+| The R stack keeps size and bits as the next and the prev blocks are visited for possible absorption
+| ::release d>l 1 << >r
+| 	  d>s >r
+| 	  d>l 0 =? ( drop nextptr d>u 0 =? ( drop d>s r> + 8 + rdrop swap d>l 1 << >r swap >r drop )( 2drop ) )( drop ) | next block
+| 	  dmms <>? ( prevptr d>u 0 =? ( drop d>s r> + 8 + >r nip )( 2drop ) )                                           | prev block
+| 	  r> swap r> wtags! ;
+
+#rsize #rbits 
+
+:rmergenext d>s rsize + 8 + 'rsize ! d>l 1 << 'rbits !  ;
+:rnextblock nextptr d>u 0 =? ( drop rmergenext drop ; ) 2drop ;
+
+:rmergeprev d>s rsize + 8 + 'rsize ! ;
+:rprevblock prevptr d>u 0 =? ( drop rmergeprev nip ; ) 2drop ;
+
+:checknext d>l 0 =? ( drop rnextblock )( drop ) ;
+:checkprev dmms <>? ( rprevblock ) ;
+
+::release d>l 1 << 'rbits ! d>s 'rsize !
+	  checknext checkprev
+	  rsize swap rbits wtags! ;
+
+
+
+
+
+	  
+	  
+	  
+| --------------------- DEBUG SECTION --------------------------------
+
+#tag #ptr  
+
+:tag>last tag %10 and 1 >> ;
+:tag>used tag %1 and ;
+:tag>size tag 2 >> ;
+
+:nextblock tag>size ptr + 8 + 'ptr ! ptr 4 - @ 'tag ! ;
+
+:pblock | here "HERE: %d" print cr
+	dmms "DMMS: %d" print cr
+	ptr "Block ptr: %d " print cr
+	ptr 4 - @ "tag1: %d " print cr
+|	ptr ptr 4 - @ 2 >> + @ "tag2: %d " print cr
+	tag>last tag>used "Used/Last: %d/%d" print cr
+	tag>size "Size: %d bytes" print cr cr cr ;
+
+:printdmm dmms 'ptr ! ptr 4 - @ 'tag !
+:printdmmrec pblock tag>last 1 =? ( drop ; ) drop nextblock printdmmrec ;
+
+| ----------------------------------
+
+#size #walkptr 
+#bx 0 #by 50 #h 20
+
+| ( n -- ) draws a sequence of pixels left to right, top to bottom
+:sequence dup bx + sw <=? ( drop dup h bx by vfill bx + 'bx ! ; )
+	  sw - sw bx - sequence 0 'bx ! by h + 'by !
+	  sequence drop ;
+
+:adjust walkptr ptr =? ( oscuro ) drop ;
+	  
+:dtag gris adjust 4 sequence ;
+
+:dmem tag>used 1? ( rojo )( verde ) drop adjust tag>size sequence ;
+
+:dblock dtag dmem dtag blanco ;
+	
+:drawdmm dmms 'ptr ! ptr 4 - @ 'tag !
+:drawdmmrec dblock tag>last 1 =? ( drop ; ) drop nextblock drawdmmrec ;
+
+| ----------------------------------
+
+:debug dup "%d" print cr cr ;
+
+:f2i 0.5 + 1024.0 *. 16 >> ;
+
+:tag 4 - @ ;
+:lastbit %10 and 1 >> ;
+:nextptr walkptr tag lastbit 1 =? ( drop ; ) drop walkptr dup tag 2 >> + 8 + 'walkptr ! ;
+:prevptr walkptr dmms =? ( drop ; ) dup 8 - @ 2 >> - 8 - 'walkptr ! ;
+
+:newalloc size f2i alloc -1 <>? ( 'walkptr ! )( drop ) cr ;
+
+:newrelease walkptr -1 <>? ( release -1 'walkptr ! )( drop ) dmms 'walkptr ! ;
+
+:*. 16 *>> ;
+
+:go 10000 dmminit
+    dmms 'walkptr !
+    show clrscr
+    blanco debug
+    size f2i "Bytes to allocate: %d" print sp sp rojo 'newalloc "Alloc" btnt 
+    verde 'nextptr "Next" btnt sp
+    amarillo 'prevptr "Prev" btnt sp
+    'nextptr >ri<
+    'prevptr >le<
+    azul 'newrelease "Release" btnt cr cr cr
+    0.25 0.025 fdim
+    -0.75 0.9 fpos
+    azul 'size hslide cr cr cr cr cr cr cr cr cr
+    1 'bx ! 50 'by ! drawdmm    
+    printdmm
+    cminiflecha
+    'exit >esc< ;
+
+: 33 go ;
+

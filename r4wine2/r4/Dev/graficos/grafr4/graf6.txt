@@ -1,0 +1,586 @@
+| rutinas graficas 4
+| para compilador
+| PHREDA 2012
+|----------------------------
+
+^r4/lib/gui.txt
+^r4/lib/fontj.txt
+^r4/lib/trace.txt
+
+#col1 $ffffff
+#col2 0
+#col
+
+#tex
+#mtx #mty
+#ma #mb
+#mex #mey
+
+|::ink 'col1 ! ;
+|::ink@ col1 ;
+
+#px #py
+#cx #cy
+#dx
+
+| lineas
+#xmin #xmax
+#ymin $ffff
+#ymax -1
+-1 -1 -1 -1 -1
+| lo borra el optimizador..por eso en ymax
+| segmentos
+| ymin x deltax ymax (cnt)
+#segs )( $3fff
+#segs> 'segs
+| activos por linea
+| @segs
+#activos )( 2048
+#activos> 'activos
+
+:activos!+ | v --
+	activos> !+ 'activos> ! ;
+:-activos	| --
+	'activos 'activos> ! ;
+
+|---------- GRAFICOS ------------
+:clamp0 | v -- v
+	dup neg 31 >> and ;
+
+:clampmax | v max -- v
+	swap over - dup 31 >> and + ;
+
+|----- mexcla de colores
+:acpx!+ | alpha col --
+	dup $ff00ff and				| alpha color colorand
+	px@ dup $ff00ff and 		| alpha color colorand inkc inkcand
+	pick2 - pick4 * 8 >> rot +	| alpha color inkc inkcandl
+	$ff00ff and >r				| alpha color inkc
+	swap $ff00 and 				| alpha px colorand
+	swap $ff00 and 				| alpha colorand pxa
+	over - rot * 8 >> + $ff00 and
+	r> or px!+  ;
+
+:gr_mix | a b al -- c (DWORD col,BYTE alpha)
+	>r
+	dup $ff00ff and pick2 $ff00ff and over - r * 8 >> + $ff00ff and
+    rot rot
+    $ff00 and swap $ff00 and over - r> * 8 >> + $ff00 and
+	or ;
+
+:mixcolor | niv -- color
+    1 <? ( col2 nip ; )
+    254 >? ( col1 nip ; )
+    col1 col2 rot gr_mix ;
+
+|*******************************
+::CP4 | xy --
+	'cy ! 'cx ! ;
+
+|*******************************
+::OP4 | xy --
+	'py ! 'px ! ;
+
+|----------- internas de pintado
+|----------------- solido
+:_setmixs	2drop ;	| y x --
+:_inkmixs	col1 ;	| -- c
+:_lines 			| cnt --
+	( 1? )( 1- col1 px!+ ) drop ;
+
+|----------------- degrade lineal
+:_setmixl | y x --
+	mtx - ma * swap mty - mb * - 'mex ! ;
+:_inkmixl | -- c
+    mex 8 >> mixcolor ;
+:_linel | cnt --
+	( 1? )( 1-
+		mex 8 >> mixcolor px!+
+		ma 'mex +! ) drop ;
+
+|----------------- degrade radial
+:distf | dx dy -- dis
+|	-? ( neg ) swap -? ( neg ) swap over <? ( swap ) | min max
+	abs swap abs swap over <? ( swap )
+	dup 8 << over 3 << + over 4 << - swap 2* -
+	over 7 << + over 5 << - over 3 << + swap 2* - ;
+
+:_inkmixr | -- c
+    mex mey distf 16 >> mixcolor ;
+:_liner	| cnt --
+	( 1? )( 1-
+	    mex mey distf 16 >>
+		mixcolor px!+
+	    ma 'mex +! mb 'mey +!
+		) drop ;
+
+:_setmixr | y x --
+:_setmixt | y x --
+    dup mtx - ma * pick2 mty - mb * - 'mex !
+    mtx - mb * swap mty - ma * + 'mey ! ;
+
+|------------------ textura
+:_inkmixt | -- c
+    mex 8 >> $ff and mey $ff00 and or 2 << tex + @ ;
+:_linet	| cnt --
+	( 1? )( 1-
+	    mex 8 >> $ff and mey $ff00 and or 2 << tex + @ px!+
+	    ma 'mex +! mb 'mey +!
+		) drop ;
+
+|--------------------
+#hmix_	'_setmixs
+#hink_	'_inkmixs
+#hlin_	'_lines
+
+| hmix_ exec	| y x --
+| hink_ exec	| -- c
+| hlin_ exec	| cnt --
+|*******************************
+::FMAT4 'mb ! 'ma ! ;
+::FCEN4 'mty ! 'mtx ! ;
+::FCOL4 'col2 ! 'col1 ! ;
+
+::SFILL4	'_setmixs 'hmix_ ! '_inkmixs 'hink_ ! '_lines 'hlin_ ! ;
+::RFILL4	'_setmixr 'hmix_ ! '_inkmixr 'hink_ ! '_liner 'hlin_ ! ;
+::LFILL4	'_setmixl 'hmix_ ! '_inkmixl 'hink_ ! '_linel 'hlin_ ! ;
+::TFILL4	'tex ! '_setmixt 'hmix_ ! '_inkmixt 'hink_ ! '_linet 'hlin_ ! ;	| tex --
+
+|---- agrega segmentos ordenados
+:calt | dx -- t
+	0? ( ; )		| tipo 0, linea vertical
+	-? ( -1.0 >? ( 0 nip ) )
+	16 >> 0? ( 1+ ; )		| tipo 1, vertical suave
+
+|	$ff00 swap / 4 <<
+|	-? ( neg 3 or ; ) 2 or ;
+
+	-? ( neg 3 )( 2 )	| tipo 2, positivo tipo 3, negativo
+	$ff00 rot 1+ / 4 << or ;
+
+:insseg | ymax deltax x ymin seg --
+	20 + dup
+	20 + over segs> over - 2 >> move>
+	!+ !+ over >r !+ !+
+	r> calt swap !
+	20 'segs> +! ;
+
+:addseg | ymax deltax x ymin --
+	pick3 >? ( 4drop ; )		| (*1) clip invierte
+	segs> ( 'segs >=? )( 20 -
+		dup @ pick2 <? ( drop insseg ; )	| ordena por ymin
+		pick2 =? ( drop dup 8 + @			| ordena por deltax si son =
+			pick4 <? ( drop insseg ; ) )
+		drop ) drop
+	segs> !+ !+ over >r !+ !+
+	r> calt swap !+ 'segs> ! ;
+
+#horiz )( 2048
+#horiz> 'horiz
+
+:-horiz		'horiz 'horiz> ! ;
+:horiz!+	horiz> !+ 'horiz> ! ;  | valor --
+
+:plinehoriz | x y --
+	sh >=? ( -1 nip ) -? ( drop 'px ! ; )
+	horiz!+ 	| y
+	px over dup 'px !
+	>? ( swap ) | max min
+ 	sw >=? ( 2drop -4 'horiz> +! ; )
+	clamp0
+	swap -? ( 2drop -4 'horiz> +! ; )
+	sw clampmax
+	16 << or
+	horiz!+	| y x1 x2
+	;
+
+|************************************
+::PLINE4 | x y --
+	py =? ( plinehoriz ; ) |drop 'px ! ; )
+	over px - 16 << over py - 				| x y dx dy
+	-? ( / py 2over )( / over px py )	| x y deltax ymax xmin ymin
+	sh >? ( 4drop 'py ! 'px ! ; )
+	-? ( neg pick3 16 *>> + 0 )
+	ymin <? ( dup 'ymin ! )
+	>r >r
+	-? ( rdrop rdrop 2drop 'py ! 'px ! ; )
+	ymax >? ( dup 'ymax ! )
+	1-  | corta justo un pixel antes, genera (*1)
+	swap r> 16 << r>
+	addseg | ymax deltax xmin ymin --
+	'py !
+	xmin <? ( dup 'xmin ! )
+	xmax >? ( dup 'xmax ! )
+	'px ! ;
+
+|---------------------------------------
+|---------------------------------------
+|---------------------------------------
+#xb
+:n@		xb neg px+! ;
+
+|------------------------------------
+:fillactd | y adr -- y adr
+	>r r@+ r@+  	| y p1 p2
+	4+
+	dup 8 + @ pick3 =? ( 0 r 4 - ! ) drop
+	dup @+ swap @ rot over swap +!
+	rot				| y x2 d2 p1
+	4+
+	dup 8 + @ pick4 =? ( 0 r 8 - ! ) drop
+	dup @+ swap @ rot over swap +!
+	"%f %f %f %f " print
+					| y x2 d2 x1 d1
+	cr
+	r> ;
+
+:log | "" --
+	count "trace.log" append ;
+
+|---------------------------------------------------
+:inaa | y adr x x1 x2 t --    x1>x2
+	>r	|	over >? ( trace )
+	$ff00 rot sw clampmax
+	rot sw >=? ( rdrop 3drop ; )
+	-? ( r * rot + swap 0 ) | alpha x2 x1
+	2dup px+! 'xb !
+	- r> rot rot                | t alpha cnt
+	hink_ exec 'col !
+|	-? ( trace )
+	( 1? )( 1- >r dup 8 >> col acpx!+ over - r> )
+	3drop n@ ;
+
+:outaa | x1 x2 t -- ;x1>x2
+	>r  |	over >? ( trace )
+	$0 rot sw clampmax
+	rot sw >=? ( rdrop 3drop ; )
+	-? ( neg r * rot + swap 0 ) | alpha x2 x1
+	2dup px+! 'xb !
+	- r> rot rot 		| delta alphai cnt
+	hink_ exec 'col !
+|	-? ( trace )
+	( 1? )( 1- >r dup 8 >> col acpx!+ over + r> )
+	3drop n@ ;
+
+:fillaa | x1 x2 --
+	over <? ( swap )	| ** quitar!!
+	-? ( 2drop ; ) sw clampmax
+	swap sw >=? ( 2drop ; ) clamp0
+	2dup px+! 'xb ! - hlin_ exec n@ ;
+
+|---------------------------------------------------
+
+:i0 | y adr p1 x1 xd t -- y adr xi	| recta
+	2drop nip 16 >>
+|	pick2 over clamp0 hmix_ exec
+	;
+
+:i1 | y adr p1 x1 xd t -- y adr xi	| punto
+	drop over + rot !		| y adr x1
+	dup 16 >>
+|	pick3 over clamp0 hmix_ exec
+	-? ( nip ; ) sw >=? ( nip ; )
+	dup px+!
+	swap 8 >> $ff and hink_ exec acpx!+
+	1+ dup neg px+! ;
+
+:i2	| y adr p1 x1 xd t -- y adr xi	| in positivo
+	>r
+	over + rot over swap !	| y adr x1 < x2
+	16 >>
+|	pick3 over clamp0 hmix_ exec
+	-? ( rdrop nip ; )
+	swap 16 >> sw >=? ( rdrop drop ; )
+	pick3 sh 1- =? ( rdrop 2drop 1+ ; ) drop 	| y adr x2 > x1
+	1- swap over
+	sw px+! r> 4 >> inaa sw neg px+! 1+ ;
+
+:i3 | y adr p1 x1 xd t -- y adr xi | in negativo
+	>r
+	over + rot over swap !	| y adr x1 > x2
+	16 >> sw >=? ( rdrop nip ; )
+	swap 16 >>
+|	pick3 over clamp0 hmix_ exec
+	-? ( rdrop drop ; )
+	dup rot
+	r> 4 >> inaa ;
+
+#tin i0 i1 i2 i3
+
+:o0	| y adr p2 x2 xd t xi -- y adr
+	nip nip sw >=? ( 3drop ; )	| y adr p2 x2 xi
+	swap 16 >> 1+ -? ( 3drop ; )
+	swap fillaa drop ;
+
+:o1 | y adr p2 x2 xd t xi -- y adr
+	nip >r + dup rot ! r> | y adr x2. xi
+	sw >=? ( 2drop ; ) 				| y adr x2 xi
+	over 16 >> 1+ -? ( 3drop ; )	| y adr x2 xi < xj
+	fillaa 							| y adr x2
+	-? ( drop ; )
+	dup 16 >> 1+ sw >=? ( 2drop ; )
+	dup px+! 1+ 'xb !
+	8 >> not $ff and hink_ exec acpx!+
+	n@ ;
+
+:o2	| y adr p2 x2 xd t xi -- y adr
+ 	swap >r >r
+	over + rot over swap ! | y adr x1 > x2
+	-? ( rdrop rdrop 2drop ; )
+	16 >> swap 16 >> |sw >=? ( rdrop rdrop 2drop ; )
+	swap r> pick2 1+ fillaa
+	swap r> 4 >> outaa
+	;
+
+:o3	| y adr p2 x2 xd t xi -- y adr
+ 	swap >r >r
+	over + rot over swap ! 		| y adr x1 < x2
+	-? ( rdrop rdrop 2drop ; )
+	16 >> swap 16 >>			| y adr x2. > x1.
+	dup r> fillaa | y adr x1 x2	; over
+	pick3 sh 1- =? ( rdrop 3drop ; ) drop
+	sw px+! swap r> 4 >> outaa sw neg px+!
+	;
+
+#tout o0 o1 o2 o3
+
+:fillact | y adr -- y adr'
+    @+ 4+ 	| y ad p1 x 0
+	dup 8 + @ pick3 =? ( 0 pick3 4 - ! ) drop
+	dup @+ | y adr p1 pp x1
+
+	pick4 over 16 >> clamp0 hmix_ exec
+
+	swap @+ swap 4+ @	| y adr p1 x1 xd t
+	dup $3 and 2 << 'tin + @ exec | y adr x1.
+	>r
+	@+ 4+
+	dup 8 + @ pick3 =? ( 0 pick3 4 - ! ) drop
+	dup @+ swap @+ swap 4+ @	| y adr p2 x1 xd t
+	r>
+	over $3 and 2 << 'tout + @ exec
+	;
+
+|------------------------------------
+:filline | y -- y
+	'activos | primero ordena
+	@+ 0? ( 2drop ; )
+	4+ @ swap  			| x1 'act
+	( activos> <? )( @+ 	| x1 'act 'ac2
+		4+ @ rot 			| 'act x2 x1
+		<? ( over 8 - dup @+ swap @ rot !+ !
+				drop 12 - 'activos <? ( 4+ ) @+ 4+ @ )
+		swap ) 2drop
+	'activos | ahora dibuja
+	( activos> <? )(
+		fillact
+		) drop
+	'activos | borra
+	( activos> <? )(
+		@+ 0? ( drop 4 - activos> 4 - @ over ! -4 'activos> +! )( drop )
+		) drop
+	;
+
+:cadahor | adr -- adr'
+	>r
+	r@+ r@+ dup $ffff and swap 16 >> | y x1 x2
+	rot pick2 | x1 x2 y x1
+	2dup hmix_ exec
+	swap setxy swap - hlin_ exec
+	r> ;
+
+:enddraw
+	-horiz
+	'segs 'segs> !
+	$ffff dup  'xmin ! 'ymin !
+	-1 dup 'xmax ! 'ymax !
+	;
+
+|************************************
+::POLI4
+	xmin sw >? ( drop enddraw ; ) drop
+	xmax -? ( drop enddraw ; ) drop
+	sh ymax <? ( 'ymax ! )( drop )
+	-1 segs> ! | marca ultimo
+	-activos
+	'segs dup @ ymin | 'seg y1 ymin
+	0 over setxy
+	( ymax <? )(
+		( over =? )( nip
+			swap dup activos!+ | agrega nuevos
+			20 + dup @ rot )
+		filline
+		sw px+!
+		1+ ) 3drop
+	'horiz ( horiz> <? )( cadahor ) drop
+	enddraw ;
+
+|---------- zoom
+:setpixel | y x color -- y x
+	ink
+	48 pick2 - 2 << 200 +
+	48 pick2 - 2 << 200 +  |xr yr
+	swap
+	over 5 + over 4 +
+	cajaf
+	;
+
+:zoom128
+	0 0 setxy
+	48 ( 1? )( 1-
+		48 ( 1? )( 1-
+        	px@ setpixel
+			1 px+!
+			) drop
+		sw 48 - px+!
+		) drop
+	;
+
+
+
+:dumpseg
+	show clrscr
+	'segs
+	( segs> <? )(
+		@+ "y:%d " print @+ "x:%f " print @+ "dx:%f " print @+ "ymax:%d " print
+		@+ "t:%d" print cr
+		) drop
+		'exit >esc<
+	;
+
+#puntos
+15 1 18 6 19 4 11 5 -$ffffff
+
+#puntos
+10 5 4 9 19 15 16 10 -$ffffff
+
+#puntos
+5 5 20 5
+30 30
+20 20
+5 20
+4 30
+-$ffffff
+
+#puntoss )( 1024
+#nrop 16
+
+:movep
+	[ 1 'puntos nrop + +! ; ] <ri>
+	[ -1 'puntos nrop + +! ; ] <le>
+	[ 1 'puntos nrop 4+ + +! ; ] <dn>
+	[ -1 'puntos nrop 4+ + +! ; ] <up>
+	[ 8 'nrop +! ; ] <f1>
+	[ -8 'nrop +! ; ] <f2>
+	;
+
+:ypol
+	'puntos ( @+ -$ffffff <>? )(
+		drop
+		over over 4 - +!
+		4+ ) 3drop ;
+
+:xpol
+	'puntos ( @+ -$ffffff <>? )(
+		drop
+		4+ over over 4 - +!
+		) 3drop ;
+
+:movea
+	[ 1 xpol ; ] <dn>
+	[ -1 xpol ; ] <up>
+	[ 8 ypol ; ] <ri>
+	[ -8 ypol ; ] <le>
+	;
+
+:testpaint
+	$ff00ff $ff FCOL4
+	sw 2/ sh 2/ fcen4
+	xymouse sh 2/ rot - sw 2/ rot -
+	over dup * over dup * + 0? ( 1 nip ) >r | gracias IQ
+	swap neg r 16 <</ swap r> 16 <</ fmat4
+	rfill4
+	10 380 ( 1? )( 1-
+		dup pick2 hmix_ exec
+		over over setxy
+		420 hlin_ exec
+		swap 1+ swap ) drop
+	;
+
+:test2
+	blanco
+|	'puntos >r
+|	r@+ r@+ 2dup op ( r@+ -$ffffff <>? )( r@+ pline ) drop rdrop
+|	pline poli
+
+	'puntos >r
+	r@+ r@+ 2dup op4
+	( r@+ -$ffffff <>? )( r@+ pline4 ) drop rdrop
+	pline4
+
+   	azul $ff 'col1 !
+
+	$ff $ff0000 FCOL4
+	sw 2/ sh 2/ fcen4
+	xymouse sh 2/ rot - sw 2/ rot -
+	over dup * over dup * + 0? ( 1 nip ) >r | gracias IQ
+	swap neg r 16 <</ swap r> 16 <</ fmat4
+	rfill4
+
+	poli4
+
+	blink 1? (
+	'puntos >r
+	r@+ r@+ setxy $ffffff px!+
+	( r@+ -$ffffff <>? )( r@+ setxy $ffffff px!+ ) drop rdrop
+	) drop
+
+	blanco cr cr cr cr
+	scr 2dup  "%d %d" print
+	zoom128
+	movep
+|	movea
+	;
+
+
+:randpoli
+	rand 'col1 ! |ink
+	rand $1ff and
+	rand $1ff and
+	|xymouse
+	2dup op4
+	170 ( 1? )( 1-
+		rand 7 >> $7ff and 100 -
+		rand 7 >> $7ff and 100 -
+		pline4 ) drop
+	pline4 poli4 ;
+
+
+:dibujapoli
+|		msec 6 >> 'seed !
+	5 ( 1? )( 1- randpoli ) drop
+	;
+
+:makepoli
+	'puntos >r
+	20 ( 1? )( 1-
+		rand 7 >> $1ff and r!+
+		rand 7 >> $1ff and r!+
+		) drop
+	-$ffffff r> ! ;
+
+|----------------------------
+|----------------------------
+:main
+|	makepoli
+	show clrscr
+		cr cr cr
+
+		test2
+		|dibujapoli
+|		cflecha
+		'makepoli <f1>
+		'exit >esc<
+		;
+
+: 33 main ;

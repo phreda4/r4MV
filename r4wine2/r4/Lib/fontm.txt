@@ -1,0 +1,57 @@
+| font monospace
+| PHREDA 2014
+|-------------------------------
+^r4/lib/grpix.txt
+^r4/lib/print.txt
+
+:a00 1 a+ ;
+:a01 a@ ink@ color33% a!+ ;
+:a10 ink@ a@ color33% a!+ ;
+:a11 ink@ a!+ ;
+
+#acc a00 a01 a10 a11
+#acn a11 a10 a01 a00
+
+:charsizem | byte -- size
+	ccw nip ;
+
+:charline | sx n bit --
+	0? ( drop ccw a+ ; )
+	ccw ( 1? )( 1- swap dup $3 and 2 << 'acc + @ exec 2 >> swap ) 2drop ;
+
+:charm | c --
+    charlin * charrom + 
+	ccx ccy setxy
+	sw ccw -
+	cch ( 1? )( 1-
+		rot @+ charline rot rot
+		over a+
+		) 3drop ;
+
+::charmt | c --
+	$ff and charlin * charrom +
+	sw ccw -
+	cch ( 1? )( 1-
+        rot @+ charline rot rot
+		over a+
+		) 3drop ;
+
+:charlinen | sx n bit --
+	0? ( drop ccw ( 1? )( 1- ink@ a!+ ) drop ; )
+	ccw ( 1? )( 1- swap dup $3 and 2 << 'acn + @ exec 2 >> swap ) 2drop ;
+
+::charmtn | c --
+	$ff and charlin * charrom +
+	sw ccw -
+	cch ( 1? )( 1-
+        rot @+ charlinen rot rot
+        over a+
+		) 3drop ;
+
+
+::fontm | 'fontm --
+	@+ dup 2 << 'charlin !
+	swap @+ rot fixsize
+	'charrom !
+	'charm 'charsizem setfont ;
+

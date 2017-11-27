@@ -1,0 +1,56 @@
+^r4/lib/gui.txt
+^r4/lib/bbuffer.txt
+^r4/lib/trace.txt
+
+:tz
+	bb.clear
+
+
+	100 70 bop 30 200 bline 90 300 bline 100 70 bline $ff ink bpoly
+	100 70 bop 90 300 bline 300 80 bline 100 70 bline $ff0000 ink bpoly
+	50 60 bop 	100 380 bline xymouse bline 50 60 bline $ff00 ink bpoly
+
+	$ff00ff ink
+|	30 30 90 80 maskfpxy
+	100 40 120 maskfpx
+	100 41 120 maskfpx
+	100 42 120 maskfpx
+	cyan
+	110 41 130 maskfpx
+	110 42 130 maskfpx
+	110 43 130 maskfpx
+
+	$ff0000 bo!
+	400 100 300 bbh!
+	401 100 300 bbh!
+
+	$ff bo!
+	300 200 500 bbw!
+	300 201 500 bbw!
+	300 202 500 bbw!
+	300 203 500 bbw!
+	300 204 500 bbw!
+	300 205 500 bbw!
+
+	;
+
+#x 500 #y 200
+:main
+	mark
+	33
+	sw sh bb.ini
+	verde
+	show clrscr
+    	tz
+		x y over 40 + over 40 + bb.occ  "%d " print cr
+		azul x y op x 40 + y line x 40 + y 40 + line x y 40 + line x y line
+
+		[ 1 'x +! ; ] <ri>
+		[ -1 'x +! ; ] <le>
+		[ -1 'y +! ; ] <up>
+		[ 1 'y +! ; ] <dn>
+
+		dup "%d" print cr
+		'exit >esc< ;
+
+: main ;

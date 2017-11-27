@@ -1,0 +1,40 @@
+^r4/lib/gui.txt
+^r4/lib/morton.txt
+
+:testprog
+	0 ( 5 <? )(
+		0 ( 5 <? )(
+			0 ( 5 <? )(
+				pick2 pick2 pick2 swap rot "%d %d %d = " print
+				pick2 pick2 pick2 swap rot morton3d "%h    " print cr
+				allowchome
+				1+ ) drop
+			1+ ) drop
+		1+ ) drop ;
+
+:testproy
+	30 40 1
+	( 40 <? )(
+		pick2 pick2 pick2 "%d %d %d " print
+		pick2 pick2 pick2 morton3d " %h " print
+		pick2 over / pick2 pick2 / "%d %d" print cr
+		1+ ) 3drop
+	;
+
+:testnext
+	0 0 0
+	20 ( 1? )( 1-
+		>r
+		pick2 pick2 pick2  "%d %d %d" print cr
+		m3dnext
+		r> ) 4drop
+	;
+
+:main
+	show clrscr |chome!
+|		testproy
+		testnext
+		'exit >esc<
+		;
+
+: mark main ;

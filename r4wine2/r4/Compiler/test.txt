@@ -1,0 +1,42 @@
+^r4/lib/gui.txt
+
+#var 4
+#coso 7
+#a1 1
+#b 1 2 3
+#c 'a1
+#d 'a1 'b
+
+:cuad
+	0? ( ; )
+	dup * + ;
+
+
+:nsqrt |n
+	0? ( ; )
+	0 $40000000 pick2 clz $fe and >>
+	( 1? )(
+		rot pick2 pick2 +	| root bit numb
+		>=? ( pick2 pick2 + - rot 2/ pick2 + )( rot 2/ )
+		rot 2 >> ) drop nip ;
+
+:testr
+	[ 1 'a1 +! ; ] <f1>
+	[ -1 'a1 +! ; ] <f2>
+	;
+
+
+:main
+	a1 c drop
+	'b 'd 2drop
+	3 cuad
+	var 1 + coso + 5 *
+	25 nsqrt 'a1 !
+	show clrscr
+	  	"Hello Human!" print
+		testr
+		'exit >esc<
+		cminiflecha
+		;
+
+: main ;

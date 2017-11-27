@@ -1,0 +1,377 @@
+| token run r4
+| PHREDA 2013
+|----------------------------------
+^r4/lib/macrosr4.txt
+^r4/lib/xfb.txt
+^r4/ide/r4-dicc.txt
+^r4/ide/r4-vstack.txt
+
+#msg
+
+#memsrc		| memoria token>src
+#memdicc	| memoria del diccionario
+#memvars	| memoria de variables
+#freemem	| memoria libre
+
+:nro>tok	dic>tok	@ ;
+::nro>mem    2 << memdicc + @ ;
+
+#:<<ip
+#:<<bp
+
+#sxc #syc #sink
+
+:sxy! | x y --
+	'syc ! 'sxc ! ;
+:emu**
+	>xfb ink@ 'sink ! ;
+:**emu
+	sink ink sxc syc op xfb> ;
+
+|---- Comprobaciones
+:dstack? | cnt --
+	3 << neg dpila> +
+	'dpila >=? ( drop ; ) drop
+	"data stack empty" 'msg ! 0 nip ;
+
+:rstack? | cnt --
+	3 << neg rpila> +
+	'rpila >=? ( drop ; ) drop
+	"return stack empty" 'msg ! 0 nip ;
+
+:progmem? | adr -- adr
+|	'tokencod >=? ( tokencod> <=? ( ; ) )
+	"fuera de codemem" 'msg ! 0 nip ;
+
+:datamem? | adr -- adr 0/1
+|	memvar >=? ( freemem <=? ( ; ) )
+	"fuera de datamem" 'msg ! 0 nip ;
+
+|--- interprete
+:i0 :i: :i:: :i# :i#: :i| :i^ drop ;
+
+:idec	tok>cte d.pushDec ;
+:ihex	tok>cte d.pushHex ;
+:ibin	tok>cte d.pushBin ;
+:ifix	tok>cte d.pushFix ;
+:istr	tok>mem d.pushStr ;
+
+|--------- ejecuta palabra
+:iwor	8 >>
+		dic>tok @ swap r.pushExe ;
+
+:ivar	8 >>
+		nro>mem @ d.pushVar ;
+:idvar	8 >>
+		nro>mem d.pushDVar ;
+:idwor	8 >>
+		dic>tok @ d.pushDCod ;
+
+|--- retorna
+:i;		drop r.cnt 0? ( nip ; ) 2drop r.pop ;
+
+|--- estructuras de control
+:i)(
+:i)		8 >> + ;
+:i(     drop ;
+:i[     over d.pushExe 8 >> + ;
+:i]     drop ;
+
+|--ahora sin value desde aca
+:iEXEC
+	d.pop 0? ( drop ; )
+	swap r.pushExe
+	|	progmem?
+	;
+
+:i0?	@+ d.TOS 0? ( 2drop ; ) drop 8 >> + ;
+:i+?	@+ d.TOS +? ( 2drop ; ) drop 8 >> + ;
+:i-?	@+ d.TOS -? ( 2drop ; ) drop 8 >> + ;
+:i1?	@+ d.TOS 1? ( 2drop ; ) drop 8 >> + ;
+:i=?	@+ d.NOS d.pop =? ( 2drop ; ) drop 8 >> + ;
+:i<?	@+ d.NOS d.pop <? ( 2drop ; ) drop 8 >> + ;
+:i>?	@+ d.NOS d.pop >? ( 2drop ; ) drop 8 >> + ;
+:i<=?	@+ d.NOS d.pop <=? ( 2drop ; ) drop 8 >> + ;
+:i>=?   @+ d.NOS d.pop >=? ( 2drop ; ) drop 8 >> + ;
+:i<>?   @+ d.NOS d.pop <>? ( 2drop ; ) drop 8 >> + ;
+:iAND?  @+ d.NOS d.pop AND? ( 2drop ; ) drop 8 >> + ;
+:iNAND? @+ d.NOS d.pop NAND? ( 2drop ; ) drop 8 >> + ;
+
+|--- memoria
+:i@     d.pop @ d.pushVar ;
+:iC@	d.pop c@ d.pushVar ;
+:iW@    d.pop w@ d.pushVar ;
+:i!     d.pop2 ! ;
+:iC!    d.pop2 c! ;
+:iW!    d.pop2 w! ;
+:i+!	d.pop2 +! ;
+:iC+!	d.pop2 c+! ;
+:iW+!	d.pop2 w+! ;
+:i@+	d.pop @+ swap d.pushVar d.pushVar ;
+:iC@+	d.pop c@+ swap d.pushVar d.pushVar ;
+:iW@+	d.pop w@+ swap d.pushVar d.pushVar ;
+:i!+	d.pop2 !+ d.pushVar ;
+:iC!+	d.pop2 c!+ d.pushVar ;
+:iW!+	d.pop2 w!+ d.pushVar ;
+
+#rega
+
+:i>A	d.pop 'rega ! ;
+:iA		rega d.pushVar ;
+:iA@    rega @ d.pushVar ;
+:iA!    d.pop rega ! ;
+:iA+	d.pop 'rega +! ;
+:iA@+	rega @+ d.pushVar 'rega ! ;
+:iA!+   d.pop rega !+ 'rega ! ;
+
+|---- pantalla
+:iSW 		sw d.pushDec ;
+:iSH  		sh d.pushDec ;
+:iFRAMEV	framev d.pushVar ;
+:iREDRAW    redraw ;
+:iUPDATE    1 update drop ;
+
+|---- dibujo
+:iOP    	d.pop2 2dup sxy! op ;
+:iLINE  	d.pop2 2dup sxy! line ;
+:iCURVE 	d.pop4 2over sxy! curve ;
+:iCURVE3 	d.pick65 sxy! d.pop6 curve3 ;	| falta
+:iPLINE 	d.pop2 2dup sxy! pline ;
+:iPCURVE 	d.pop4 2over sxy! pcurve ;
+:iPCURVE3 	d.pick65 sxy! d.pop6 pcurve3 ; | falta
+:iPOLI   	poli ;
+:iFCOL   	d.pop2 fcol ;
+:iFCEN   	d.pop2 fcen ;
+:iFMAT   	d.pop2 fmat ;
+:iSFILL  	sfill ;
+:iLFILL  	lfill ;
+:iRFILL  	rfill ;
+:iTFILL  	d.pop tfill ;
+
+:iPAPER  	d.pop paper ;
+:iINK    	d.pop ink ;
+:iINKF   	ink@ d.pushVar ;
+:iALPHA  	d.pop ALPHA ;
+|----- sis
+:iMSEC   	msec d.pushVar ;
+:iTIME   	time rot d.pushVar swap d.pushVar d.pushVar ;
+:iDATE   	date rot d.pushVar swap d.pushVar d.pushVar ;
+:iEND    	drop 0 ;
+:iRUNi   	vDROP ;
+|-----mouse
+:iXYMOUSE	xymouse swap d.pushVar d.pushVar ;
+:iBMOUSE    bmouse d.pushVar ;
+|-----teclado
+:iSKEY  	d.pop key! ;
+:iKEY		key d.pushVar ;
+|-----joystick
+:iCNTJOY    cntjoy d.pushVar ;
+:iGETJOY    d.pop GETJOY d.pushVar ;
+|--- carpetas
+:iFFIRST	d.pop FFIRST d.pushVar ;
+:iFNEXT		FNEXT d.pushVar ;
+|--- archivos
+:iLOAD      d.pop2 load d.pushVar ;  | 'from "filename" -- 'to
+:iSAVE      d.pop3 save ;   |  'from cnt "filename" --
+:iAPPEND	d.pop3 append ;   |  'from cnt "filename" --
+
+:iMEM       freemem d.pushVar ; | mem
+
+|--- mueve mem
+:iMOVE      d.pop3 move ;
+:iMOVE>     d.pop3 move> ;
+:iFILL     d.pop3 fill ;
+:iCMOVE     d.pop3 cmove ;
+:iCMOVE>    d.pop3 cmove> ;
+:iCFILL     d.pop3 cfill ;
+
+|--- sonido
+:iSLOAD     d.pop SLOAD d.pushVar ;  | "" -- n
+:iSPLAY     d.pop SPLAY ;  | n/0 --
+:iSINFO     d.pop SINFO d.pushVar ;  | "" -- n
+:iSSET		d.pop4 SSET ;  | pan vol freq "" --
+
+:iOPENURL	d.pop3 openurl d.pushVar ;
+
+|---------- tabla de saltos
+#tablai	| tabla de saltos de instrucciones
+i0 i: i:: i# i: i| i^		| 0 1 2 3 4 5 6
+idec ihex ibin ifix istr    | 7 8 9 a b
+iwor ivar idwor idvar		| c d e f
+i;
+i(		i)(		i)		i[		i]		iEXEC
+i0?		i+?		i-?		i1?		i=?		i<?		i>?		i<=?	i>=?	i<>?	iAND?	iNAND?
+vDUP	vDROP	vOVER	vPICK2	vPICK3	vPICK4	vSWAP	vNIP	vROT
+v2DUP	v2DROP	v3DROP	v4DROP	v2OVER	v2SWAP
+v>R		vR>		vR
+vAND	vOR		vXOR	vNOT	v+		v-		v*		v/		v*/
+v*>>	v/MOD	vMOD	vABS	vSQRT   vCLZ	v<</
+vNEG	v1+		v4+		v1-		v2/		v2*		v<<		v>>
+i@		iC@		iW@		i!		iC!		iW!		i+!		iC+!	iW+!	i@+		i!+		iC@+	iC!+	iW@+	iW!+
+i>A	iA iA@ iA! iA+ iA@+ iA!+
+iMOVE	iMOVE>	iFILL iCMOVE	iCMOVE> iCFILL
+iMEM	iFFIRST	iFNEXT
+iLOAD	iSAVE	iAPPEND
+iUPDATE
+iXYMOUSE iBMOUSE
+iSKEY	iKEY
+iCNTJOY	iGETJOY
+iMSEC	iTIME	iDATE	iEND	iRUNi
+iSW		iSH		iREDRAW
+iFRAMEV
+iINK	iINKF	iALPHA
+iOP		iLINE	iCURVE	iCURVE3 iPLINE	iPCURVE	iPCURVE3 iPOLI
+iFCOL	iFCEN	iFMAT	iSFILL	iLFILL	iRFILL	iTFILL
+iSLOAD	iSPLAY	iSSET	iSINFO					|--- Sonido
+iOPENURL
+
+|-------------------------------
+| Asigma memoria para ejecucion
+|-------------------------------
+
+:mem0 | nro --
+	freemem !+ 'freemem ! ;
+:mem1 | nro --
+	freemem w!+ 'freemem ! ;
+:mem2 | nro --
+	freemem c!+ 'freemem ! ;
+:mem3 | nro --
+	'freemem +! ;
+
+#gmem 'mem0
+
+:gstr | adr --
+	freemem
+	( swap c@+ 1? )( rot c!+ ) rot
+	c!+ 'freemem ! drop ;
+
+
+:accpal | val instr --
+	11 <? ( drop tok>cte gmem exec ; ) 	| nro
+	11 =? ( drop tok>mem gstr ; )		| str
+	16 <? ( drop 8 >>
+			dup dic>inf @
+			%1 and? ( drop nro>mem )( drop nro>tok )
+			mem0 ; )	| pal
+	17 =? ( 2drop 'mem2 'gmem ! ; ) | (
+	18 =? ( 2drop 'mem3 'gmem ! ; )	| )(
+	21 =? ( 2drop 'mem1 'gmem ! ; ) | [
+	2drop 'mem0 'gmem ! ;
+
+|i0 i: i:: i# i: i| i^ |6
+|idec ihex ibin ifix istr | 11
+|iwor ivar idwor idvar	| 15
+|i; i( i)( i) i[ i]		| 21
+
+:addmem | adr1token -- adr1token
+	'mem0 'gmem !
+	4+	| saltea definicion
+	( @+ 1? )(
+		dup $ff and
+		7 <? ( 3drop ; ) 21 >? ( 3drop ; )
+		accpal
+       ) 2drop ;
+
+:cadavar | nro -- nro
+	freemem ,	| para esta palabra...
+	dup dic>call@ 0? ( drop ; ) drop 		| sin llamadas
+	dup dic>inf @ 1 nand? ( drop ; ) drop	| es word
+	freemem
+	over dic>tok @ addmem
+	freemem =? ( 4 'freemem +! ) | si es variable sin nros
+	drop ;
+|------------------------------------------
+#:code<
+
+:escom
+	"WIN|" =pre 1? ( drop 5 + ; ) drop | Compila para WINDOWS
+	( c@+ 1? )( 10 =? ( drop 1- ; ) 13 =? ( drop 1- ; ) drop ) drop 1- ;
+
+:escad
+	1+ ( c@+ 1? )( 34 =? ( drop c@+ 34 <>? ( drop 1- ; ) ) drop ) drop 1- ;
+
+:pasapal
+	( c@+ 1? )( $ff and 33 <? ( drop 1- ; ) drop ) drop 1- ;
+
+:essp | quitar espacios
+    ( c@+ $ff and 33 <? )( 0? ( drop 1- ; ) drop )
+	$7c =? ( drop escom essp ; )		| $7c |	 Comentario
+	drop 1-	;
+
+:nexttoken | src -- src
+	dup c@ 0? ( drop ; )
+|	$5e =? ( drop esinc essp ; )			| $5e ^  Include
+	34 =? ( drop escad essp ; )		| $22 "	 Cadena
+	drop
+	pasapal essp ;
+
+::tok>src | tok -- src
+	code< - memsrc + @ ;
+
+::breakpoint | src --
+	memsrc ( @+ pick2 <? )( drop ) drop
+	4 - memsrc - code< +
+	nip '<<bp ! ;
+
+::tokenmem
+	here 'memsrc !
+	indicepal< @+ 1- swap @ dup 'code< !
+	( code> <? )( swap dup , nexttoken swap 4+ ) drop
+	here dup 'memdicc !
+	cntwords 2 << + dup 'freemem ! 'memvars !
+	0 ( cntwords <? )( cadavar 1+ ) drop
+	freemem 'here !
+	;
+
+|-------------------------------
+| palabras de interaccion
+|-------------------------------
+::resetvm | --
+	d.ini	| inicia pilad
+	r.ini	| inicia pilar
+	<<boot '<<ip !
+	;
+
+::stepvm | --
+	<<ip 0? ( drop ; )
+:stepvmi
+	**emu
+	(	@+ dup $ff and
+		21 >? ( nip )
+		2 << 'tablai + @ exec
+		code< >? )
+	'<<ip !
+	emu**
+	;
+
+::stepvmn | --
+	<<ip 0? ( drop ; )
+	dup @ $ff and $c <>? ( drop stepvmi ; ) drop
+	**emu
+	dup 4+ swap
+	( over <>? )(
+		@+ dup $ff and
+		21 >? ( nip )
+		2 << 'tablai + @ exec
+		0? ( '<<ip ! drop emu** ; )
+		) nip
+	'<<ip !
+	emu** ;
+
+::playvm | --
+	<<ip 0? ( drop ; )
+	**emu
+	( <<bp <>? )(
+		@+ dup $ff and
+		21 >? ( nip )
+		2 << 'tablai + @ exec
+		0? ( '<<ip ! emu** ; )
+		)
+	'<<ip !
+	emu** ;
+
+::tokenexec | token --
+	dup $ff and
+	21 >? ( nip )
+	2 << 'tablai + @ exec ;
+

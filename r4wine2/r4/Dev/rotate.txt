@@ -1,0 +1,17 @@
+^r4/lib/gui.txt
+^r4/lib/bmr.txt
+
+^inc/1492.bmr
+^inc/1492.spr
+
+:main
+	33
+	show clrscr verde
+		dup "%d img rotate test" print cr
+		sw 2/ sh 2/ msec 4 << 'avion bmr.drawr
+		xymouse 32 - swap 32 - swap msec 3 << 'auto bmr.drawr
+
+|		cmano
+		'exit >esc< ;
+
+: main ;

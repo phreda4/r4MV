@@ -1,0 +1,13 @@
+| framebuffer secundario
+| PHREDA 2017
+|-------------------------
+#mxfb
+
+::iniXFB
+	here 'mxfb !
+	sw sh * 2 << 'here +!
+	;
+
+::XFB 'mxfb ;
+::>XFB framev mxfb sw sh * MOVE ;
+::XFB> mxfb framev sw sh * MOVE ;

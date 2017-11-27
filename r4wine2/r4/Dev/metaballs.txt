@@ -1,0 +1,186 @@
+| Metaballs
+| http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/
+
+^r4/lib/gui.txt
+^r4/lib/dmm.txt
+
+| info about all disks in the scene
+#ndisks #disks | one disk : x y r = 3 words = 6 bytes
+#val #x #y #radius #x0 #y0 
+
+:bounds over -
+:randbtw | ( min max -- v )
+       over - rand abs swap mod + ;
+
+:ranx 50 sw bounds ;
+:rany 50 sh bounds ;
+:ranradius 50 100 randbtw ;
+       
+:new_disks
+      12 'ndisks !
+      disks
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w!+
+      ranx swap w!+ rany swap w!+ ranradius swap w! ;
+
+:debug dup "%d" print cr ;
+
+| converts current point ptr into x,y
+:updatexy dup sw mod 'x ! sw / 'y ! ;
+
+:disk_adr 6 * disks + ;
+
+:update_curdisk disk_adr w@+ 'x0 ! w@+ 'y0 ! w@ 'radius ! ;
+
+| fixed-point arithmetic
+:real10 10 << ;
+:mul10 10 *>> ;
+:div10 10 <</ ;
+:sq10 dup mul10 ;
+
+| process each disk
+| the value is accumulated in the val variable
+| what is being summed is: (radius^2)/((x-x0)^2+(y-y0)^2)
+:proc_disk update_curdisk
+	   x x0 =? ( drop y y0 =? ( 1 real10 'val ! drop ; )( drop ) )( drop )
+	   x x0 - radius 10 * >? ( drop ; ) drop
+	   y y0 - radius 10 * >? ( drop ; ) drop
+	   radius real10 sq10
+	   x x0 - real10 sq10
+	   y y0 - real10 sq10 +
+	   div10
+	   val + 'val ! ;
+
+| for each point compute influence of all disks
+:proc_pt updatexy
+	 0 'val !
+	 ndisks ( 0 >? )( 1- dup proc_disk ) drop
+	 val 1 real10 >=? ( x y op x y line ) drop ;
+
+| walk the whole screen	 
+:all_pts sw sh * 1- ( 0 >=? )( dup proc_pt 20 - ) drop ;
+
+:metaballs all_pts ;
+
+:drawdisks rojo ndisks ( 0 >? )( 1- dup update_curdisk x0 y0 radius circle ) drop ;
+
+#cbmb 0
+#cbgrid 1
+#cbms 1
+#cbdisks 1
+#ndiv -0.4
+#cellsize 1
+#ncols 1
+#nrows 1
+#pause 0
+
+| Converts slider value to [1,sw-1]
+:sval2cs 0.5 + sw sh min 2 - 16 << *. 16 >> 1 + ;
+
+:updategrid sw sh min 1- ndiv sval2cs / 'cellsize !
+	    sh cellsize / 'ncols !
+	    sw cellsize / 'nrows ! ;
+
+| drawing for each of the 16 possible configuration	    
+	    
+:drawms0000 ;
+:drawms0001 x                y cellsize 2 / + op
+	    x cellsize 2 / + y cellsize + line ;
+:drawms0010 x cellsize 2 / + y cellsize + op
+	    x cellsize     + y cellsize 2 / + line ;
+:drawms0011 x                y cellsize 2 / + op
+	    x cellsize     + y cellsize 2 / + line ;
+:drawms0100 x cellsize 2 / + y                op
+	    x cellsize     + y cellsize 2 / + line ;
+:drawms1000 x                y cellsize 2 / + op
+	    x cellsize 2 / + y                line ;
+:drawms0101 drawms1000
+	    drawms0010 ;
+:drawms0110 x cellsize 2 / + y                op
+	    x cellsize 2 / + y cellsize +     line ;
+:drawms0111 drawms1000 ;
+:drawms1001 drawms0110 ;
+:drawms1010 drawms0001
+	    drawms0100 ;
+:drawms1011 drawms0100 ;
+:drawms1100 drawms0011 ;
+:drawms1101 drawms0010 ;
+:drawms1110 drawms0001 ;
+:drawms1111 ;
+
+#drawmsvec 'drawms0000 'drawms0001 'drawms0010 'drawms0011 'drawms0100 'drawms0101 'drawms0110 'drawms0111
+	   'drawms1000 'drawms1001 'drawms1010 'drawms1011 'drawms1100 'drawms1101 'drawms1110 'drawms1111
+
+#bits 
+| calculates the bit pattern for a given 4-dot configuration
+| and draws corresponding line pattern
+| ! much is re-calculated at this stage...
+:drawmspt | ( x y -- )
+	cellsize * 'y ! cellsize * 'x !
+	0 'val ! 0 'bits !
+	ndisks ( 0 >? )( 1- dup proc_disk ) drop
+	val 1 real10 >=? ( bits %1000 or 'bits ! ) drop
+
+	x cellsize + 'x ! 0 'val !
+	ndisks ( 0 >? )( 1- dup proc_disk ) drop
+	val 1 real10 >=? ( bits %0100 or 'bits ! ) drop
+
+	y cellsize + 'y ! 0 'val !
+	ndisks ( 0 >? )( 1- dup proc_disk ) drop
+	val 1 real10 >=? ( bits %0010 or 'bits ! ) drop
+
+	x cellsize - 'x ! 0 'val !
+	ndisks ( 0 >? )( 1- dup proc_disk ) drop
+	val 1 real10 >=? ( bits %0001 or 'bits ! ) drop
+
+	naranja 'drawmsvec bits 4 * + @ exec ;
+	
+:drawdot | ( x y -- )
+	 cellsize * 'y ! cellsize * 'x !
+	 0 'val !
+	 ndisks ( 0 >? )( 1- dup proc_disk ) drop
+	 val 1 real10 >=? ( verde )( negro ) drop
+	 x y 2dup op line ;
+	 
+:drawgrid nrows ( +? )( ncols ( +? )( 2dup drawdot 1- ) drop 1- ) drop ;
+
+:drawms nrows ( +? )( ncols ( +? )( 2dup drawmspt 1- ) drop 1- ) drop ;
+
+:display 0.25 0.025 fdim -0.65 0.4 fpos
+	 verde 'ndiv hslide
+	 updategrid
+	 blanco ndiv sval2cs "N divides: %d" print cr cr
+	 cellsize "cell size: %d" print cr cr
+	 ncols nrows "N rows/N cols: %d/%d" print cr cr
+	 'cbdisks "Draw disks" btncheck cr cr
+	 'cbmb "Draw metaballs" btncheck cr cr
+	 'cbgrid "Draw grid" btncheck cr cr
+	 'cbms "Draw marching squares" btncheck cr cr
+	 cbmb 1? ( metaballs ) drop
+	 cbgrid 1? ( drawgrid ) drop
+	 cbms 1? ( drawms ) drop
+	 cbdisks 1? ( drawdisks ) drop ;
+
+:main show clrscr blanco
+      debug cr
+      display
+      'pause "Pause this madness" btncheck cr cr
+      pause 0? ( new_disks ) drop
+      cminiflecha
+      'exit >esc< ;
+      
+:init 10000 dmminit
+      6 100 * alloc 'disks !
+      new_disks ;
+
+: 33 init main ;
+

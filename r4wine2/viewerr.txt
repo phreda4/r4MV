@@ -1,0 +1,13 @@
+^r4/lib/gui.txt
+
+:main
+	mark
+	here dup "debug.err" load
+	0 swap !
+	empty 
+	fonti2 verde
+	show clrscr
+		here print
+		'exit >esc< ;
+
+: main ;

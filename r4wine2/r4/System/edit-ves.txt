@@ -1,0 +1,1174 @@
+| reanimator.txt
+| PHReda Nov2006,May17
+|-----------------------
+^r4/lib/gui.txt
+^r4/lib/dlg.txt
+^r4/lib/vesprite.txt
+
+^r4/lib/dlg.txt
+^r4/lib/dlgfile.txt
+^r4/lib/dlgcol.txt
+
+^r4/lib/ricons.txt
+^inc/ric/fontawesome.ric
+
+#modo
+#color
+#xv #yv #sv
+#ves 0
+#ves>
+
+| inicio x1y1 x2y2 color
+#tra 0
+#tra>
+
+| scrach pad
+#lin
+#lin>
+
+#po #pa
+#xf #yf
+#xfa #yfa
+#xsa #ysa
+#xca #yca
+#wpa #hpa
+
+#cursor
+#picktra -1
+
+#xmin #ymin #xmax #ymax	| box in screen
+#colp
+
+|----------------------------------
+:i.st
+	$7fffffff dup 'xmin ! 'ymin !
+	-$7fffffff dup 'xmax ! 'ymax ! ;
+
+:a.st | adr --
+    d>xy
+    ymax >? ( dup 'ymax ! ) ymin <? ( dup 'ymin ! ) drop
+    xmax >? ( dup 'xmax ! ) xmin <? ( dup 'xmin ! ) drop
+	;
+
+:t0 drop ;
+:t1 8 >> 'colp ! ;
+:t2 a.st @+ a.st ;
+:t3 drop 4+ ; | cen mat
+:t4 a.st ;
+:t7 a.st @+ a.st @+ a.st ;
+:tc 8 >> 'colp ! swap >r xmin ymin xy>d r!+ xmax ymax xy>d r!+ colp r!+ dup r!+ r> swap i.st ;
+
+#lbox t0 t1 t2 t3 t4 t4 t2 t7 t4 t4 t2 t7 tc tc tc tc
+:buildtra
+	ves> 4+ dup 'tra !
+	ves dup rot !+ swap i.st
+	( ves> <? )(
+     	@+ dup $f and 2 << 'lbox + @ exec
+		) drop
+	dup 'tra> !
+	dup 'lin ! 0 over ! 'lin> !
+	;
+
+:rebuild1tra | tra --
+	i.st
+	4 << tra +
+	@+ ( @+ dup $f and $c <? )(
+		2 << 'lbox + @ exec
+		) 3drop
+	xmin ymin xy>d swap !+
+	xmax ymax xy>d swap !
+	;
+
+:lastnode | adr -- adr'
+	( @+ $f and $c <? )( drop ) drop ;
+
+:getcolor | adr -- color
+	lastnode 4 - @ 8 >> ;
+
+|----------------------------------
+:resetves
+	ves 0 over ! 'ves> !
+	buildtra
+	-1 'picktra !
+	0 'cursor !
+	;
+
+|---------------------------------
+:p1 2dup 3 fbox ink@ >r gris 3 box r> ink ;
+:p2 2dup 3 fdiam ink@ >r gris 3 diam r> ink ;
+
+|---------- punto en poligono
+#inside
+
+:dline | p1 p2 --
+	2dup gc>xy op gc>xy line ;
+
+:entre | p1 p2 --
+|	dline
+	d>xy rot d>xy  | x1 y1 x2 y2
+	pick2 <? ( 2swap )
+	yf pick3 pick2 between -? ( 4drop drop ; ) drop
+	pick2 - swap pick3 -	| x1 y1 y2-y1 x2-x1
+	rot yf swap - *			| x1 (y2-1) (x2-x1)*(yf-y1)
+	rot xf swap - rot *		| (x2-x1)*(yf-y1) (xf-x1)*(y2-1)
+	>? ( 1 'inside +! ) drop ;
+
+:t0 drop ;
+:t1 drop 4+ ;
+:t4 po -1 =? ( drop dup 'pa ! 'po ! ; )
+	over dup 'pa ! 'po ! entre ;
+:t5 pa over 'pa ! entre ;
+:t6 swap @+ dup pa entre
+	rot dup 'pa ! entre ;
+:t7 swap @+ swap @+ | n3 n2 adr n1
+	dup pa entre 	| n3 n2 adr n1
+	rot dup rot entre |	n3 a n2
+	rot dup 'pa ! entre ;
+
+#ppo t0 t0 t1 t1 t4 t5 t6 t7 t4 t5 t6 t7
+
+:train? | adr -- 1/0
+	0 'inside !
+	-1 'po !
+	( @+ dup $f and $c <? )(
+		2 << 'ppo + @ exec
+		) 3drop
+	inside 1 and ;
+
+|-------
+:inmouse | x y -- 1/0
+	xymouse rot - dup * rot rot - dup * +
+	32 <=? ( 1 )( 0 ) nip ;
+
+:dotf | x1 y1 --
+	yfix 3 >> 'yf ! xfix 3 >> 'xf ! ;
+
+:indot | x y -- 1/0
+	yf - dup * swap xf - dup * +
+	32 <=? ( 1 )( 0 ) nip ;
+
+:in? | xm ym xM yM -- 0/1
+	rot yf rot rot between -? ( 3drop 0 ; ) drop
+	xf swap rot between -? ( drop 0 ; ) drop
+	1 ;
+
+:intr
+	( tra> <? )( 4+ >r
+		r@+ r@+ d>xy rot d>xy
+|		in? 1? ( drop r> 12 - tra - 4 >> ; ) drop
+		in? 1? ( drop r 12 - @ train? 1? ( drop r> 12 - tra - 4 >> ; ) ) drop
+		r> 4+ ) drop
+	-1 ;
+
+:intra | x1 y1 -- tra
+	dotf tra intr ;
+
+:innext | tra -- tra'
+	4 << tra + intr ;
+
+:searchtra | x y -- tra
+	intra -? ( ; )
+	( dup 1+ innext 0 >? )( nip ) drop ;
+
+:setpicktra
+	xymouse searchtra -? ( 'picktra ! ; )
+	dup 'picktra !
+    4 << tra +
+    4+ |@+ getcolor 'color !
+	@+ gc>xy 'ymin ! 'xmin !
+	@ gc>xy 'ymax ! 'xmax !
+	;
+
+|---------------------
+:vistall
+	sw dup 2/ 'xv !
+	sh dup 2/ 'yv !
+	min 64 - 'sv ! ;
+
+|----- curvas
+:cursor0 ;
+
+:cursor0c
+	gris
+	xca yca 2dup op xymouse line
+	verde 3 fbox ;
+
+:cursor1
+	xymouse line ;
+
+:cursor2
+	xymouse lin> 4 - @ gc>xy curve
+	gris
+	xca yca op
+	lin> 4 - @ gc>xy 2dup line
+	3 fdiam
+	;
+
+:cursor3
+	xca yca
+	xymouse
+	pick3 dup pick3 - +
+	pick3 dup pick3 - +
+	xca yca 2over curve
+	gris
+	2dup 3 fdiam 2over 3 fdiam
+	op line line
+	;
+
+:cursor4
+	xymouse
+	lin> 4 - @ gc>xy curve
+	gris
+	lin> 12 - >r
+	r@+ gc>xy 2dup op
+	r@+ gc>xy 2dup line 3 fdiam
+	op r> @ gc>xy 2dup line 3 fdiam
+	;
+
+:cursor4c
+	xymouse
+	lin> 4 - @ gc>xy curve
+	gris
+	lin> 12 - >r
+	r@+ gc>xy 2dup op
+	r> 4+ @ gc>xy 2dup line 3 fdiam 3 fdiam
+	;
+
+:cursor5
+	xca yca
+	xymouse
+	pick3 dup pick3 - +
+	pick3 dup pick3 - +
+	xca yca 2over lin> 4 - @ gc>xy curve3
+	gris
+	2dup 3 fdiam 2over 3 fdiam
+	op line line
+	;
+
+#ecursor 'cursor0
+#emodo 0
+
+:ins0
+	xymouse xy>gc 4 or
+	lin> !+ 'lin> !
+	'cursor1 'ecursor ! ;
+
+:ins0c
+	xymouse xy>gc
+	xca yca xy>gc 4 or
+	lin> !+ !+ 'lin> !
+	'cursor2 'ecursor ! ;
+
+:ins1
+	xymouse xy>gc 5 or
+	lin> !+ 'lin> !
+	'cursor1 'ecursor ! ;
+
+:ins2
+	lin> 4 - dup @ $fffffff0 and
+	xymouse xy>gc 6 or
+	rot !+ !+ 'lin> !
+	'cursor1 'ecursor ! ;
+
+:ins3
+	xca yca
+	xymouse
+	pick3 dup pick3 - +
+	pick3 dup pick3 - +
+	xy>gc rot rot xy>gc
+	2swap xy>gc 6 or
+	lin> >r r!+
+	swap r!+ r!+ r> 'lin> !
+	'cursor4 'ecursor !
+	;
+
+:ins4
+    lin> 4 - >r
+	r @ $fffffff0 and
+	xymouse xy>gc 6 or r!+
+	r!+ r> 'lin> !
+	'cursor1 'ecursor !
+	;
+
+
+:ins5
+	lin> 4 - >r
+	r @ $fffffff0 and
+	xca yca
+	xymouse
+	pick3 dup pick3 - +
+	pick3 dup pick3 - +
+	xy>gc rot rot xy>gc		| nc mou
+	2swap xy>gc 7 or		| nc mou ca
+	r!+ swap r!+ swap r!+
+	r!+ r> 'lin> !
+    'cursor4c 'ecursor !
+	;
+
+:closep
+	| la ultima curva(curda?)
+	ecursor
+	'cursor4 =? ( ins4 )
+	'cursor4c =? ( ins4 )
+	drop
+   	ves> >r
+	lin ( lin> <? )( @+ r!+ ) drop
+	color 8 << $c or r!+
+	0 r ! r> 'ves> !
+	buildtra
+	'cursor0 'ecursor !
+	;
+
+:remallp
+	lin 'lin> !
+	'cursor0 'ecursor !
+	;
+
+
+:t0 drop ;
+:t1 drop 4+ ;
+:t5 gc>xy op ;
+:t2 gc>xy line ;
+:t3 swap >r gc>xy r@+ gc>xy curve r> ;
+:t4 swap >r gc>xy r@+ gc>xy r@+ gc>xy curve3 r> ;
+
+#ltra t0 t0 t1 t1 t5 t2 t3 t4 t5 t2 t3 t4 t0 t0 t0 t0
+
+:drawdraw
+	lin lin> =? ( drop ecursor exec ; )
+	gris
+	( lin> <? )(
+		@+ dup $f and 2 << 'ltra + @ exec
+		) drop
+
+	rojo
+	ecursor exec
+
+	lin @ gc>xy
+	2dup inmouse 1? ( rojo 'closep guiBtn )( verde ) drop
+	3 fbox
+	;
+
+:drawlines
+	lin lin> =? ( drop ; )
+	gris
+	( lin> <? )(
+		@+ dup $f and 2 << 'ltra + @ exec
+		) drop ;
+
+|----
+:inip
+	xymouse 'yca ! 'xca !
+	0 'emodo ! ;
+
+:movp1
+	xymouse yca - abs swap xca - abs or
+	4 <? ( drop ; ) drop
+	1 'emodo !
+	ecursor
+	'cursor0 =? ( drop 'cursor0c 'ecursor ! ; )
+	'cursor1 =? ( drop 'cursor3 'ecursor ! ; )
+	'cursor2 =? ( drop 'cursor3 'ecursor ! ; )
+	'cursor3 =? ( drop 'cursor4 'ecursor ! ; )
+	'cursor4 =? ( drop 'cursor5 'ecursor ! ; )
+	'cursor4c =? ( drop 'cursor5 'ecursor ! ; )
+	drop
+	;
+
+:movp
+	emodo 0? ( drop movp1 ; ) drop ;
+
+:uppp
+	ecursor
+	'cursor0 =? ( drop ins0 ; )
+	'cursor0c =? ( drop ins0c ; )
+	'cursor1 =? ( drop ins1 ; )
+	'cursor2 =? ( drop ins2 ; )
+	'cursor3 =? ( drop ins3 ; )
+	'cursor4 =? ( drop ins4 ; )
+	'cursor4c =? ( drop ins4 ; )
+	'cursor5 =? ( drop ins5 ; )
+	drop
+	;
+
+|---- lineas
+:inid
+	xymouse xy>gc 8 or lin !+ 0 over ! 'lin> ! ;
+:movd
+	xymouse xy>gc 9 or lin> !+ 0 over ! 'lin> ! ;
+:updd
+   	ves> >r
+   	color 8 << 1 or r!+
+	lin ( lin> <? )( @+ r!+ ) drop
+|	color 8 << $c or r!+
+	0 r ! r> 'ves> !
+	buildtra
+	;
+
+:inicl	xymouse dup 'ymin ! 'ymax ! dup 'xmin ! 'xmax ! ;
+:movcl  xymouse 'ymax ! 'xmax ! ;
+
+|---- caja
+:updc
+	ves> >r
+	xmin ymin xmax ymax
+	2over xy>gc 4 or r!+
+	pick3 over xy>gc 5 or r!+
+	2dup xy>gc 5 or r!+
+	drop swap xy>gc 5 or r!+
+	drop
+	color 8 << $c or r!+
+	0 r ! r> 'ves> !
+	buildtra
+	;
+
+|---- elipse
+:updel
+	ves> >r
+	xmin xmax 2dup + 2/ rot rot - abs 2/    | xm rx
+	ymin ymax 2dup + 2/ rot rot - abs 2/	| xm rx ym ry
+	pick3 pick2 pick2 - xy>gc 4 or r!+
+	pick3 pick3 + pick2 xy>gc 6 or r!+
+	pick3 pick3 + pick2 pick2 - xy>gc r!+
+	pick3 pick2 pick2 + xy>gc 6 or r!+
+	pick3 pick3 + pick2 pick2 + xy>gc r!+
+	pick3 pick3 - pick2 xy>gc 6 or r!+
+	pick3 pick3 - pick2 pick2 + xy>gc r!+
+	pick3 pick2 pick2 - xy>gc 6 or r!+
+	pick3 pick3 - pick2 pick2 - xy>gc r!+
+	4drop
+	color 8 << $c or r!+
+	0 r ! r> 'ves> !
+	buildtra ;
+
+|----
+:drawhand
+	'inid 'movd 'updd guiMap	| lineas
+	drawlines
+|	'remlastline <del>
+	;
+
+:drawpoint
+	'inip 'movp 'uppp guiMap
+	drawdraw
+|	'removep <del>
+|	'remlastp <del>
+	'remallp <del>
+	;
+
+:drawbox
+	'inicl 'movcl 'updc guiMap
+	color ink xmin ymin xmax ymax cajaf ;
+
+:drawcir
+	'inicl 'movcl 'updel guiMap
+	color ink
+	xmin xmax 2dup + 2/ rot rot - abs 2/
+	ymin ymax 2dup + 2/ rot rot - abs 2/
+	rot swap fellipse ;
+
+#mdraw 'drawpoint
+
+:mododraw
+	mdraw exec ;
+
+|----------------------------------
+:modovista
+	[ xymouse 'yf ! 'xf ! ; ]
+	[ xymouse dup yf - 'yv +! 'yf ! dup xf - 'xv +! 'xf ! ;	] guiDnMove
+	;
+
+|----------------------------------
+:rebox
+	picktra -? ( drop ; ) rebuild1tra
+:reboxl
+	picktra 4 << tra + 4+
+	xv yv pos sv qdim
+	@+ gc>xy 'ymin ! 'xmin !
+	@ gc>xy 'ymax ! 'xmax !
+	;
+
+|------
+:+nodo | adr --
+	dup 4+ swap ves> over - 2 >> move> ;
+
+:-nodo | adr --
+	dup 4+ ves> over - 2 >> move ;
+
+:renodo
+	buildtra rebox 0 'cursor ! ;
+
+|------
+:0ins ;
+:1ins cursor +nodo renodo ;
+:2ins ;
+:3ins ;
+#tins 0ins 1ins 2ins 3ins
+
+:insnodo
+	cursor 0? ( drop ; ) drop
+	cursor @ $3 and 2 << 'tins + @ exec ;
+
+|------
+:0del   cursor | op
+		dup 4+ @ $3 and
+		1 =? ( drop -nodo cursor dup @ $fffffff0 and 4 or swap ! renodo ; )
+		2drop
+		;
+:1del	cursor -nodo renodo ;	| line
+:2del   cursor dup -nodo -nodo renodo ;	| curve
+:3del   cursor dup dup -nodo -nodo -nodo renodo ;	| curve3
+
+#tdel 0del 1del 2del 3del
+
+:delnodo
+	cursor 0? ( drop ; ) drop
+	cursor @ $3 and 2 << 'tdel + @ exec ;
+
+|------
+:tocanodo | x y -- nro/0
+	xymouse 'yf ! 'xf !
+	picktra 4 << tra + @
+	( @+ dup $f and $c <? )( drop
+		gc>xy indot 1? ( drop 4 - ; )
+		drop ) 3drop 0 ;
+
+:muevenodo | cursor --
+	xymouse xy>gc over @ $f and or swap ! ;
+
+:modoeditne
+	'setpicktra guiBtn ;
+
+:cursor! | nodo --
+	'cursor !
+	;
+
+|---
+:t0 drop ;
+:t1 drop 4+ ;
+:t2 dup 'pa ! gc>xy p1 ;
+:t3 dup 'pa ! gc>xy p1
+	@+ gc>xy p2 ;
+:t4 >r @+ >r @+
+	gc>xy 2dup op pa gc>xy line p2
+	r> gc>xy 2dup op r> dup 'pa ! gc>xy 2dup line p1 p2 ;
+
+#ltrap t0 t0 t1 t1 t2 t2 t3 t4 t2 t2 t3 t4
+
+:drawtra
+	blanco
+	( @+ dup $f and $c <? )(
+		2 << 'ltrap + @ exec
+		) 3drop
+	cursor 0? ( drop ; )
+	rojo @ gc>xy 3 fbox ;
+
+|---
+:modoeditn
+	picktra -? ( drop modoeditne ; )
+	[ tocanodo 0? ( -1 'picktra ! ) cursor! ; ]
+	[ cursor 1? ( muevenodo ; ) drop ; ]
+	'rebox
+	guiMap
+	4 << tra + @ drawtra ;
+
+|---------------------------------
+:movetr | adr --
+	( dup @ dup $f and $c <? )(
+		swap d>xy
+		yfa + swap xfa + swap
+		xy>d or swap !+
+		) 3drop ;
+
+:movelim | adr -- adr'
+	dup @ d>xy yfa + swap xfa + swap xy>d swap !+
+	dup @ d>xy yfa + swap xfa + swap xy>d swap !+
+	;
+
+:movepoly
+	xymouse
+	yfix 3 >> dup yf - 'yfa ! 'yf !
+	xfix 3 >> dup xf - 'xfa ! 'xf !
+
+	picktra 4 << tra + 4+	| limites
+	@+ d>xy
+	yfa + -$1fff <? ( 3drop ; ) drop
+	xfa + -$1fff <? ( 2drop ; ) drop
+	@+ d>xy
+	yfa + $1fff >? ( 3drop ; ) drop
+	xfa + $1fff >? ( 2drop ; ) drop
+
+	12 -
+	dup @ movetr			| mueve poly
+	4+						| mueve limites
+	movelim
+	8 -
+	@+ gc>xy 'ymin ! 'xmin !
+	@ gc>xy 'ymax ! 'xmax !
+	;
+
+:escalanodo
+	swap d>xy	| x y
+	yca - ysa *. yca + swap
+	xca - xsa *. xca + swap
+	xy>d ;
+
+:escalapoly
+	picktra 4 << tra + @ >r
+	lin ( lin> <? )(
+		@+ dup $f and
+		$c <? ( escalanodo )
+	 	or r!+ ) drop
+	rdrop ;
+
+
+:rotanodo
+	swap d>xy	| x y
+	yca - swap xca - swap
+	over xsa *. over ysa *. + yca + >r
+	swap ysa *. swap xsa *. - xca + r>
+	xy>d ;
+
+:rotapoly
+	picktra 4 << tra + @ >r
+	lin ( lin> <? )(
+		@+ dup $f and
+		$c <? ( rotanodo )
+	 	or r!+ ) drop
+	rdrop ;
+
+
+:delpoly
+	picktra 4 << tra + @
+	dup lastnode ves>	| ini end last
+	over -
+	over pick3 - neg 'ves> +!
+	2 >> 1+ move 				| des src cnt
+	0 ves> !
+	buildtra
+	-1 'picktra ! ;
+
+:cpypoly
+	ves> picktra 4 << tra + @
+	dup lastnode over -			| last ini cnt
+	dup 'ves> +!
+	2 >> move
+	0 ves> !
+	buildtra
+	reboxl ;
+
+|--- scratch pad
+:.pad
+	lin 'lin> ! ;
+
+:cpy>pad | adr --
+	lin> >r
+	( @+ dup $f and $c <? )( drop
+		r!+ ) drop
+	r!+ drop
+	r> 'lin> ! ;
+
+:cpypad> | adr --
+	>r lin
+	( lin> <? )( @+ r!+ ) drop
+	rdrop ;
+
+|---
+:uppoly
+	picktra tra> tra - 4 >> 1- >=? ( drop ; )
+	.pad
+	4 << tra +
+	dup @ swap 16 + @	| p1 p2
+	cpy>pad
+	dup cpy>pad
+	cpypad>
+	buildtra
+	1 'picktra +!
+	reboxl
+	;
+
+:dnpoly
+	picktra 0? ( drop ; )
+	.pad
+	4 << tra +
+	dup @ cpy>pad
+	16 - @ dup cpy>pad
+	cpypad>
+	buildtra
+	-1 'picktra +!
+	reboxl
+	;
+
+|----------------------------------
+:inpoly | -- 1/0
+	xymouse
+	ymin ymax between -? ( 2drop 0 ; ) drop
+	xmin xmax between -? ( drop 0 ; ) drop
+	picktra 4 << tra + @ train? ;
+
+
+:polyini
+	lin 'lin> !
+	picktra 4 << tra + @+
+	cpy>pad
+	@+ d>xy rot @ d>xy rot
+	dup 'yca ! - 'hpa !
+	over 'xca ! swap - 'wpa !
+	xymouse dotf ;
+
+:polyinir
+	lin 'lin> !
+	picktra 4 << tra + @+
+	cpy>pad
+	@+ d>xy rot @ d>xy rot
+	2dup + 2/ 'yca ! - abs 'hpa !
+	2dup + 2/ 'xca ! - abs 'wpa !
+	xymouse dotf ;
+
+:mvscala
+	xymouse
+	yfix 3 >> yca - 'yfa !
+	xfix 3 >> xca - 'xfa !
+	yfa hpa 16 <</ 'ysa !
+	xfa wpa 16 <</ 'xsa !
+	escalapoly
+	rebox ;
+
+:mvscalax
+	xymouse drop
+	xfix 3 >> xca - 'xfa !
+	1.0 'ysa !
+	xfa wpa 16 <</ 'xsa !
+	escalapoly
+	rebox ;
+
+:mvscalay
+	xymouse nip
+	yfix 3 >> yca - 'yfa !
+	yfa hpa 16 <</ 'ysa !
+	1.0 'xsa !
+	escalapoly
+	rebox ;
+
+:rotapolya
+	xymouse
+	swap xfix 3 >> xca -
+	swap yfix 3 >> yca -
+	atan2
+	xf xca - yf yca -
+	atan2
+	- 0.25 + sincos 'xsa ! 'ysa !
+	rotapoly
+	rebox ;
+
+#emove
+
+:dnp
+	xmin xmax + 2/ ymax | punto de x escala
+	inmouse 1? ( drop polyini 'mvscalay 'emove ! ; ) drop
+	xmax ymin ymax + 2/ | punto de y escala
+	inmouse 1? ( drop polyini 'mvscalax 'emove ! ; ) drop
+	xmax ymax | punto de xy escala
+	inmouse 1? ( drop polyini 'mvscala 'emove ! ; ) drop
+	xmin ymin | punto de rotar
+	inmouse 1? ( drop polyinir 'rotapolya 'emove ! ; ) drop
+
+	inpoly 0? ( 1- 'picktra ! ; ) drop
+	xymouse dotf
+
+	'movepoly 'emove ! | mover
+	;
+
+:upp
+|trace
+	;
+
+:modoeditp
+	picktra -? ( drop 'setpicktra guiBtn ; ) drop
+	xmin ymin xmax ymax	dotbox
+	negro
+	xmin xmax + 2/ ymin ymax + 2/ 5 cruz
+	verde
+	xmin ymin p2
+	blanco
+	xmax ymax p1
+	xmax ymin ymax + 2/ p1
+	xmin xmax + 2/ ymax p1
+	'dnp emove 'upp guiMap
+	;
+
+|------------------------------------
+:relim
+	dup 4+
+	@+ gc>xy
+	ymin <? ( dup 'ymin ! ) drop
+	xmin <? ( dup 'xmin ! ) drop
+	@ gc>xy
+	ymax >? ( dup 'ymax ! ) drop
+	xmax >? ( dup 'xmax ! ) drop
+	;
+
+:sumlim
+	$7fffffff dup 'xmin ! 'ymin !
+	$80000000 dup 'xmax ! 'ymax !
+	lin >r
+	tra ( tra> <? )(
+		r@+ 0? ( drop )( drop relim )
+		16 + ) drop rdrop ;
+
+:dnsel
+	xymouse dup 'ymin ! 'ymax ! dup 'xmin ! 'xmax ! ;
+:movsel
+	xymouse 'ymax ! 'xmax ! ;
+
+:dentro?
+	d>xy
+	yf yfa between -? ( 2drop 0 ; ) drop
+	xf xfa between -? ( drop 0 ; ) drop
+	1 ;
+
+#cntsel
+
+:nosel
+	lin 'lin> !
+	$7fff dup 'xmin ! dup 'ymin ! dup 'xmax !
+	'ymax ! ;
+
+:upsel
+	xmin xfix 3 >> xmax xfix 3 >>
+	over <? ( swap ) 'xfa ! 'xf !
+	ymin yfix 3 >> ymax yfix 3 >>
+	over <? ( swap ) 'yfa ! 'yf !
+	0 'cntsel !
+	lin >r
+	0
+	ves ( ves> <? )(
+    	@+ dup $f and $c <? ( drop dentro? 1? ( rot 1+ rot rot ) drop )( 2drop swap 1? ( 1 'cntsel +! ) r!+ 0 swap )
+    	) 2drop
+    r> 0 over ! 'lin> !
+    cntsel 0? ( drop nosel ; ) drop
+	sumlim
+	;
+
+:copia | ves --
+	 ( @+ dup $f and $c <? )( drop , ) drop , drop ;
+
+:delsel
+	mark
+	lin >r
+	tra ( tra> <? )(
+       	@+	| tra' inicio
+		r@+ 0? ( drop copia )( 2drop )
+		12 + ) drop rdrop
+	here empty
+	ves >r
+	here ( over <? )( @+ r!+ ) 2drop
+	r> 0 over ! 'ves> !
+	buildtra
+	-1 'picktra !
+	0 'cursor !
+	;
+
+:draw | adr --
+	( @+ dup $f and $c <? )( 2 << 'ltra + @ exec ) 3drop ;
+
+:drawselecc
+	lin >r
+	tra ( tra> <? )(
+       	@+	| tra' inicio
+		r@+ 0? ( 2drop )( drop draw )
+		12 + )
+	drop rdrop ;
+
+:movesel
+	xymouse
+	yfix 3 >> dup yf - 'yfa ! 'yf !
+	xfix 3 >> dup xf - 'xfa ! 'xf !
+
+|	xmin ymin
+|	yfa + -$1fff <? ( 2drop ; ) drop
+|	xfa + -$1fff <? ( drop ; ) drop
+|	xmax ymax
+|	yfa + $1fff >? ( 2drop ; ) drop
+|	xfa + $1fff >? ( drop ; ) drop
+
+	lin >r
+	tra ( tra> <? )(
+       	@+	| tra' inicio
+		r@+ 1? ( drop movetr dup movelim drop )( 2drop )
+		12 + )
+	drop rdrop
+	sumlim
+    ;
+
+:inbox?
+	xymouse
+	ymin ymax between -? ( 2drop 0 ; ) drop
+	xmin xmax between -? ( drop 0 ; ) drop
+	1 ;
+
+:dnps
+|	xmin xmax + 2/ ymax | punto de x escala
+|	inmouse 1? ( drop selini 'smvscalay 'emove ! ; ) drop
+|	xmax ymin ymax + 2/ | punto de y escala
+|	inmouse 1? ( drop selini 'smvscalax 'emove ! ; ) drop
+|	xmax ymax | punto de xy escala
+|	inmouse 1? ( drop selini 'smvscala 'emove ! ; ) drop
+|	xmin ymin | punto de rotar
+|	inmouse 1? ( drop polyinir 'srotapolya 'emove ! ; ) drop
+	inbox? 0? ( drop lin 'lin> ! dnsel ; ) drop
+	xymouse dotf
+	'movesel 'emove ! | mover
+	;
+
+:selecttr
+	xmin ymin xmax ymax	dotbox
+	negro
+	xmin xmax + 2/ ymin ymax + 2/ 5 cruz
+	verde
+	xmin ymin p2
+	blanco
+	xmax ymax p1
+	xmax ymin ymax + 2/ p1
+	xmin xmax + 2/ ymax p1
+	rojo
+	fonti xmin ymin atxy cntsel "%d" print
+	drawselecc
+	'dnps emove guiDnMove
+	;
+
+:modosel
+	lin lin> <? ( drop selecttr ; ) drop
+	'dnsel 'movsel 'upsel guiMap
+	xmin ymin xmax ymax
+	pick3 1+ pick3 1+ pick3 1+ pick3 1+
+	blanco caja negro caja
+	;
+
+|------------------------------------
+:btnric | icon vec --
+	ink@ >r btne blanco 2-gc drawric 2+gc r> ink ;
+
+|------------------------------------
+
+:toodraw
+	'i.pencil [ 'drawpoint 'mdraw ! ; ] btnric gcdn
+|	'i.paint_brush [ 'drawhand 'mdraw ! ; ] btnric gcdn
+	'i.stop [ 'drawbox  'mdraw ! ; ] btnric gcdn
+	'i.circle [ 'drawcir  'mdraw ! ; ] btnric
+	;
+
+:toovista
+	'i.zoom_in [ sv 2* 'sv ! ; ] btnric gcdn
+	'i.zoom_out [ sv 2/ 'sv ! ; ] btnric gcdn
+	'i.resize_full 'vistall btnric gcdn
+	;
+
+:tooeditn
+	picktra -? ( drop ; ) drop
+	'i.remove_sign 'delnodo btnric gcdn
+	'i.plus_sign 'insnodo btnric gcdn
+	;
+
+:colpoly
+	picktra -? ( drop ; )
+    4 << tra + @ lastnode 4 -
+	@ 8 >> 'color ! ;
+
+:polycol
+	picktra -? ( drop ; )
+    4 << tra + @ lastnode 4 -
+    dup @ $f and color 8 << or swap ! ;
+
+:tooeditp
+	picktra -? ( drop ; ) drop
+	'i.copy 'cpypoly btnric gcdn
+	'i.circle_arrow_up 'uppoly btnric gcdn
+	'i.circle_arrow_down 'dnpoly btnric gcdn
+	'i.tint 'polycol btnric gcdn
+	'i.eyedropper 'colpoly btnric gcdn
+	'i.remove_sign 'delpoly btnric gcdn
+	;
+
+
+:toolsel
+	'i.object_group 0 btnric gcdn | group
+	'i.object_ungroup 0 btnric gcdn	| ungroup
+| move
+| rota
+| escale
+	'i.remove_sign 'delsel btnric gcdn	| del
+	;
+
+|------- modos
+#modos 'mododraw 'modovista 'modoeditp  'modoeditn 'modosel
+#tools 'toodraw 'toovista 'tooeditp 'tooeditn 'toolsel
+
+|----- botonera
+#modogui 'mododraw
+#modotoo 'toodraw
+
+:setmodo
+	dup 'modo ! dup 2 <<
+	dup 'modos + @ 'modogui !
+	'tools + @ 'modotoo !
+
+	lin 'lin> !
+	'cursor0 'ecursor !
+	;
+
+:botonmodo | icon nro --
+	modo =? ( azul )( negro )
+	'setmodo btne
+	modo =? ( 8+gc blanco )( gris )
+	swap 8-gc drawric 8+gc
+	modo =? ( 8-gc  )
+	drop
+	gcdn ;
+
+#colorfondo $ffffff
+#egrilla 2 
+:drawves
+	xv yv pos sv qdim
+
+	colorfondo ink gc.fbox
+	gris egrilla 2* rgrilla
+	ves vesprite ;
+
+:botonera
+	scr home fonti
+	azul 2 linesfill blanco cr2
+	dup ":r%d VesEditor " printc
+
+   	32 qdim 18 18 pos
+	rojo
+|	'exit dup >esc< btne blanco 'i.off drawric gcdn
+	'i.off 'exit dup >esc< btnric gcdn
+	'i.trash 'resetves btnric gcdn
+	gcdn
+	'i.pencil 0 botonmodo
+	'i.eye_open 1 botonmodo
+	'i.star 2 botonmodo
+	'i.star_empty 3 botonmodo
+	'i.check_empty 4 botonmodo
+
+|	'i.magic 4 botonmodo
+|	verde oscuro
+|	'i.undo 0 btnric gcdn
+|	'i.repeat 0 btnric gcdn gcdn
+	gcdn
+	cyan oscuro
+    modotoo exec
+	gcdn gcdn
+	naranja oscuro
+	'i.cog [ colorfondo not 'colorfondo ! ; ] btnric gcdn
+
+	sw 26 - 26 pos
+	'color btncol
+	;
+
+:teclado
+	[ sv 5 >> neg 'yv +! ; ] <up>
+	[ sv 5 >> 'yv +! ; ] <dn>
+	[ sv 5 >> 'xv +! ; ] <ri>
+	[ sv 5 >> neg 'xv +! ; ] <le>
+	[ sv 2* 'sv ! ; ] <pgup>
+	[ sv 2/ 'sv ! ; ] <pgdn>
+	;
+
+|-------- DEBUG
+:tr1
+	picktra -? ( drop ; )
+	4 << tra + @ dup lastnode >r =? ( ">" print ) r> =? ( "<" print )
+	;
+
+|-------- DEBUG
+:dumptr
+	scr home negro
+
+	ves ( ves> 4+ <=? )(
+		tr1
+		ves> =? ( "!" print )
+		tra =? ( "*" print )
+		@+
+		dup $f and $c >=? ( cr ) drop
+		"%h " print cr allowchome
+		) drop
+	tra lin ( lin> <? )(
+		@+ "%h " print
+		swap @+ @ "%h " print
+		cr allowchome
+		12 + swap
+		) 2drop
+	cr
+	picktra " pk: %d" print cr
+	cursor " cu: %h" print cr
+	ymax ymin xmax xmin "%d %d %d %d" print
+	;
+|-------- DEBUG
+
+:main
+	buildtra
+	4
+	show clrscr
+		drawves
+		modogui exec
+        botonera
+        teclado
+
+|		dumptr |-------- DEBUG
+
+		'exit >esc<
+		cminiflecha ;
+
+|--- symplify poly
+:lef	| last equal first
+	;
+:cef	| control point equal first
+	;
+:cel	| control point equal last
+	;
+:pil	| point in line
+	;
+
+:t0 ;
+
+:t4	| OP
+	po pick2 'po !
+	-1 =? ( drop  ; )
+	|lef
+	;
+:t5 | LINE
+	| pil
+	;
+:t6 | CURVE
+	| cef
+	;
+
+:t7	| CURVE3
+	| cef cel
+	;
+:tc ;
+
+#ts t0 t0 t0 t0 t4 t5 t6 t7 t4 t5 t6 t7 tc tc tc tc
+
+
+:simplify
+	-1 'po !
+	ves dup ( @+ 1? )(
+		dup $f and 2 << 'ts + @ exec
+		rot !+ swap ) 3drop ;
+
+:vmem
+	mark
+	here dup 'ves ! dup 'ves> ! 0 swap !
+	vistall
+	;
+
+: $aaaaaa paper
+	vmem
+	ves "mem/notepad.vsp" load 0 swap !
+|	simplify
+	ves ( @+ 1? )( drop ) swap 4 - 'ves> !
+	main
+	ves ves> over - "mem/notepad.vsp" save ;

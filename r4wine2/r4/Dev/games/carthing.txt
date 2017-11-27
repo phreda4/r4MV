@@ -1,0 +1,163 @@
+| Very simple car physics
+| from https://gamedev.stackexchange.com/questions/1796/vehicle-physics-with-skid
+| Gamepad works in linux (behaves differently in windows..)
+
+^r4/lib/gui.txt 
+^r4/lib/bmr.txt 
+^r4/lib/polygr.txt 
+^inc/1492.bmr | contains the car sprite
+
+#npos 0       | total number of tracked positions
+#flpos )( 800 | font-left tyre
+#frpos )( 800 | font-right tyre
+#rlpos )( 800 | rear-left tyre
+#rrpos )( 800 | rear-right tyre
+
+#px #py | positionX, positionY - where the car is
+#vx #vy | velocityX, velocityY - speed on each axis
+#drag   | drag - how fast the car slows down
+#angle  | angle - the rotation of the car
+#av     | angularVelocity - speed the car is spinning
+#ad     | angularDrag - how fast the car stops spinning
+#power  | power - how fast car can accelerate
+#ts     | turnSpeed - how fast to turn
+
+| draws trail
+:drawpos | ( mem - )
+	 npos 2 <? ( 2drop ; ) drop
+	 dup npos 1- 100 mod 8 * + | draw from previous position
+	 dup @ swap 4 + @ op
+	 2
+:drawrec | ( mem n - )
+	 npos 99 min =? ( 2drop ; ) dup
+	 npos swap - 100 + 100 mod 8 * pick2 + >r
+	 r @ r> 4 + @ line
+	 1+ drawrec ;
+
+| ( y x adr - ) saves intermediate car positions
+:savepos npos 100 mod 8 * + >r r ! r> 4 + ! ;
+
+:pxi px 16 >> ;
+:pyi py 16 >> ;
+
+:aposx angle swap + cos 40.0 *. px + 16 >> ;
+:aposy angle swap + sin 40.0 *. py + 16 >> ;
+
+:savetracks +0.4 aposy +0.4 aposx 'rlpos savepos
+	    -0.4 aposy -0.4 aposx 'rrpos savepos
+	    +0.1 aposy +0.1 aposx 'flpos savepos
+	    -0.1 aposy -0.1 aposx 'frpos savepos
+	    npos 1+ 'npos ! ;
+
+:simulate px vx + 'px !
+	  py vy + 'py !
+	  vx drag *. 'vx !
+	  vy drag *. 'vy !
+	  angle av + 'angle !
+	  av ad *. 'av !
+	  power 0.0 =? ( drop 0.0 'av ! ; ) drop
+	  savetracks ;
+	
+:printstats px "px: %f " print cr
+	   py "py: %f " print cr
+	   vx "vx: %f " print cr
+	   vy "vy: %f " print cr
+	   drag "drag: %f " print cr
+	   angle "angle: %f " print cr
+	   av "angular velocity: %f " print cr
+	   ad "angular drag : %f " print cr
+	   power "power: %f" print cr cr ;
+	   
+:usage amarillo
+       "Button 1: Accelerate" print cr
+       "Button 2: Brake" print cr
+       "left/right: wheel" print cr
+       blanco ;
+
+:drawtrail 'rlpos drawpos
+	   'rrpos drawpos
+	   'flpos drawpos
+	   'frpos drawpos ;
+	   
+:drawspeed pxi
+	   pyi
+	   px vx 10.0 *. + 16 >>
+	   py vy 10.0 *. + 16 >>
+	   3 glineg ;
+
+| sprite is 64x104	   
+:drawcar pxi 32 -
+	 pyi 52 -
+	 angle -1.0 *. 0.25 + 'auto bmr.drawr
+	 amarillo drawspeed blanco ;
+	 
+:draw drawcar drawtrail ;
+
+:debug dup "%d" print cr ;
+
+| gets the nth value from the mth joystick	
+| ( nval numjoy -- # )
+:joyval getjoy swap 4 * + @ ;
+	
+:joy0left 2 0 joyval 0? ( 1 )( 0 ) nip ;
+:joy0right 2 0 joyval $FFFE =? ( 1 )( 0 ) nip ;
+:joy0down 3 0 joyval $FFFE =? ( 1 )( 0 ) nip ;
+:joy0up 3 0 joyval 0? ( 1 )( 0 ) nip ;
+
+:joy0bval 8 0 joyval ;
+
+| ( butn - 0/1 )
+:joy0b? joy0bval 1 rot 1- << and 1? ( 1 )( 0 ) nip ;
+
+:joy0b1 1 joy0b? ;
+:joy0b2 2 joy0b? ;
+:joy0b3 3 joy0b? ;
+:joy0b4 4 joy0b? ;
+
+#maxpower 16.0
+
+:accelerate power 0.1 + maxpower >? ( drop maxpower 'power ! )( 'power ! ) ;
+
+:slower power swap - +? ( 'power ! )( drop 0.0 'power ! ) ;
+
+:pedals joy0b1 1 =? ( drop accelerate ; ) drop 
+       	joy0b2 1 =? ( drop 0.2 slower ; ) drop
+	0.1 slower ;
+
+:updatev angle dup cos power *. 'vx ! sin power *. 'vy ! ;
+
+:speed pedals updatev ;
+
+| turn speed is a function of the power
+| cannot turn if speed is zero
+:adjpower power 2.0 /. *. ;
+
+:turn | ( amount - )
+      adjpower 'ts ! av ts + 'av ! 0.0 'ts ! ;
+
+:goleft -0.0002 turn ;
+:goright 0.0002 turn ;
+
+:tleft  joy0left  1 =? ( drop goleft ; ) drop ;
+:tright joy0right 1 =? ( drop goright ; ) drop ;
+
+:wheel tleft tright ;
+
+:inputs speed wheel ;
+
+:go show clrscr debug
+    printstats
+    usage
+    inputs simulate draw
+    'exit >esc< ;
+
+:init 150.0 'px ! 150.0 'py !
+      0.0 'vx ! 0.0 'vy !
+      0.9 'drag !
+      0.0 'angle !
+      0.0 'av !
+      0.95 'ad !
+      4.0 'power !
+      0.0 'ts ! ;
+      
+: init 33 go ;

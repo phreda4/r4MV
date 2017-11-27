@@ -1,0 +1,33 @@
+| r4-include profile
+| PHREDA 2015
+|------------------
+^r4/lib/mprint.txt
+
+| tabla profile
+| mseca amsec calls
+#profile_ini
+#profile_table
+#profile_fin
+
+:12* | n -- n*12
+	2 << dup 2* + ;
+
+::profile_start | nrow --
+	12* profile_table + msec swap ! ;
+
+::profile_end | nrow --
+	12* profile_table + 
+	msec over @ - over 4+ +!
+	1 swap 8 + +! ;
+
+|------------------------------------------
+::profile_save | --
+	profile_ini profile_fin over - "mem/profile.mem" save ;
+
+::profile_mem | cntw "" --
+	mark
+	here 'profile_ini !
+	over , ,s 0 ,c | cnt "nombre"
+	here 'profile_table !
+	( 1? )( 0 , 0 , 0 , 1- ) drop
+	here 'profile_fin ! ;

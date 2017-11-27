@@ -1,0 +1,89 @@
+| Teclado, Memoria, Conversion, Basicos
+| PHREDA
+| :r4 system library
+|-------------------------
+| Distribucion de teclado - Scancode to Ascii
+^r4/lib/key-es1.txt
+|^r4/lib/key-us1.txt
+|^r4/lib/key-fr1.txt
+|^r4/lib/key-de1.txt
+
+#k2a1 'k2asc
+#k2a2 'k2ascs
+#tablact 'k2asc
+#:mshift 0
+
+::toasc | scancode -- ascii
+	tablact + c@ ;
+
+::?ukey $100 or
+::?key key =? ( drop exec ; ) 2drop ;
+
+:updshift
+	mshift 1? ( k2a2 )( k2a1 ) 'tablact ! drop ;
+
+:caps
+	k2a1 'k2asc =? ( 'k2asc 'k2a2 ! 'k2ascs 'k2a1 ! )( 'k2ascs 'k2a2 ! 'k2asc 'k2a1 ! ) drop
+	updshift
+	;
+
+::<visible> | vec --
+	[ k2a2 'tablact ! 1 'mshift ! ; ] dup $2a ?key $36 ?key | teclas shift
+	[ k2a1 'tablact ! 0 'mshift ! ; ] dup $2a ?ukey $36 ?ukey | levanta shift
+	'caps $3a ?key  | teclas caps
+
+	[ 'k2alt 'tablact ! ; ] $38 ?key 								| abajo alt
+	'updshift $38 ?ukey	| arriba alt
+	key
+	$100 and? ( 2drop ; )
+	toasc $ff and 32 <? ( 2drop ; )
+	drop exec ;
+
+::<nro> | vec --
+	[ 'k2ascs 'tablact ! 1 'mshift ! ; ] dup $2a ?key $36 ?key | teclas shift
+	[ 'k2asc 'tablact ! 0 'mshift ! ; ] dup $2a ?ukey $36 ?ukey | levanta shift
+	[ 'k2alt 'tablact ! ; ] $38 ?key 								| abajo alt
+	[ mshift 1? ( 'k2ascs )( 'k2asc ) nip 'tablact ! ; ] $38 ?ukey	| arriba alt
+	key
+	$100 and? ( 2drop ; )
+	toasc $ff and
+	$30 <? ( 2drop ; )
+	$39 >? ( 2drop ; )
+	drop exec ;
+
+::<dot> | vec --
+	key $100 and? ( 2drop ; )
+	toasc $ff and
+	$2c =? ( $2e nip )
+	$2e <>? ( 2drop ; )
+	drop exec ;
+
+::<shift> dup $2a ?key $36 ?key ;
+::>shift< dup $2a ?ukey $36 ?ukey ;
+::<esc> 1 ?key ;	::>esc< 1 ?ukey ;
+::<spc> $39 ?key ;	::>spc< $39 ?ukey ;
+::<back> $e ?key ;
+::<tab> $f ?key ;
+::<enter> $1c ?key ;	::>enter< $1c ?ukey ;
+::<ctrl> $1d ?key ;		::>ctrl< $1d ?ukey ;
+::<alt> $38 ?key ;		::>alt< $38 ?ukey ;
+
+::<home> $47 ?key ;	::<end> $4f ?key ;
+::>home< $47 ?ukey ; ::>end< $4f ?ukey ;
+
+::<up> $48 ?key ;	::<dn> $50 ?key ;
+::<ri> $4d ?key ;	::<le> $4b ?key ;
+::>up< $48 ?ukey ;	::>dn< $50 ?ukey ;
+::>ri< $4d ?ukey ;	::>le< $4b ?ukey ;
+
+::<ins> $52 ?key ;	::<del> $53 ?key ;
+::<pgup> $51 ?key ; ::<pgdn> $49 ?key ;
+::>ins< $52 ?ukey ;	::>del< $53 ?ukey ;
+::>pgup< $51 ?key ; ::>pgdn< $49 ?key ;
+
+::<f1> $3b ?key ;	::<f2> $3c ?key ;
+::<f3> $3d ?key ; 	::<f4> $3e ?key ;
+::<f5> $3f ?key ; 	::<f6> $40 ?key ;
+::<f7> $41 ?key ; 	::<f8> $42 ?key ;
+::<f9> $43 ?key ; 	::<f10> $44 ?key ;
+::<f11> $57 ?key ;	::<f12> $58 ?key ;

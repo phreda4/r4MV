@@ -1,0 +1,221 @@
+| Calculadora parlante
+| PHREDA 2013
+|--------------------------------
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/input.txt
+^r4/lib/rfont.txt
+^r4/lib/ricons.txt
+
+^inc/ric/fontawesome.ric
+^inc/rft/robotobold.rft
+
+^r4/lib/frac.txt
+^r4/lib/habla.txt
+
+|--------------------------------------------------------------------------
+
+#sstart #sexit #serror
+#sigual #smas #smenos #spor #sdividido
+#ssobre #sComa #sPotencia #sRaiz
+#sBorrar #sLimpiar #sNumero
+
+#soundfile
+"start.ogg" "exit.ogg" "error.ogg"
+"igual.ogg" "mas.ogg" "menos.ogg" "por.ogg" "dividido.ogg"
+"sobre.ogg" "coma.ogg" "elevadoa.ogg" "raiz.ogg"
+"borrar.ogg" "limpiar.ogg" "numero.ogg"
+0
+
+:sonidos
+	sayNroIni
+	"media/milagros/" 'sstart 'soundfile loadSounds
+	;
+
+|--------------------------------------------------------------------------
+#nro
+
+#nro1 0 1
+#nro2 0 1
+
+#nop -1
+
+#log )( 1024
+
+:nomi
+	'nro1 'nro ! ;
+:denomi
+	'nro1 4 + 0 over ! 'nro ! ;
+
+:rread
+	'nro1 f@ sayFrac frase! ;
+
+:rreadfix
+	sNumero frase,
+	'nro1 f@
+	1 <=? ( drop sayInt frase! ; )
+	16 <</ sayFix frase! ;
+
+|---- resolver operaciones
+
+:opmas f+ ;
+:opmenos f- ;
+:oppor f* ;
+:opdiv f/ ;
+:oppot drop fpow ;
+:opraiz drop froot ;
+
+#lop 'opmas 'opmenos 'oppor 'opdiv 'oppot 'opraiz
+
+:tigual
+	nop -? ( drop rread ; ) drop
+	sigual frase,
+	'nro2 f@ 'nro1 f@
+	nop 1- 2 << 'lop + @ exec
+	2dup sayFrac frase!
+	'nro1 f!
+	0 1 'nro2 f!
+	nomi
+ 	-1 'nop !
+	;
+
+:tiguala
+	'nro2 f@ 'nro1 f@
+	nop 1- 2 << 'lop + @ exec
+	2dup sayFrac frase!
+	'nro2 f!
+	0 1 'nro1 f!
+	nomi
+ 	-1 'nop !
+	;
+
+:transf
+	nop +? ( drop tiguala ; ) drop
+	'nro1 f@ 'nro2 f!
+	0 1 'nro1 f!
+	nomi ;
+
+:tmas
+	transf 1 'nop ! smas frase, frase! ;
+:tmenos
+	transf 2 'nop ! smenos frase, frase! ;
+:tpor
+	transf 3 'nop ! spor frase, frase! ;
+:tdiv
+	transf 4 'nop ! sdividido frase, frase! ;
+:tpot
+	transf 5 'nop ! spotencia frase, frase! ;
+:trai
+	transf 6 'nop ! sraiz frase, frase! ;
+
+:fraccion
+	sSobre frase, frase!
+	denomi
+	;
+
+:negar
+	nro1 neg 'nro1 !
+	'nro1 f@ sayFrac frase!
+	;
+
+:tback
+	nro @ -? ( neg 10 / neg )( 10 / ) nro !
+	sBorrar frase,
+	sNumero frase,
+	rread
+	;
+
+:tdel
+	0 1 'nro1 f! nomi -1 'nop !
+	sLimpiar frase, frase!
+	;
+
+:teclanro | --
+	key $80 and? ( drop ; )
+	toasc $ff and
+	$30 <? ( drop ; )
+	$39 >? ( drop ; )
+	$30 -
+	nro @
+	-? ( neg 10 * over + neg )( 10 * over + )
+	nro !
+	sayInt frase!
+	;
+
+:keylist | vec str --
+	key $80 and? ( 3drop ; )
+	toasc tolow
+	swap
+	( c@+ 1? )(
+		pick2 =? ( 3drop @ exec ; )
+		drop rot 4+ rot rot
+		) 4drop ;
+
+#acclist 'tmas 'tmenos 'tpor 'tdiv 'fraccion
+#acclise 'negar 'fraccion 'tmas 'tmenos 'tpor 'tdiv 'tpot 'trai 'rread 'rreadfix
+
+:teclas
+	'tback <back>
+	'tdel <del>
+	'tigual <enter>
+	'acclise "qwertyuias" keylist
+	'acclist "+-*/." keylist
+	teclanro
+	;
+
+:printnro | 'nro
+	@+ 0? ( 2drop "0" print ; )
+	swap @ 0? ( drop "%d/" print ; )
+	1 =? ( drop "%d" print ; )
+	swap "%d/%d" print ;
+
+:display
+	nop -? ( drop 'nro1 printnro ; )
+	'nro2 printnro
+	1- "+-*/^`" + c@ sp emit sp
+	'nro1 printnro
+	;
+
+:teclado
+	0 1 'nro1 f!
+	0 1 'nro2 f!
+	'nro1 'nro !
+	show clrscr
+		hablando
+		robotobold 64 rfont!
+		cr2
+		verde "Calculadora de Milagros" printc
+		cr cr
+		robotobold 128 rfont!
+		sp sp
+		azul linefill
+		blanco display cr
+
+|		'log print
+|		'nro1 f@ "%d %d" print cr
+|		'nro2 f@ "%d %d" print cr
+
+		robotobold 48 rfont!
+		cr cr
+		cyan
+		"Q:negativo W:fraccion" print cr
+		"E:+ R:- T:* Y:/ " print cr
+		"U:Potencia I:Raiz" print cr
+		"A:Leer Numero S:Leer con decimales" print cr
+
+
+		teclas
+		'exit >esc<
+		cminiflecha
+		;
+
+:swait
+	-1 ( sinfo 0? ) drop ;
+
+:main
+	sstart splay
+	teclado
+	sexit splay
+	swait ;
+
+: sonidos main ;

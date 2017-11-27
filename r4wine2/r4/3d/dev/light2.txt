@@ -1,0 +1,197 @@
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+
+^r4/lib/part16.txt
+^r4/lib/anima.txt
+^r4/3d/octree/iso_16.txt
+
+^r4/lib/trace.txt
+
+:shader | version 1
+	@+ $7fffffff =? ( drop 1 px+! 4+ ; )
+	8 >> $f and 1+
+	swap @+ $f0f0f0 and
+	rot *
+	px!+ ;
+
+:shader | version 2
+	@+ $7fffffff =? ( drop 1 px+! 4+ ; )
+	swap @+ 4 >> $f0f0f and
+	rot
+	pick2 @ - 5 >> 7 + 15 clamp0max 1+
+	* $f0f0f0 and
+	dup 4 >> or
+	px!+ ;
+
+:shader | version 3
+	@+ $7fffffff =? ( drop 1 px+! 4+ ; )
+	swap >r
+	r@+ 4 >> $f0f0f and
+	swap | color z
+	dup r @ -
+	r 16 - @ rot - +
+	6 >> 7 + 15 clamp0max 1+
+	* $f0f0f0 and
+	dup 4 >> or
+	px!+ r> ;
+
+
+#sum 7
+| version 4 (x-1+x+1)/2
+:shader | version 4
+	@+ $7fffffff =? ( drop 1 px+! 4+ ; ) drop
+	@+ 4 >> $f0f0f and | adr color
+	over @ pick2 16 - @ -
+	6 >> sum + 16 clamp0max
+	* $f0f0f0 and
+	dup 4 >> or
+	px!+ ;
+
+
+#sum 128
+| version 5 - full 8 bits channel
+
+:shader
+	@+ $7fffffff =? ( drop 1 px+! ; ) drop
+	dup zbo + @ | adr color
+	over @ pick2 8 - @ - 2 >>
+	sum + 256 clamp0max
+	shadow8 px!+ ;
+
+
+::zdraw | x y --
+	setxy
+	sw w3do -
+	zb
+	h3do ( 1? )( 1-
+		w3do ( 1? )( 1-
+			rot shader rot rot
+			) drop
+		pick2 px+!
+		) 3drop ;
+
+|-------------
+#xcam 0 #ycam 0 #zcam 2.0
+
+|-------------
+:3dop transform p3d op ;
+:3dline transform p3d line ;
+
+|-------------
+:freelook
+	xymouse
+	sh 2/ - 7 << swap
+	sw 2/ - neg 7 << swap
+	neg mrotx mroty
+	;
+
+|-------------
+#sizx #sizy #sizz
+
+:drawz | z --
+	sizx neg sizy neg pick2 3dop
+	sizx sizy neg pick2 3dline
+	sizx sizy pick2 3dline
+	sizx neg sizy pick2 3dline
+	sizx neg sizy neg rot 3dline ;
+
+:drawl | x1 x2 --
+	2dup sizz neg 3dop sizz 3dline ;
+
+:box3d | sx sy sz --
+	'sizz ! 'sizy ! 'sizx !
+	sizz neg drawz sizz drawz
+	sizx neg sizy neg drawl sizx sizy neg drawl
+	sizx sizy drawl sizx neg sizy drawl
+	;
+
+|-------------
+#nline 300
+
+:dpoint | nro val -- nro
+	8 >> sh 1- clamp0max
+	over swap setxy $ff0000 px!+
+	;
+
+:dumpline
+	verde
+	0 nline op sw nline line
+	zb nline w3do * 3 << +
+	>r
+	0 ( sw <? )(
+     	r@+ dpoint
+     	4 r+
+		1+ ) drop
+	rdrop
+
+	[ -1 'nline +! ; ] <up>
+	[ 1 'nline +! ; ] <dn>
+	;
+
+
+|-------------
+#Otierra
+
+#fps
+#fc
+#tn
+#mseca
+
+:frames/sec
+	1 'fc +!
+	msec tn <? ( drop ; )
+	1000 + 'tn !
+	fc 'fps !
+	0 'fc !
+	;
+
+:main
+	mark
+	0 'paper !
+	sw sh ini3do
+|	"media/3do/horse.3do"
+|	"media/3do/earth.3do"
+|	"media/3do/mario.3do"
+|	"media/3do/tree1.3do"
+|	"media/3do/xyzrgb_dragon.3do"
+	"media/3do/xyzrgb_statuette.3do"
+	load3do 'Otierra !
+	33
+	msec 1000 + 'tn !
+	show0 clrscr
+
+		matini
+		freelook
+		xcam ycam zcam mtrans
+
+      -0.25 mrotzi
+|		msec 2 << mrotxi
+|		msec 2 << mrotyi
+
+		zb.clear
+		Otierra drawoctree
+		0 0 zdraw
+
+		frames/sec
+
+		verde fonti
+		dup "%d " print cr
+		msec fps over mseca - "%d ms fps:%d" print cr 'mseca !
+		zcam ycam xcam "%f %f %f" print cr
+
+
+|        dumpline
+
+		[ -0.01 'zcam +! ; ] <up>
+		[ 0.01 'zcam +! ; ] <dn>
+		[ -0.01 'xcam +! ; ] <le>
+		[ 0.01 'xcam +! ; ] <ri>
+		[ -0.01 'ycam +! ; ] <pgup>
+		[ 0.01 'ycam +! ; ] <pgdn>
+
+        [ -10 'sum +! ; ] <f1>
+        [ 10 'sum +! ; ] <f2>
+		'exit >esc< cminiflecha
+		;
+
+: main ;

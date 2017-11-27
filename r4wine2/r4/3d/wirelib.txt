@@ -1,0 +1,422 @@
+| WireLib
+| PHREDA 2015
+|-----------------------------------------
+^r4/lib/3dmat.txt
+
+:3dop transform p3d op ;
+:3dline transform p3d line ;
+
+|---- grillas
+::grillaxy | step lim z -
+	>r dup neg
+	( over <=? )(
+		dup pick2 neg r 3dop
+		dup pick2 r 3dline
+		over neg over r 3dop
+		over over r 3dline
+		pick2 + )
+	3drop rdrop ;
+
+::grillayz | step lim x --
+	>r dup neg
+	( over <=? )(
+		r over pick3 neg 3dop
+		r over pick3 3dline
+		r pick2 neg pick2 3dop
+		r pick2 pick2 3dline
+		pick2 + )
+	3drop rdrop ;
+
+::grillaxz | step lim y --
+	>r dup neg
+	( over <=? )(
+		dup r pick3 neg 3dop
+		dup r pick3 3dline
+		over neg r pick2 3dop
+		over r pick2 3dline
+		pick2 + )
+	3drop rdrop ;
+
+|--------- Cursor
+#csize
+#vert )( 64
+
+:to3d | z y x -- x y
+	transform p3d swap ;
+
+:nver | n -- x y
+	3 << 'vert + @+ swap @ ;
+
+:drawcursor
+	0 nver 2dup op 1 nver line 3 nver line 2 nver line line
+	4 nver 2dup op 5 nver line 7 nver line 6 nver line line
+	0 nver op 4 nver line
+	1 nver op 5 nver line
+	2 nver op 6 nver line
+	3 nver op 7 nver line ;
+
+::xyzcubo | z y x --
+	'vert >r
+	pick2 pick2 pick2 to3d r!+ r!+
+	pick2 csize + pick2 pick2 to3d r!+ r!+
+	pick2 pick2 csize + pick2 to3d r!+ r!+
+	pick2 csize + pick2 csize + pick2 to3d r!+ r!+
+	csize +
+	pick2 pick2 pick2 to3d r!+ r!+
+	pick2 csize + pick2 pick2 to3d r!+ r!+
+	pick2 pick2 csize + pick2 to3d r!+ r!+
+	pick2 csize + pick2 csize + pick2 to3d r!+ r> !
+	3drop
+	drawcursor ;
+
+:adjust | x y z -- z y x
+	1 deepvox 1- << >r
+	r swap - 1- 16 deepvox - <<
+	r rot - 1- 16 deepvox - <<
+	rot r> swap - 1- 16 deepvox - << ;
+
+::voxcursor | x y z --
+	1.0 deepvox >> 'csize !
+	adjust
+	xyzcubo ;
+
+
+	|------------------
+#voxelc1 0 0 0	| coordenanas reales
+#voxelc2 0 0 0
+
+#maxx #minx
+#maxy #miny
+#maxz #minz
+
+::voxelc1! | x y z --
+	'voxelc1 !+ !+ ! ;
+
+::voxelc2! | x y z --
+	'voxelc2 !+ !+ ! ;
+
+:adjust
+	1 deepvox 1- << >r
+	r voxelc1 - 1- 16 deepvox - <<
+	r voxelc2 - 1- 16 deepvox - <<
+	over <? ( swap ) | min max
+	csize + 'maxx ! 'minx !
+	r 'voxelc1 4+ @ - 1- 16 deepvox - <<
+	r 'voxelc2 4+ @ - 1- 16 deepvox - <<
+	over <? ( swap ) | min max
+	csize + 'maxy ! 'miny !
+	r 'voxelc1 8 + @ - 1- 16 deepvox - <<
+	r> 'voxelc2 8 + @ - 1- 16 deepvox - <<
+	over <? ( swap ) | min max
+	csize + 'maxz ! 'minz ! ;
+
+::voxcursorx | --
+	1.0 deepvox >> 'csize !
+	adjust
+	'vert >r
+	minx miny minz to3d r!+ r!+
+	maxx miny minz to3d r!+ r!+
+	minx maxy minz to3d r!+ r!+
+   	maxx maxy minz to3d r!+ r!+
+	minx miny maxz to3d r!+ r!+
+	maxx miny maxz to3d r!+ r!+
+	minx maxy maxz to3d r!+ r!+
+   	maxx maxy maxz to3d r!+ r> !
+	drawcursor ;
+
+:voxcx
+	voxelc1 voxelc2 over >? ( swap ) ;
+:voxcy
+	'voxelc1 4+ @ 'voxelc2 4+ @ over >? ( swap ) ;
+:voxcz
+	'voxelc1 8 + @ 'voxelc2 8 + @ over >? ( swap ) ;
+
+::mapvoxcursorx | vector --
+	>r
+	voxcz ( over <=? )(
+		voxcy ( over <=? )(
+			voxcx ( over <=? )(
+				pick4 pick3 pick2 r exec
+				1+ ) 2drop
+			1+ ) 2drop
+		1+ ) 2drop
+	rdrop ;
+
+|--------- Grilla
+#nx #ny #nz
+
+:dotprod2 | x y z -- dp
+	nz * swap ny * + swap nx * + ;
+
+::draw3dgrid
+	0 0 0 transform 'nz ! 'ny ! 'nx !
+
+	gris
+	0 0 $ff transform
+	rot nx - rot ny - rot nz -
+	dotprod2 +? ( 0.5 )( -0.5 ) nip
+	0.25 0.5 rot grillaxy
+
+	0 $ff 0 transform
+	rot nx - rot ny - rot nz -
+	dotprod2 +? ( 0.5 )( -0.5 ) nip
+	0.25 0.5 rot grillaxz
+
+	$ff 0 0 transform
+	rot nx - rot ny - rot nz -
+	dotprod2 +? ( 0.5 )( -0.5 ) nip
+	0.25 0.5 rot grillayz
+	;
+
+::voxcursore
+	1.0 deepvox >> 'csize !
+	adjust
+	'vert >r
+	minx miny minz to3d r!+ r!+
+	maxx miny minz to3d r!+ r!+
+	minx maxy minz to3d r!+ r!+
+   	maxx maxy minz to3d r!+ r!+
+	minx miny maxz to3d r!+ r!+
+	maxx miny maxz to3d r!+ r!+
+	minx maxy maxz to3d r!+ r!+
+   	maxx maxy maxz to3d r!+ r> !
+
+	0 0 0 transform 'nz ! 'ny ! 'nx !
+	0 0 $ff transform rot nx - rot ny - rot nz - dotprod2 -? ( 4 )( 0 ) >r drop
+	0 $ff 0 transform rot nx - rot ny - rot nz - dotprod2 -? ( 2 r+ ) drop
+	$ff 0 0 transform rot nx - rot ny - rot nz - dotprod2 -? ( 1 r+ ) drop
+	r nver op
+	r 1 xor nver line r 3 xor nver line
+	r 2 xor nver line r 6 xor nver line
+	r 4 xor nver line r 5 xor nver line
+	r 1 xor nver line 
+	r 2 xor nver op r nver line r> 4 xor nver line
+	;
+
+|---------- dda3
+#:cx #:cy #:cz	| actual
+#ox #oy #oz	| origen
+#dx #dy #dz	| direccion
+#ex #ey #ez
+#sx #sy #sz
+#n
+
+::voxOp | xi yi zi --
+	'oz ! 'oy ! 'ox ! ;
+
+|----
+::voxLinet | x y z --
+	0 dup 'ex ! dup 'ey ! 'ez !
+	oz over - sign 'sz ! abs 'dz ! 'cz !
+	oy over - sign 'sy ! abs 'dy ! 'cy !
+	ox over - sign 'sx ! abs 'dx ! 'cx !
+	dx dy max dz max 'n !
+	;
+
+::voxPasot
+	dx 'ex +!
+	dy 'ey +!
+	dz 'ez +!
+	n
+	ex 2* <? ( sx 'cx +! dup neg 'ex +! )
+	ey 2* <? ( sy 'cy +! dup neg 'ey +! )
+	ez 2* <? ( sz 'cz +! dup neg 'ez +! )
+	drop
+	;
+|---
+::voxLine | x y z --
+	oz over - sign 'sz ! abs 'dz ! 'cz !
+	oy over - sign 'sy ! abs 'dy ! 'cy !
+	ox over - sign 'sx ! abs 'dx ! 'cx !
+	dy dx - 'ez !
+	dz dx - 'ey !
+	dy dz - 'ex !
+	;
+
+::voxPaso
+	ez -? ( drop 
+		ey -? ( drop sx 'cx +! dy 2* 'ez +! dz 2* 'ey +! ; )
+		0? ( sx 'cx +! dy 2* 'ez +! dz 2* 'ey +! )
+		drop
+		sz 'cz +! dx 2* neg 'ey +! dy 2* 'ex +! ; )
+	0? ( drop sz 'cz +! dx 2* neg 'ey +! dy 2* 'ex +! sx 'cx +! dy 2* 'ez +! dz 2* 'ey +! ; )
+	drop
+	ex -? ( drop sz 'cz +! dx 2* neg 'ey +! dy 2* 'ex +! ; )
+	0? ( sz 'cz +! dx 2* neg 'ey +! dy 2* 'ex +! )
+	drop
+	sy 'cy +! dx 2* neg 'ez +! dz 2* neg 'ex +!
+	;
+
+
+::voxEnd? | -- 0/n
+	cx ox - cy oy - or cz oz - or ;
+
+|---------- mapeo
+#vector
+#zposnow
+#$octree
+#$pixels
+
+:adjustmem | octree --
+	dup 28 + '$octree !
+	4+ @ $octree + '$pixels ! ;
+
+:octcolor | mem -- color
+    $octree - $pixels + @ ;
+
+:oct++ | adr -- adr bitmask | relativo
+	@+ dup 8 >> 2 << rot + swap $ff and ;
+
+:3dchi | adr bitm nro n --  adr bitm adrc
+	zposnow $fffffff8 and or 'zposnow !
+	1- over and popcnt 2 << pick2 + ;  | node bitm node'
+
+:3drec | oct --
+	$pixels	>=? ( octcolor zposnow vector exec ; )
+	oct++
+	zposnow 3 << 'zposnow !
+	1 over nand? ( drop )( 0 3dchi 3drec )
+	2 over nand? ( drop )( 1 3dchi 3drec )
+	4 over nand? ( drop )( 2 3dchi 3drec )
+	8 over nand? ( drop )( 3 3dchi 3drec )
+	16 over nand? ( drop )( 4 3dchi 3drec )
+	32 over nand? ( drop )( 5 3dchi 3drec )
+	64 over nand? ( drop )( 6 3dchi 3drec )
+	128 over nand? ( drop )( 7 3dchi 3drec )
+	2drop
+	zposnow 3 >> 'zposnow !
+	;
+
+::3domap | vector 3d0 --
+	adjustmem
+	'vector !
+	0 'zposnow !
+	$octree 3drec ;
+
+|------------ point in cuad
+#xt #yt
+#inside
+
+|...x2-x1 * y-y1 - y2-y1 * x-x1
+:cross | x1 y1 x2 y2 -- x2 y2 cr
+	2swap 						| x2 y2 x1 y1
+	pick3 pick2 - yt pick2 - *	| x2 y2 x1 y1 A
+	pick3 rot - rot neg xt + * - ;
+
+:top | x y z --
+	0 'inside ! transform p3d 2dup
+	;
+
+:tline | x y z -- 1..fail
+	transform p3d
+	cross 0? ( ; )
+	inside 0? ( swap 'inside ! ; )
+	xor $80000000 and ;
+
+:tinside | -- 1..fail
+	2swap
+	cross nip nip 0? ( ; )
+	inside xor $80000000 and ;
+
+#:hx0 #:hy0 #:hz0
+#:hx1 #:hy1 #:hz1
+
+#vertex )( 480
+#vertex>
+
+:4nip nip nip nip nip ;
+
+:qin | -- in
+	vertex> 48 - >r
+	r@+ r@+ r@+ top
+	r@+ r@+ r@+ tline drop
+	12 r+ r@+ r@+ r@+ tline 1? ( rdrop 4nip ; ) drop
+	-24 r+ r@+ r@+ r> @ tline 1? ( 4nip ; ) drop
+	tinside ;
+
+:quadchild | id --
+	vertex> dup >r 48 -
+	swap 2 << dup 2* + | 12*
+	over + swap >r >r | prev pivot
+	r@+ r@+ r> @ r> | x y z pri
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @+ pick2 + 2/ r!+
+	@+ pick4 + 2/ r!+ @+ pick3 + 2/ r!+ @ + 2/
+	r> !+ 'vertex> !
+	2drop ;
+
+:remchid
+	-48 'vertex> +! ;
+
+:testchild | -- z
+	0 quadchild qin 0? ( ; ) drop remchid
+	1 quadchild qin 0? ( drop 1 ; ) drop remchid
+	2 quadchild qin 0? ( drop 2 ; ) drop remchid
+	3 quadchild 3 |qin 0? ( drop 3 ; ) drop remchid
+	;
+
+:zsearch | zorder2d
+	0 deepvox ( 1? )( 1-
+		testchild rot 2 << or
+		swap ) drop
+	invmorton2d ;
+
+:p! | x y z
+	hx0 -? ( drop 'hz0 ! 'hy0 ! 'hx0 ! ; ) drop
+	'hz1 ! 'hy1 ! 'hx1 ! ;
+
+:quadxy | q z -- 1/0
+	'vertex >r
+	 0.5 r!+  0.5 r!+ dup r!+
+	 0.5 r!+ -0.5 r!+ dup r!+
+	-0.5 r!+  0.5 r!+ dup r!+
+	-0.5 r!+ -0.5 r!+ r> !+
+	'vertex> !
+	qin 1? ( 2drop 0 ; ) drop
+	zsearch p! 1 ;
+
+:quadyz | q x -- 1/0
+	'vertex >r
+	dup r!+  0.5 r!+  0.5 r!+
+	dup r!+  0.5 r!+ -0.5 r!+
+	dup r!+ -0.5 r!+  0.5 r!+
+	r!+     -0.5 r!+ -0.5 r> !+
+	'vertex> !
+	qin 1? ( 2drop 0 ; ) drop
+	zsearch rot p! 1 ;
+
+:quadxz | q y -- 1/0
+	'vertex >r
+	 0.5 r!+ dup r!+  0.5 r!+
+	 0.5 r!+ dup r!+ -0.5 r!+
+	-0.5 r!+ dup r!+  0.5 r!+
+	-0.5 r!+ r!+     -0.5 r> !+
+	'vertex> !
+	qin 1? ( 2drop 0 ; ) drop
+	zsearch rot swap p! 1 ;
+
+
+:sortvox
+	hz0 qsize 2/ - hy0 qsize 2/ - hx0 qsize 2/ - transform
+	dup * swap dup * + swap dup * +
+	hz1 qsize 2/ - hy1 qsize 2/ - hx1 qsize 2/ - transform
+	dup * swap dup * + swap dup * +
+	>? ( drop ; ) drop
+	hz1 hz0 'hz1 ! 'hz0 !
+	hy1 hy0 'hy1 ! 'hy0 !
+	hx1 hx0 'hx1 ! 'hx0 !
+	;
+
+::testbox | x y -- 1/0
+	'yt ! 'xt !
+	-1 'hx0 !
+	0
+	qsize -0.5 quadxy + 0 0.5 quadxy +
+	qsize -0.5 quadyz + 0 0.5 quadyz +
+	qsize -0.5 quadxz + 0 0.5 quadxz +
+	1? ( sortvox )
+	|*** DEBUG
+|	rojo hx0 hy0 hz0 voxcursor
+|	verde hx1 hy1 hz1 voxcursor
+	;

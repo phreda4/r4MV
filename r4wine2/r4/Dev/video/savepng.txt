@@ -1,0 +1,87 @@
+| save uncompress png
+| PHREDA 2017
+|---------------
+^r4/lib/loadpng.txt
+^r4/lib/img.txt
+
+^r4/lib/crc32.txt
+
+#DEFLATE_MAX_BLOCK_SIZE 65535
+#wp #hp
+#size
+
+:crc | desde --- crc
+	here over - swap crc32 ;
+:adler
+	here over - swap adler32 ;
+
+:,32 dup 24 >> ,c dup 16 >> ,c dup 8 >> ,c ,c ;
+
+:header
+	$89504E47 ,32 $0D0A1A0A ,32	| PNG header
+	$0000000D ,32 $49484452 ,32 | IHDR chunk
+	wp ,32
+	hp ,32
+	$08020000 ,32 $00 ,c
+	17 crc ,32		| IHDR CRC-32 to be filled in (starting at offset 29)
+	size ,32 		| IDAT chunk
+	$49444154 ,32
+	$08 ,c $1D ,c 	| DEFLATE data
+	;
+
+:,pixel | col --
+	dup 16 >> ,c dup 8 >> ,c ,c ;
+
+:lines
+	>r
+    1 ,c
+	wp ( 1? )(
+		r@+ ,pixel
+		1- ) drop
+	r> ;
+
+:image
+	framev
+	hp ( 1? )( swap
+		lines
+		sw wp - 2 << +
+		swap 1- ) 2drop ;
+
+:finish
+	0 adler ,32
+	0 crc ,32
+	0 ,32	| IEND chunk
+	$49454E44 ,32 $AE426082 ,32
+	;
+
+| save frame from 0,0
+::savepng | "" w h --
+	over 3 * 1+ over *
+	dup DEFLATE_MAX_BLOCK_SIZE /
+	dup DEFLATE_MAX_BLOCK_SIZE * pick2 <? ( drop 1+ )( drop )
+	5 * 6 + +
+	'size !
+	'hp ! 'wp !
+	mark
+	header
+	image
+	finish
+	savemem
+	empty ;
+
+|------------------------------
+#imgp
+
+:testsave
+	"media/bmp/demo-mandelbrot2.png" 512 512 savepng ;
+
+:main
+	"media/bmp/demo-mandelbrot.png" loadpng 'imgp !
+	show clrscr
+		0 0 imgp img.draw
+		'testsave <f1>
+		'exit >esc<
+		;
+
+
+: mark main ;

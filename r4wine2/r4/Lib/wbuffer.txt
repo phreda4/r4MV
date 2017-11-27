@@ -1,0 +1,171 @@
+| wbuffer - convex polyfill
+| PHREDA 2016
+|-------------------------
+^r4/lib/trace.txt
+
+#:zb
+#zbw #zbh
+#zcnt #:zbo
+
+#segs	| mem polys
+#px #py #pz
+#ymin #ymax
+#zstep
+#zbase
+
+#o #z
+
+::zo! 'o ! ;
+::zz! 'z ! ;
+
+|--- maskbuffer | zbw*zbh
+:zb.adr | x y -- d
+	zbw * + 2 << zb + ;
+
+::zb@ | x y -- b
+	zb.adr @ ;
+
+::zbo! | o z x y --
+	zb.adr >r r!+ r> zbo + ! ;
+
+::zb! | x y z --
+	rot rot zb.adr >r r!+ o r> zbo + ! ;
+
+::zbw! | x y z w --
+	swap 'z !
+	rot rot zb.adr >r | w
+	( 1? )(
+		r@+
+		z <? ( z r 4 - ! o r zbo + ! )
+		drop 1- ) drop
+	rdrop ;
+
+::zbh! | x y z h --
+	swap 'z !
+	rot rot zb.adr >r
+	zbw 1- 2 << swap
+	( 1? )(
+		r@+
+		z <? ( z r 4 - ! o r zbo + ! )
+		drop
+		over r+ 1- ) 2drop
+	rdrop ;
+
+::zb.clear
+	zb >r zcnt ( 1? )( 1- 0 r!+ ) drop rdrop ;
+
+::zb.ini | w h --
+	2dup * dup 'zcnt ! dup 2 << 4 - 'zbo !
+	here dup 'zb ! 		| zbuffer,cbuffer
+	swap 3 << + dup 'segs !
+	over 4 << + 'here !
+	dup 1- 'ymax ! 'zbh ! 'zbw !
+	zb.clear ;
+
+::zb.occ | w h x y z -- 1/0
+	'z !
+	zb.adr >r
+	zbw pick2 - 2 <<
+	swap ( 1? )(
+		pick2 ( 1? )( r@+
+			z <? ( nip 4drop rdrop 1 ; )
+			drop 1- ) drop
+		over r+
+		1- ) 3drop
+	rdrop 0 ;
+
+::zb.set | w h x y z o --
+	'o ! 'z !
+	zb.adr >r
+	zbw pick2 - 2 <<
+	swap ( 1? )(
+		pick2 ( 1? )( r@+
+			z <? ( z r 4 - ! o r zbo + ! )
+			drop 1- ) drop
+		over r+
+		1- ) 3drop
+	rdrop ;
+
+::zb.fill | w h x y --
+	zb.adr >r
+	zbw pick2 - 2 <<
+	swap ( 1? )(
+		pick2 ( 1? )( r@+
+			z <? ( z r 4 - ! o r zbo + ! )
+			drop 1- ) drop
+		over r+
+		1- ) 3drop
+	rdrop ;
+
+|--- convex polygon
+#FBASE	12
+#vert )( 32
+#vert> 'vert
+
+::zop | x y z --
+	'zbase ! 0 'pz !
+	ymin 4 << segs + >r
+	ymax ymin - 1+ ( 1? )( 1- $7fffffff r!+ -1 r!+ 8 r+ ) drop rdrop
+	dup 'ymin ! dup 'ymax !
+	over FBASE << dup pick2 4 << segs + !+ !+ 0 dup rot !+ !
+	'py ! 'px !
+	'vert 'vert> !
+	;
+
+:enlinea | x y --
+	4 << segs + >r
+	dup FBASE <<
+	r@+ <? ( dup r 4 - ! pz r 4+ ! )
+	r@+ >? ( dup r 4 - ! pz r 4+ ! )
+	drop rdrop
+	'px ! ;
+
+::zline | x y z --
+	pz 'z !
+	zbase - 11 << 'pz !
+	py =? ( enlinea ; )
+	px py
+	2over 'py ! 'px !
+	pick2 >? ( 2swap z pz dup 'z ! - )( pz z - ) 'zstep !
+	ymin <? ( dup 'ymin ! )
+ 	rot ymax >? ( dup 'ymax ! )		| comprueba el mayor
+	>r >r FBASE << swap FBASE << 	| x1 x2
+	over - r> r> over -				| x1 (x2-x1) y1 (y2-y1)
+	rot over / 					| x1 y1 (y2-y1) t
+	rot 4 << segs + dup >r
+	vert> !+ 'vert> !				| x1 (y2-y1) t
+	zstep pick2 / 'zstep !
+	rot over + rot				| t x1 cnt
+	1+ ( 1? )( 1- swap
+		r@+ <? ( dup r 4 - ! z r 4+ ! )
+		r@+ >? ( dup r 4 - ! z r 4+ ! )
+		8 r+
+		zstep 'z +!
+		pick2 + swap )
+	3drop rdrop ;
+
+:zbline | cnt x zi --
+	swap 2 << py + >r
+	swap ( 1? )(
+		over 11 >> zbase +
+		r@+ >? ( r 4 - ! o r zbo + ! )( drop )
+		swap zstep + swap
+		1- ) 2drop
+	rdrop ;
+
+::zpoly | --
+	'vert @+
+	@+ swap @+ rot - 'py ! 'zstep !
+	( vert> <? )( @+
+		@+ swap @+ rot - py >? ( 'py ! 'zstep ! )( 2drop )
+		) drop
+	zstep @+ swap @ swap - py FBASE >> 1+ / 'zstep !
+	ymax ymin
+	dup 4 << segs + >r
+	dup zbw * 2 << zb + 'py !
+	( over <=? )(
+		r@+ FBASE >> r@+ FBASE >> over - 1+
+		swap r@+ 4 r+
+		zbline
+		zbw 2 << 'py +!
+		1+ ) 2drop rdrop ;

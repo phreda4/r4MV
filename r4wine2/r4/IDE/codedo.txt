@@ -1,0 +1,94 @@
+|
+| CodeDO - Interactive IDE
+| PHREDA 2015
+|--------------------------------
+
+^r4/lib/gui.txt
+^r4/lib/btn.txt
+^r4/lib/input.txt
+
+^r4/lib/fontm.txt
+^inc/fntm/droidsans13.txt
+
+^r4/lib/trace.txt
+
+^r4/ide/r4-token.txt
+^r4/ide/r4-tokenrun.txt
+
+#mok "Ok!"
+#msg	'mok
+
+#hist )( $ffff	| historia
+#hist> 'hist
+#pad )( 256		| pad entrada
+#padh>
+
+:paderror
+	errormsg
+	'msg !
+	padh> 0 over c! 'hist> !
+	;
+
+:padenter
+	hist> 'padh> !
+	'pad hist> strcpyl 1- 13 swap c!+ 0 over c! 'hist> !
+
+	mark
+	'hist tokeniza
+	empty
+	1? ( paderror ; ) drop
+	'mok 'msg !
+	0 'pad !
+
+	|---- ejecuta codigo
+	cls
+	tokenmem
+	stack.ini
+	<<boot ( code> <? )( steptoken ) drop
+    >XFB
+
+	|-------------------
+	refreshfoco
+	;
+
+:showglass
+	ccy sw * 2 << framev +
+	sw sh ccy - *
+	( 1? )( 1- swap dup @ 2/
+		$3f3f3f and
+		$3f or
+		swap !+ swap )
+	2drop ;
+
+|-----------------------------------------------
+:mensajer4
+	msg 'mok =? ( verde
+			)( rojo "! " printx amarillo )
+	printx
+	;
+
+:main
+	4
+	mark
+	'fontdroidsans13 fontm
+	stack.ini
+	show xfb>scr
+		|----------------------------------
+		'hist print cr
+		codeprint cr
+		infodic cr
+|		dumpdic cr
+		dumpvstack
+
+		|----------------------------------
+		0 rows 4 - gotoxy
+		showglass
+		verde dup ":r%d " print mensajer4 cr
+		blanco "> " print
+		'pad 255 inputcr
+		'padenter <enter>
+
+		'exit >esc<
+		cminiflecha ;
+
+: main ;
