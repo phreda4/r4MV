@@ -97,7 +97,8 @@ char *macros[]={// directivas del compilador
 "NEG","1+","4+","1-","2/","2*","<<",">>",
 "@","C@","W@","!","C!","W!","+!","C+!","W+!", //--- memoria
 "@+","!+","C@+","C!+","W@+","W!+",
-">A","A","A@","A!","A+","A@+","A!+",
+">A","A>","A@","A!","A+","A@+","A!+",
+">B","B>","B@","B!","B+","B@+","B!+",
 "MOVE","MOVE>","FILL","CMOVE","CMOVE>","CFILL",//-- movimiento de memoria
 "MEM",
 "FFIRST","FNEXT",
@@ -106,12 +107,9 @@ char *macros[]={// directivas del compilador
 "XYMOUSE","BMOUSE", //"MOUSE",     //-------- mouse
 "KEY!", "KEY",          //-------- teclado
 "CNTJOY","GETJOY",     //-------- joystick
-
 "MSEC","TIME","DATE","END","RUN",//--- sistema
 "SW","SH",
-//"CLS",
 "REDRAW","FRAMEV",//--- pantalla
-//"SETXY","PX+!","PX!+","PX@","XFB",">XFB","XFB>","PAPER",
 "INK","INK@","ALPHA", //--- color
 "OP","LINE","CURVE","CURVE3","PLINE","PCURVE","PCURVE3","POLI",//--- dibujo
 "FCOL","FCEN","FMAT","SFILL","LFILL","RFILL","TFILL",
@@ -125,7 +123,6 @@ char *macros[]={// directivas del compilador
 #ifdef NET
 "OPENURL",
 #endif
-//"TIMER",            //------- timer
 //---------------------
 #ifdef PRINTER
 "DOCINI","DOCEND","DOCAT","DOCLINE","DOCTEXT","DOCFONT","DOCBIT","DOCRES","DOCSIZE", //-- impresora
@@ -146,20 +143,19 @@ CSQRT,CLZ,CDIVSH,
 NEG,INC,INC4,DEC,DIV2,MUL2,SHL,SHR,//--- aritmetica
 FECH,CFECH,WFECH,STOR,CSTOR,WSTOR,INCSTOR,CINCSTOR,WINCSTOR,//--- memoria
 FECHPLUS,STOREPLUS,CFECHPLUS,CSTOREPLUS,WFECHPLUS,WSTOREPLUS,
-TOA,A,AF,AS,AA,AFA,ASA,
+TOA,ATO,AF,AS,AA,AFA,ASA,
+TOB,BTO,BF,BS,BA,BFA,BSA,
 MOVED,MOVEA,FILL,CMOVED,CMOVEA,CFILL,
 MEM, 
 FFIRST,FNEXT,
 LOAD,SAVE,APPEND,//--- bloques de memoria, bloques
 UPDATE,
-XYMOUSE,BMOUSE, //MOUSE,
+XYMOUSE,BMOUSE, //MOUSE
 SKEY, KEY,
 CNTJOY,GETJOY,
 MSEC,TIME,IDATE,SISEND,SISRUN,//--- sistema
 WIDTH,HEIGHT,
-//CLS,
 REDRAW,FRAMEV,//--- pantalla
-//SETXY,MPX,SPX,GPX, VXFB,TOXFB,XFBTO, COLORF,
 COLOR,COLORA,ALPHA,//--- color
 OP,LINE,CURVE,CURVE3,PLINE,PCURVE,PCURVE3,POLI,//--- dibujo
 FCOL,FCEN,FMAT,SFILL,LFILL,RFILL,TFILL, //--- pintado
@@ -349,7 +345,7 @@ register int TOS;			// Tope de la pila PSP
 register int *NOS;			// Next of stack
 register BYTE **R;			// return stack
 BYTE *IP=codigo;	// lugar del programa // ebx
-int rega;
+int rega,regb;
 int W,W1;			// palabra actual y auxiliar
 
 R=RSP;*R=(BYTE*)&ultimapalabra;
@@ -408,10 +404,10 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
 	case TOR: R++;*R=(BYTE*)TOS;TOS=*NOS;NOS--;continue;
     case RFROM: NOS++;*NOS=TOS;TOS=(int)*R;R--;continue;
     case ERRE: NOS++;*NOS=TOS;TOS=(int)*R;continue;
-//	case ERREM: (*(int*)R)+=TOS;TOS=*NOS;NOS--;continue;
-//    case ERRFM: NOS++;*NOS=TOS;TOS=**(int**)R;(*(int*)R)+=4;continue;
-//    case ERRSM: **(int**)R=TOS;TOS=*NOS;NOS--;(*(int*)R)+=4;continue;
-//    case ERRDR: R--;continue;
+//  case ERREM: (*(int*)R)+=TOS;TOS=*NOS;NOS--;continue;
+//  case ERRFM: NOS++;*NOS=TOS;TOS=**(int**)R;(*(int*)R)+=4;continue;
+//  case ERRSM: **(int**)R=TOS;TOS=*NOS;NOS--;(*(int*)R)+=4;continue;
+//  case ERRDR: R--;continue;
 	case AND: TOS&=*NOS;NOS--;continue;
     case OR: TOS|=*NOS;NOS--;continue;
 	case XOR: TOS^=*NOS;NOS--;continue;
@@ -451,12 +447,19 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case WFECHPLUS: NOS++;*NOS=TOS+2;TOS=*(short *)TOS;continue;
     case WSTOREPLUS: *(short *)TOS=(short)*NOS;TOS+=2;NOS--;continue;
     case TOA: rega=TOS;TOS=*NOS;NOS--;continue;
-    case A: NOS++;*NOS=TOS;TOS=rega;continue;
+    case ATO: NOS++;*NOS=TOS;TOS=rega;continue;
     case AF: NOS++;*NOS=TOS;TOS=*(int*)rega;continue;
     case AS: *(int*)rega=TOS;TOS=*NOS;NOS--;continue;
     case AA: rega+=TOS*4;TOS=*NOS;NOS--;continue;
     case AFA: NOS++;*NOS=TOS;TOS=*(int*)rega;rega+=4;continue;
     case ASA: *(int*)rega=TOS;TOS=*NOS;NOS--;rega+=4;continue;    
+    case TOB: regb=TOS;TOS=*NOS;NOS--;continue;
+    case BTO: NOS++;*NOS=TOS;TOS=regb;continue;
+    case BF: NOS++;*NOS=TOS;TOS=*(int*)regb;continue;
+    case BS: *(int*)regb=TOS;TOS=*NOS;NOS--;continue;
+    case BA: regb+=TOS*4;TOS=*NOS;NOS--;continue;
+    case BFA: NOS++;*NOS=TOS;TOS=*(int*)regb;regb+=4;continue;
+    case BSA: *(int*)regb=TOS;TOS=*NOS;NOS--;regb+=4;continue;    
 // por velocidad         
     case MOVED: // | de sr cnt --
          W=*(NOS-1);W1=*NOS;
@@ -488,6 +491,44 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
          while (TOS--) { *(char *)W++=W1; }
          NOS-=2;TOS=*NOS;NOS--;
          continue;
+//--- bloque de memoria
+    case MEM: NOS++;*NOS=TOS;TOS=(int)memlibre;continue; // inicio de n-MB de datos
+//--- bloques
+    case FFIRST: // "" -- fdd/0
+         if (hFind!=NULL) FindClose(hFind);
+         strcpy(error,(char*)TOS);strcat(error,"\\*");
+         hFind=FindFirstFile(error, &ffd);
+         if (hFind == INVALID_HANDLE_VALUE) TOS=0; else TOS=(int)&ffd;
+         continue;
+    case FNEXT: // -- fdd/0
+         NOS++;*NOS=TOS;
+         if (FindNextFile(hFind, &ffd)==0) TOS=0; else TOS=(int)&ffd;
+         continue ;
+
+	case LOAD: // 'from "filename" -- 'to
+         if (TOS==0||*NOS==0) { TOS=*NOS;NOS--;continue; }
+         file=fopen((char*)TOS,"rb");
+         TOS=*NOS;NOS--;
+         if (file==NULL) continue;
+         do { W=fread((void*)TOS,sizeof(char),1024,file); TOS+=W; } while (W==1024);
+         fclose(file);continue;
+    case SAVE: // 'from cnt "filename" --
+         if (TOS==0||*NOS==0) { DeleteFile((char*)TOS);
+                              NOS-=2;TOS=*NOS;NOS--;continue; }
+         file=fopen((char*)TOS,"wb");
+         TOS=*NOS;NOS--;
+         if (file==NULL) { NOS--;TOS=*NOS;NOS--;continue; }
+         fwrite((void*)*NOS,sizeof(char),TOS,file);
+         fclose(file);
+         NOS--;TOS=*NOS;NOS--;continue;
+    case APPEND: // 'from cnt "filename" --
+         if (TOS==0||*NOS==0) { NOS-=2;TOS=*NOS;NOS--;continue; }
+         file=fopen((char*)TOS,"ab");
+         TOS=*NOS;NOS--;
+         if (file==NULL) { NOS--;TOS=*NOS;NOS--;continue; }
+         fwrite((void*)*NOS,sizeof(char),TOS,file);
+         fclose(file);
+         NOS--;TOS=*NOS;NOS--;continue;
     
 //--- sistema
 	case UPDATE:
@@ -511,9 +552,9 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case REDRAW: gr_redraw(); continue;
 	case MSEC: NOS++;*NOS=TOS;TOS=timeGetTime();continue;
     case IDATE: time(&sit);sitime=localtime(&sit);NOS++;*NOS=TOS;TOS=sitime->tm_year+1900;
-        NOS++;*NOS=TOS;TOS=sitime->tm_mon+1;NOS++;*NOS=TOS;TOS=sitime->tm_mday;continue;
+         NOS++;*NOS=TOS;TOS=sitime->tm_mon+1;NOS++;*NOS=TOS;TOS=sitime->tm_mday;continue;
     case TIME: time(&sit);sitime=localtime(&sit);NOS++;*NOS=TOS;TOS=sitime->tm_sec; 
-        NOS++;*NOS=TOS;TOS=sitime->tm_min;NOS++;*NOS=TOS;TOS=sitime->tm_hour;continue;
+         NOS++;*NOS=TOS;TOS=sitime->tm_min;NOS++;*NOS=TOS;TOS=sitime->tm_hour;continue;
     case SISEND: 
          return 0;
     case SISRUN:
@@ -574,7 +615,7 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case SINFO: // "" -- mm
          TOS=0;
          for(int i=0;i<FSOUND_GetMaxChannels();i++) TOS|=FSOUND_IsPlaying(i); 
-        continue;
+         continue;
     case SSET: // pan vol frec mm --
          if (TOS!=0) FSOUND_Sample_SetDefaults((FSOUND_SAMPLE *)TOS,int(*NOS),int(*(NOS-1)),int(*(NOS-2)),-1);
         TOS=*(NOS-3);NOS-=4;continue;
@@ -583,47 +624,6 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case SBI: NOS++;*NOS=TOS;TOS=(int)bisound();continue;
 #endif
 
-//--- bloque de memoria
-    case MEM: NOS++;*NOS=TOS;TOS=(int)memlibre;continue; // inicio de n-MB de datos
-//--- bloques
-
-    case FFIRST: // "" -- fdd/0
-         if (hFind!=NULL) FindClose(hFind);
-         strcpy(error,(char*)TOS);strcat(error,"\\*");
-         hFind=FindFirstFile(error, &ffd);
-         if (hFind == INVALID_HANDLE_VALUE) TOS=0; else TOS=(int)&ffd;
-         continue;
-    case FNEXT: // -- fdd/0
-         NOS++;*NOS=TOS;
-         if (FindNextFile(hFind, &ffd)==0) TOS=0; else TOS=(int)&ffd;
-         continue ;
-
-	case LOAD: // 'from "filename" -- 'to
-         if (TOS==0||*NOS==0) { TOS=*NOS;NOS--;continue; }
-         file=fopen((char*)TOS,"rb");
-         TOS=*NOS;NOS--;
-         if (file==NULL) continue;
-         do { W=fread((void*)TOS,sizeof(char),1024,file); TOS+=W; } while (W==1024);
-         fclose(file);continue;
-    case SAVE: // 'from cnt "filename" --
-         if (TOS==0||*NOS==0) { DeleteFile((char*)TOS);
-                              NOS-=2;TOS=*NOS;NOS--;continue; }
-         file=fopen((char*)TOS,"wb");
-         TOS=*NOS;NOS--;
-         if (file==NULL) { NOS--;TOS=*NOS;NOS--;continue; }
-         fwrite((void*)*NOS,sizeof(char),TOS,file);
-         fclose(file);
-         NOS--;TOS=*NOS;NOS--;continue;
-    case APPEND: // 'from cnt "filename" --
-         if (TOS==0||*NOS==0) { NOS-=2;TOS=*NOS;NOS--;continue; }
-         file=fopen((char*)TOS,"ab");
-         TOS=*NOS;NOS--;
-         if (file==NULL) { NOS--;TOS=*NOS;NOS--;continue; }
-         fwrite((void*)*NOS,sizeof(char),TOS,file);
-         fclose(file);
-         NOS--;TOS=*NOS;NOS--;continue;
-                  
-         
 //--- red
 #ifdef NET
     case OPENURL: // url header buff -- buff/0

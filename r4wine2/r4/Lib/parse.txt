@@ -184,7 +184,7 @@
 |-----
 ::?lista  | str list -- str 0 / str' n
 	>a ( a@+ 1? )(
-		over =word= 1? ( drop nip a ; )( drop )
+		over =word= 1? ( drop nip a> ; )( drop )
 		) drop 0 ;
 
 ::=s | s1 s2 -- 0/1
@@ -353,7 +353,7 @@
 	over c@ 0? ( 3drop -1 ; ) drop
 	0 >a
 	( dup c@ 1? )( drop
-		dup pick2 =l 1? ( 3drop a ; ) drop
+		dup pick2 =l 1? ( 3drop a> ; ) drop
 		>>s 1 a+ )
 	3drop -1 ;
 

@@ -94,7 +94,7 @@
 	here 'lista !
 	tablaprofile >a
 	indicepal< ( indicepal> 16 - <? )(
-		dup 8 + @ %1 nand? ( r +lista over a!+ 8 a+ ) drop
+		dup 8 + @ %1 nand? ( a> +lista over a!+ 8 a+ ) drop
 		16 + )
 	drop 
 	here lista - 3 >> 1+ 'clista !

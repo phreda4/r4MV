@@ -8,9 +8,9 @@
 
 ::actor+! | org x y z --
 	pick3 4+ >a
-	rot a +! 4 a+
-	swap a +! 4 a+
-	a +!
+	rot a> +! 4 a+
+	swap a> +! 4 a+
+	a> +!
 	;
 
 :actor*!

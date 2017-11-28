@@ -61,7 +61,7 @@
 	over 5 >> pick3 5 >> - 1- swap	| x1 x2 cntx cnty
 	2swap gmask1 swap gmask2
 	2swap 1+						| maska maskb cntx cnty
-	( 1? )( 1- a @+
+	( 1? )( 1- a> @+
 		pick4 and? ( 4drop 2drop 1 ; ) drop	| maska maskb cntx cnty adr
 		pick2 ( 1? )( 1- swap
 			@+ -1 <>? ( 4drop 3drop 1 ; ) drop
@@ -182,14 +182,14 @@
  	ymax >? ( dup 'ymax ! )
 	dup 'py !
 	3 << segs + >a
-	a@+ <? ( dup a 4 - ! )
-	a@+ >? ( dup a 4 - ! )
+	a@+ <? ( dup a> 4 - ! )
+	a@+ >? ( dup a> 4 - ! )
 	'px ! ;
 
 :bdot | x y --
 	3 << segs + >a
-	a@+ <? ( dup a 4 - ! )
-	a@+ >? ( dup a 4 - ! )
+	a@+ <? ( dup a> 4 - ! )
+	a@+ >? ( dup a> 4 - ! )
 	drop ;
 
 :bline2

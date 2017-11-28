@@ -157,9 +157,9 @@
 	-? ( drop ; )
 	reg!! ;
 
-::d.swap	dpila> 8 - >a a@+ a@+ a 8 - !+ ! ;
-::d.rot		dpila> 12 - >a a@+ a@+ a@+ swap a 12 - !+ !+ ! ;
-::d.2swap	dpila> 16 - >a a@+ a@+ swap a@+ a@+ swap a 16 - !+ !+ !+ ! ;
+::d.swap	dpila> 8 - >a a@+ a@+ a> 8 - !+ ! ;
+::d.rot		dpila> 12 - >a a@+ a@+ a@+ swap a> 12 - !+ !+ ! ;
+::d.2swap	dpila> 16 - >a a@+ a@+ swap a@+ a@+ swap a> 16 - !+ !+ !+ ! ;
 
 :newcell | valor tipo -- nro
 	celln 2 << 'cellt +
@@ -658,12 +658,20 @@
 	cellMem cellR1 d.drop cellR1 d.drop ;
 
 :i>a	cellR1 d.drop ;
-:ia     d.tos pushREG ;
+:ia>	d.tos pushREG ;
 :ia@	d.tos pushREG ;
 :ia!	cellR1 d.drop ;
 :ia+	cellR1 d.drop ;
 :ia@+	d.tos pushREG ;
 :ia!+	cellR1 d.drop ;
+
+:i>b	cellR1 d.drop ;
+:ib>	d.tos pushREG ;
+:ib@	d.tos pushREG ;
+:ib!	cellR1 d.drop ;
+:ib+	cellR1 d.drop ;
+:ib@+	d.tos pushREG ;
+:ib!+	cellR1 d.drop ;
 
 :vuso6	cellR1 d.drop cellR1 d.drop
 :vuso4	cellR1 d.drop
@@ -777,7 +785,8 @@ xop2a1	|76 >>    ab -- c  usa ecx
 2@	|W@+    a -- bc     tos es ddat
 2!	|W!+   ab -- c      tos es ddat
 
-i>a ia ia@ ia! ia+ ia@+ ia!+
+i>a ia> ia@ ia! ia+ ia@+ ia!+
+i>b ib> ib@ ib! ib+ ib@+ ib!+
 
 vuso3	|MOVE  abc --       a,b es ddat
 vuso3	|MOVE> abc --		a,b es ddat

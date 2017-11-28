@@ -93,10 +93,10 @@
 :,4drop ,drop
 :,3drop ,drop
 :,2drop ,drop ,drop ;
-:,swap	dstack> 8 - >a a@+ a@+ a 8 - !+ ! ;
+:,swap	dstack> 8 - >a a@+ a@+ a> 8 - !+ ! ;
 :,nip	,swap ,drop ;
-:,rot	dstack> 12 - >a a@+ a@+ a@+ swap a 12 - !+ !+ ! ;
-:,2swap	dstack> 16 - >a a@+ a@+ swap a@+ a@+ swap a 16 - !+ !+ !+ ! ;
+:,rot	dstack> 12 - >a a@+ a@+ a@+ swap a> 12 - !+ !+ ! ;
+:,2swap	dstack> 16 - >a a@+ a@+ swap a@+ a@+ swap a> 16 - !+ !+ !+ ! ;
 
 :,dup	d.TOS regR newreg dpush ;
 :,over	d.NOS regR newreg dpush ;
@@ -152,7 +152,8 @@
 	'dstack ( dstack> <? )( @+ a!+ ) drop
 	-1 a!+
 	'rstack ( rstack> <? )( @+ a!+ ) drop
-	-1 a!+ a 'ssc> !
+	-1 a!+ 
+	a> 'ssc> !
 	;
 
 :popvar
@@ -299,7 +300,7 @@
 	d.TOS dup regM regR ,drop d.TOS regR ,drop ;
 
 :,>a	dpop drop ;
-:,a		newreg dpush ;
+:,a>	newreg dpush ;
 :,a@    newreg dpush ;
 :,a!	dpop drop ;
 :,a+	dpop drop ;
@@ -332,7 +333,7 @@ xop2a1 xop2a1 |,<< ,>>
 2+! 2+!	2+!	|,+! ,c+! ,w+!
 2@ 2! 2@ 2! 2@ 2!       |,@+ ,!+ ,c@+ ,c!+ ,w@+ ,w!+
 
-,>a ,a ,a@ ,a! ,a+ ,a@+ ,a!+
+,>a ,a> ,a@ ,a! ,a+ ,a@+ ,a!+
 
 ,uso3	|MOVE  abc --       a,b es ddat
 ,uso3	|MOVE> abc --		a,b es ddat

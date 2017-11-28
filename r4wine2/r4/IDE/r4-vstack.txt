@@ -83,58 +83,58 @@
 ::vDUP
 	dpila> 8 - >a
 	a@+ a@+ swap
-	a!+ a!+ a 'dpila> ! ;
+	a!+ a!+ a> 'dpila> ! ;
 ::v2DUP
 	dpila> 16 - >a
 	a@+ a@+ swap
 	a@+ a@+ swap 2swap
 	a!+ a!+ a!+ a!+
-	a 'dpila> ! ;
+	a> 'dpila> ! ;
 ::vOVER
 	dpila> 16 - >a
-	a@+ a@+ swap a 8 + >a
-	a!+ a!+ a 'dpila> ! ;
+	a@+ a@+ swap a> 8 + >a
+	a!+ a!+ a> 'dpila> ! ;
 ::vPICK2
 	dpila> 24 - >a
-	a@+ a@+ swap a 16 + >a
-	a!+ a!+ a 'dpila> ! ;
+	a@+ a@+ swap a> 16 + >a
+	a!+ a!+ a> 'dpila> ! ;
 ::vPICK3
 	dpila> 32 - >a
-	a@+ a@+ swap a 24 + >a
-	a!+ a!+ a 'dpila> ! ;
+	a@+ a@+ swap a> 24 + >a
+	a!+ a!+ a> 'dpila> ! ;
 ::vPICK4
 	dpila> 40 - >a
-	a@+ a@+ swap a 32 + >a
-	a!+ a!+ a 'dpila> ! ;
+	a@+ a@+ swap a> 32 + >a
+	a!+ a!+ a> 'dpila> ! ;
 ::vSWAP
 	dpila> 16 - >a
 	a@+ a@+ swap
-	a@+ a @ swap
+	a@+ a@ swap
 	dpila> 16 -
 	!+ !+ !+ ! ;
 ::vNIP
 	dpila> 8 - >a
-	a@+ a@+ swap a 16 -
+	a@+ a@+ swap a> 16 -
 	!+ !+ 'dpila> ! ;
 ::vROT
 	dpila> 24 - >a
 	a@+ a@+ swap
 	a@+ a@+ swap
-	a@+ a @ swap 2swap
+	a@+ a@ swap 2swap
 	dpila> 24 -
 	!+ !+ !+ !+ !+ ! ;
 ::v2OVER
 	dpila> 32 - >a
 	a@+ a@+ swap
 	a@+ a@+ swap 2swap
-	a 16 +
+	a> 16 +
 	!+ !+ !+ !+ 'dpila> ! ;
 ::v2SWAP
 	dpila> 32 - >a
 	a@+ a@+ swap
 	a@+ a@+ swap 2swap
 	a@+ a@+ swap
-	a@+ a@+ swap 2swap a 32 -
+	a@+ a@+ swap 2swap a> 32 -
 	!+ !+ !+ !+ !+ !+ !+ ! ;
 
 |--- aritmeticas y logica

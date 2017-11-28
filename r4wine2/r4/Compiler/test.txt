@@ -2,10 +2,10 @@
 
 #var 4
 #coso 7
-#a1 1
+#a 1
 #b 1 2 3
-#c 'a1
-#d 'a1 'b
+#c 'a
+#d 'a 'b
 
 :cuad
 	0? ( ; )
@@ -21,17 +21,17 @@
 		rot 2 >> ) drop nip ;
 
 :testr
-	[ 1 'a1 +! ; ] <f1>
-	[ -1 'a1 +! ; ] <f2>
+	[ 1 'a +! ; ] <f1>
+	[ -1 'a +! ; ] <f2>
 	;
 
 
 :main
-	a1 c drop
+	a c drop
 	'b 'd 2drop
 	3 cuad
 	var 1 + coso + 5 *
-	25 nsqrt 'a1 !
+	25 nsqrt 'a !
 	show clrscr
 	  	"Hello Human!" print
 		testr

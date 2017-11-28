@@ -182,7 +182,7 @@
 ::light8 | color ligth -- color
 	over $ff and over + $ff min >a
 	over $ff00 and over 8 << + $ff00 min a+
-	16 << swap $ff0000 and + $ff0000 min a or ;
+	16 << swap $ff0000 and + $ff0000 min a> or ;
 
 | blend c1 and c2 in 2 bits
 ::blend2 | c1 c2 i -- c

@@ -221,7 +221,7 @@
 	indicepal< ( indicepal> <? )(
 		dup 8 + @ 1 and? ( over 'indicepal - 4 >> a!+ ) drop
 		16 + ) drop
-	a 'varlist - 2 >> 'varlistc ! ;
+	a> 'varlist - 2 >> 'varlistc ! ;
 
 :showvars
 	0 ( varows <? )(

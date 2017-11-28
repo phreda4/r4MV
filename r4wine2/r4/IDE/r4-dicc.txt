@@ -111,7 +111,7 @@
 	code> a!+	| token de comienzo
 	a!+				| info de palabra
 	0 a!+			| mem?
-	a 0 over ! 'indicepal> ! ;
+	a> 0 over ! 'indicepal> ! ;
 
 |---- Compila programa
 ::,, | n --

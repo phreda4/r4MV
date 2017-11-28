@@ -491,15 +491,6 @@
 	'exit >esc<
 	;
 
-:main2
-	mark
-	here dup "debug.err" load
-	0 swap !
-	empty fonti2
-	show clrscr
-		here print
-		'exit >esc< ;
-
 :ram
 	mark
 	rebuild
@@ -507,4 +498,7 @@
 	loadm
 	;
 
-: ram main savem ;
+: ram 
+main
+|keytest
+savem ;

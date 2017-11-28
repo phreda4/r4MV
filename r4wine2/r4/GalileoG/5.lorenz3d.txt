@@ -1,4 +1,4 @@
-| lorenz 
+| lorenz
 | GALILEOG 2016
 | +3d PHREDA 2016
 |-------------------------------------------
@@ -63,15 +63,16 @@
 
 	lorenz>
 	'lorenz> =? ( 'lorenz nip )	| ultimo punto
-	>r r@+ r@+ r@+ 3dop
-	r>
+	dup @ over 4+ @ pick2 8 + @ 3dop
 	( 'lorenz> <? )(
-		>r r@+ r@+ r@+ 3dline
-		r> ) drop
+		dup @ over 4+ @ pick2 8 + @
+		3dline
+		) drop
 	'lorenz ( lorenz> <? )(
-		>r r@+ r@+ r@+ 3dline
-		r> ) drop
-		
+		dup @ over 4+ @ pick2 8 + @
+		3dline
+		) drop
+
 	lorenz> 12 -
 	'lorenz <? ( 'lorenz> 12 - nip )	| ultimo punto
 

@@ -330,7 +330,7 @@
 	;
 
 
-:	$0 paper
+:	$0 'paper !
 	mark
 	leererrores
 	memoria

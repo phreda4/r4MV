@@ -252,7 +252,7 @@
 	indicepal> >a a!+ a!+ a!+ 	| nombre|tok|info|
 	0 a!+ 0 a!+ 0 a!+ 0 a!+		| stat|mem|calls|dir|
 	pinc> 8 - @ a!+				| group(inc)
-	a 0 over ! 'indicepal> ! ;
+	a> 0 over ! 'indicepal> ! ;
 
 :esboot
 	prog> '<<boot ! 3 'estado !

@@ -2,12 +2,11 @@
 | PHREDA 2017
 |-------------------------
 #mxfb
-
+#s
 ::iniXFB
-	here 'mxfb !
-	sw sh * 2 << 'here +!
-	;
-
-::XFB 'mxfb ;
-::>XFB framev mxfb sw sh * MOVE ;
-::XFB> mxfb framev sw sh * MOVE ;
+	mark here 'mxfb !
+	sw sh * dup 's !
+	2 << 'here +! ;
+::XFB mxfb ;
+::XFB> framev mxfb s MOVE ;
+::>XFB mxfb framev s MOVE ;
