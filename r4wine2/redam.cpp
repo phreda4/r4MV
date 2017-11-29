@@ -90,11 +90,11 @@ char *macros[]={// directivas del compilador
 "0?","+?","-?","1?","=?","<?",">?","<=?",">=?","<>?","AND?","NAND?",
 "DUP","DROP","OVER","PICK2","PICK3","PICK4","SWAP","NIP","ROT", //--- pila
 "2DUP","2DROP","3DROP","4DROP","2OVER","2SWAP",
-">R","R>","R",//"R+","R@+","R!+","RDROP",//--- pila direcciones
+">R","R>","R@",//"R+","R@+","R!+","RDROP",//--- pila direcciones
 "AND","OR","XOR","NOT",                //--- logicas
 "+","-","*","/","*/","*>>","/MOD","MOD","ABS", //--- aritmeticas
 "SQRT","CLZ","<</",
-"NEG","1+","4+","1-","2/","2*","<<",">>",
+"NEG","1+","4+","1-","2/","2*","<<",">>","0>>",
 "@","C@","W@","!","C!","W!","+!","C+!","W+!", //--- memoria
 "@+","!+","C@+","C!+","W@+","W!+",
 ">A","A>","A@","A!","A+","A@+","A!+",
@@ -140,7 +140,7 @@ TOR,RFROM,ERRE,//ERREM,ERRFM,ERRSM,ERRDR,//--- pila direcciones
 AND,OR,XOR,NOT,//--- logica
 SUMA,RESTA,MUL,DIV,MULDIV,MULSHR,DIVMOD,MOD,ABS,
 CSQRT,CLZ,CDIVSH,
-NEG,INC,INC4,DEC,DIV2,MUL2,SHL,SHR,//--- aritmetica
+NEG,INC,INC4,DEC,DIV2,MUL2,SHL,SHR,SHR0,//--- aritmetica
 FECH,CFECH,WFECH,STOR,CSTOR,WSTOR,INCSTOR,CINCSTOR,WINCSTOR,//--- memoria
 FECHPLUS,STOREPLUS,CFECHPLUS,CSTOREPLUS,WFECHPLUS,WSTOREPLUS,
 TOA,ATO,AF,AS,AA,AFA,ASA,
@@ -430,6 +430,7 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case DIV2: TOS>>=1;continue;	case MUL2: TOS<<=1;continue;
 	case SHL: TOS=(*NOS)<<TOS;NOS--;continue;
     case SHR: TOS=(*NOS)>>TOS;NOS--;continue;
+    case SHR0: TOS=(unsigned)(*NOS)>>TOS;NOS--;continue;
 //--- memoria
 	case FECH: TOS=*(int *)TOS;continue;
     case CFECH: TOS=*(char*)TOS;continue;

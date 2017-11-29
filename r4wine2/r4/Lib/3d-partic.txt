@@ -91,8 +91,8 @@
 ::p3d.zdraw
 	here zbuffer - 3 >> >r
 	empty
-|	r 1+ here shellsort
-	r 1+ here radixsort
+|	r@ 1+ here shellsort
+	r@ 1+ here radixsort
 	here r>
 	( 1? )( 1-
 		swap 4+ @+

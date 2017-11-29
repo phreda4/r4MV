@@ -240,7 +240,7 @@
 
 ::p3ditest | x y z -- z y x
 	xf over 20 <</ >r | 20 bits
-	swap r 20 *>> oy +
+	swap r@ 20 *>> oy +
 	rot r> 20 *>> ox + ;
 
 ::p3dizb | x y z -- z y x
@@ -266,19 +266,19 @@
 	transform
 	0? ( 3drop ox oy ; )
 	>r
-	yf r */ oy + swap
+	yf r@ */ oy + swap
 	xf r> */ ox + swap ;
 
 ::invproject3d | x y z -- x y
 	>r
-	oy - r yf */ swap
+	oy - r@ yf */ swap
 	ox - r> xf */ swap ;
 
 ::projectdim | x y z -- u v
 	transform
 	0? ( 3drop 0 0 ; )
 	>r
-	yf r */	swap
+	yf r@ */	swap
 	xf r> */ swap ;
 
 ::project | x y z -- u v
@@ -296,7 +296,7 @@
 	oxyztransform
 	0? ( 3drop ox oy ; )
 	>r
-	yf r */ oy + swap
+	yf r@ */ oy + swap
 	xf r> */ ox + swap ;
 
 ::proyect2d | x y z -- x y
@@ -334,11 +334,11 @@
 |------- vectores
 ::normInt2Fix | x y z -- xf yf zf
 	pick2 dup * pick2 dup * + over dup * + sqrt
-	1? ( 1.0 swap /. ) >r rot r *. rot r *. rot r> *. ;
+	1? ( 1.0 swap /. ) >r rot r@ *. rot r@ *. rot r> *. ;
 
 ::normFix | x y z -- x y z
 	pick2 dup *. pick2 dup *. + over dup *. + sqrt.
-	1? ( 1.0 swap /. ) >r rot r *. rot r *. rot r> *. ;
+	1? ( 1.0 swap /. ) >r rot r@ *. rot r@ *. rot r> *. ;
 
 |-------- vectores en memoria
 ::v3len | v1 -- l

@@ -92,7 +92,7 @@
 |----- cursor
 ::printcur | adr -- adr
 	ccx dup >r 1-
-	ccy  2dup op cch + pline
+	ccy 2dup op cch + pline
 	c@+ gemiti
 	ccx ccy 2dup cch + op pline
 	poli
@@ -298,14 +298,14 @@
 ::boxprintc | .. "" cnt --
 	ccw * ccx + >r
 	mprint sizeprint
-	r ccx - swap - 2/ 'ccx +!
+	r@ ccx - swap - 2/ 'ccx +!
 	printx
 	r> 'ccx ! ;
 
 ::boxprintr | .. "" cnt --
 	ccw * ccx + >r
 	mprint
-	sizeprint r swap - 'ccx !
+	sizeprint r@ swap - 'ccx !
 	printx
 	r> 'ccx ! ;
 
@@ -330,14 +330,14 @@
 ::linesfill | cnt --
 	>r
 	tx1 ccy 2dup op
-	2dup cch r * + pline
+	2dup cch r@ * + pline
 	tx2 ccy 2dup cch r> * + pline pline pline poli
 	;
 
 ::fillcnt | cnt --
 	ccw * >r
 	ccx ccy 2dup op
-	over r + over pline
+	over r@ + over pline
 	over r> + over cch + pline
 	over over cch + pline
 	pline poli ;

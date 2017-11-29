@@ -218,7 +218,7 @@
 	'tipoext swap 2 - ( 1? )( swap >>0 swap 1- ) drop >r
 	mark
 	'name 'path "%s/%s" ,print
-	r "mem/inc-%w.mem" mprint savemem
+	r@ "mem/inc-%w.mem" mprint savemem
 	empty
 	r> "r4/system/inc-%w.txt" mprint run ;
 
@@ -458,6 +458,7 @@
 
 |		drawfulltree
 		drawtree
+
 
 		drawsource
 

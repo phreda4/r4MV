@@ -8,8 +8,8 @@
 
 ::actor+! | org x y z --
 	pick3 4+ >r
-	rot r +! 4 r+
-	swap r +! 4 r+
+	rot r@ +! 4 r+
+	swap r@ +! 4 r+
 	r> +!
 	;
 
@@ -112,7 +112,7 @@
 ::esc.zdraw
 	here zbuffer - 3 >> >r
 	empty
-	r 1+ here shellsort
+	r@ 1+ here shellsort
 	here r>
 	( 1? )( 1-
 		swap 4+ @+

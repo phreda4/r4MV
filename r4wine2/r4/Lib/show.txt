@@ -15,7 +15,7 @@
 	msec dup 'lastime !+ ! 0 '.exit !
 	( .exit 0? )( drop
 		10 update drop
-		r exec
+		r@ exec
 		redraw )
 	drop r> drop 0 '.exit ! 0 key! ;
 
@@ -23,14 +23,14 @@
 	msec dup 'lastime !+ ! 0 '.exit !
 	( .exit 0? )( drop
 		20 update drop
-		r exec
+		r@ exec
 		redraw )
 	drop r> drop 0 '.exit ! 0 key! ;
 
 ::show0 | ; maximo framerate
 	msec dup 'lastime !+ ! 0 '.exit !
 	( .exit 0? )( update drop
-		r exec
+		r@ exec
 		redraw )
 	drop r> drop 0 '.exit ! 0 key! ;
 
@@ -42,7 +42,7 @@
 	-1 dup 'foconow ! 'lastgui !
 	( .exit 0? )( drop
 		10 update drop
-		r exec
+		r@ exec
 		lastgui 1? ( redraw )( 1 'lastgui ! -1 'foconow ! ) drop )
 	drop r> drop
 	0 dup dup 'lastgui ! '.exit ! key! ;

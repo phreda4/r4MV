@@ -110,7 +110,7 @@
 ::esc.zdraw
 	here zbuffer - 3 >> >r
 	empty
-	r 1+ here shellsort
+	r@ 1+ here shellsort
 	here r>
 	( 1? )( 1-
 		swap 4+ @+
