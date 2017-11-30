@@ -4,7 +4,7 @@
 ^r4/lib/grpix.txt
 ^r4/lib/print.txt
 
-:a00 1 a+ ;
+:a00 4 a+ ;
 :a01 a@ ink@ color33% a!+ ;
 :a10 ink@ a@ color33% a!+ ;
 :a11 ink@ a!+ ;
@@ -16,13 +16,13 @@
 	ccw nip ;
 
 :charline | sx n bit --
-	0? ( drop ccw a+ ; )
+	0? ( drop ccw 2 << a+ ; )
 	ccw ( 1? )( 1- swap dup $3 and 2 << 'acc + @ exec 2 >> swap ) 2drop ;
 
 :charm | c --
     charlin * charrom + 
 	ccx ccy setxy
-	sw ccw -
+	sw ccw - 2 <<
 	cch ( 1? )( 1-
 		rot @+ charline rot rot
 		over a+
@@ -30,7 +30,7 @@
 
 ::charmt | c --
 	$ff and charlin * charrom +
-	sw ccw -
+	sw ccw - 2 <<
 	cch ( 1? )( 1-
         rot @+ charline rot rot
 		over a+
@@ -42,7 +42,7 @@
 
 ::charmtn | c --
 	$ff and charlin * charrom +
-	sw ccw -
+	sw ccw - 2 << 
 	cch ( 1? )( 1-
         rot @+ charlinen rot rot
         over a+

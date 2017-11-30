@@ -2,196 +2,114 @@
 ^r4/lib/gui.txt
 ^r4/lib/btn.txt
 ^r4/lib/input.txt
+^r4/lib/xfb.txt
 ^r4/lib/parse.txt
-^r4/lib/codecolor.txt
 ^r4/system/mem-ed.txt
-^r4/lib/fontm.txt
-^inc/fntm/droidsans13.txt
+^r4/ide/r4-token.txt
+^r4/ide/r4-tokenrun.txt
+^r4/ide/r4-stackana.txt
+^r4/ide/r4-tokenprint.txt
+^r4/lib/codecolor.txt
+^r4/lib/trace.txt
  #pantaini>
  #pantafin>
  #prilinea
  #cntlinea
- #inisel
- #finsel
  #fuente
  #fuente>
  #$fuente
- #clipboard
- #clipboard>
- #undobuffer
- #undobuffer>
- #errorlin
- #errormsg )( 256
- #wordact
-:_lins_  fuente> DUP 1- $fuente OVER - 1+ CMOVE> 1 '$fuente +! :lover fuente> C!+ DUP 'fuente> ! $fuente >? ( DUP '$fuente ! ) DROP
-:lins 0 profile_start _lins_ 0 profile_end ;
-:_lover_  fuente> C!+ DUP 'fuente> ! $fuente >? ( DUP '$fuente ! ) DROP :0lin 0 $fuente C! ;
-:lover 1 profile_start _lover_ 1 profile_end ;
-:_0lin_  0 $fuente C! ;
-:0lin 2 profile_start _0lin_ 2 profile_end ;
- #modo 'lins
-:_back_  fuente> fuente <=? ( DROP ; ) DUP 1- C@ undobuffer> C!+ 'undobuffer> ! DUP 1- SWAP $fuente OVER - 1+ CMOVE -1 '$fuente +! -1 'fuente> +! ;
-:back 3 profile_start _back_ 3 profile_end ;
-:_del_  fuente> $fuente >=?
- ( DROP ; ) 1+ fuente <=? ( DROP ; ) 9 OVER 1- C@ undobuffer> C!+ C!+ 'undobuffer> ! DUP 1- SWAP $fuente OVER - 1+ CMOVE -1 '$fuente +! ;
-:del 4 profile_start _del_ 4 profile_end ;
+ #wlist
+ #wnow
+ #initok
+ #initok>
+ #nowtok>
+ #cnttok
+:_drawline_  tokencolor sp tokenstr print sp 20 col OVER initok> initok - 2 >> + printstack cr ;
+:drawline 0 profile_start _drawline_ 0 profile_end ;
+:_drawword_  initok> 0
+ ( cntlinea <? )( cnttok >=? ( 2DROP ; ) -? ( 2DROP ; ) SWAP nowtok> =? ( blanco ">>" )( "  " ) print @+ drawline SWAP 1+ ) 2DROP ;
+:drawword 1 profile_start _drawword_ 1 profile_end ;
+:_searchw_  1+ indicepal< ( indicepal> <? )( SWAP OVER @ <? ( DROP 16 - ; ) SWAP 16 + ) NIP 16 - ;
+:searchw 2 profile_start _searchw_ 2 profile_end ;
+:_setword_  fuente> searchw DUP 4+ @ DUP 'initok ! DUP 'initok> ! DUP 'nowtok> ! SWAP DUP 8 + @ 1 AND?
+ ( DROP 12 + @ 20 >> $FFF AND 'cnttok ! DROP ; ) DROP 12 + @ 20 >> $FFF AND DUP 'cnttok ! 2 << OVER + SWAP stackanalisisa ;
+:setword 3 profile_start _setword_ 3 profile_end ;
+:_nowtok>+!_  nowtok> + initok <? ( 4+ ) DUP initok - 2 >> cnttok >=? (
+ DROP 4 - )( DROP ) 'nowtok> ! nowtok> ( initok> <? )( -4 'initok> +! ) cntlinea 1- 2 << - ( initok> >? )( 4 'initok> +! ) DROP ;
+:nowtok>+! 4 profile_start _nowtok>+!_ 4 profile_end ;
+:_insideword_  setword show clrscr $6600 INK 1 linesfill blanco 'ed.nombre " %s " print cyan 0 rows 1- gotoxy $2200 INK 1 linesfill blanco verde DUP ":R%d" print
+ blanco "dEBUG " printx " |ESC-exit " print 0 1 gotoxy chome! drawword 30 0 gotoxy chome! verde stackadump [ -4 nowtok>+! ; ] <up> [ 4 nowtok>+! ; ] <dn> 'exit >esc< cminiflecha ;
+:insideword 5 profile_start _insideword_ 5 profile_end ;
 :_<<13_  ( fuente >=? )( DUP C@ 13 =? ( DROP ; ) DROP 1- ) ;
-:<<13 5 profile_start _<<13_ 5 profile_end ;
+:<<13 6 profile_start _<<13_ 6 profile_end ;
 :_>>13_  ( $fuente <? )( DUP C@ 13 =? ( DROP 1- ; ) DROP 1+ ) DROP $fuente 2 - ;
-:>>13 6 profile_start _>>13_ 6 profile_end ;
- #1sel
- #2sel
-:_selecc_  mshift 0?
- ( DUP 'inisel ! 'finsel ! ; ) DROP inisel 0? ( fuente> '1sel ! ) DROP fuente> DUP '2sel ! 1sel OVER <? ( SWAP ) 'finsel ! 'inisel ! ;
-:selecc 7 profile_start _selecc_ 7 profile_end ;
-:_khome_  selecc fuente> 1- <<13 1+ 'fuente> ! selecc ;
-:khome 8 profile_start _khome_ 8 profile_end ;
-:_kend_  selecc fuente> >>13 1+ 'fuente> ! selecc ;
-:kend 9 profile_start _kend_ 9 profile_end ;
-:_scrollup_  pantaini> 1- <<13 1- <<13 1+ 'pantaini> ! prilinea 1? ( 1- ) 'prilinea ! selecc ;
-:scrollup 10 profile_start _scrollup_ 10 profile_end ;
-:_scrolldw_  pantaini> >>13 2 + 'pantaini> ! pantafin> >>13 2 + 'pantafin> ! 1 'prilinea +! selecc ;
-:scrolldw 11 profile_start _scrolldw_ 11 profile_end ;
-:_colcur_  fuente> 1- <<13 SWAP - ;
-:colcur 12 profile_start _colcur_ 12 profile_end ;
-:_karriba_  fuente> fuente =? ( DROP ; ) selecc DUP 1- <<13 SWAP OVER - SWAP DUP 1- <<13 SWAP OVER - ROT min + fuente max 'fuente> ! selecc ;
-:karriba 13 profile_start _karriba_ 13 profile_end ;
-:_kabajo_  fuente> $fuente >=? ( DROP ; ) selecc DUP 1- <<13 OVER SWAP - SWAP >>13 1+ DUP 1+ >>13 1+ OVER - ROT min + 'fuente> ! selecc ;
-:kabajo 14 profile_start _kabajo_ 14 profile_end ;
-:_kder_  selecc fuente> $fuente <? ( 1+ 'fuente> ! selecc ; ) DROP ;
-:kder 15 profile_start _kder_ 15 profile_end ;
-:_kizq_  selecc fuente> fuente >? ( 1- 'fuente> ! selecc ; ) DROP ;
-:kizq 16 profile_start _kizq_ 16 profile_end ;
-:_kpgup_  selecc 20 ( 1? )( 1- karriba ) DROP selecc ;
-:kpgup 17 profile_start _kpgup_ 17 profile_end ;
-:_kpgdn_  selecc 20 ( 1? )( 1- kabajo ) DROP selecc ;
-:kpgdn 18 profile_start _kpgdn_ 18 profile_end ;
-:_e.clear_  fuente DUP 'pantaini> ! DUP 'fuente> ! '$fuente ! 0lin ;
-:e.clear 19 profile_start _e.clear_ 19 profile_end ;
-:_ajpri_  0 fuente ( pantaini> <? )( C@+ 13 =? ( ROT 1+ ROT ROT ) DROP ) DROP 'prilinea ! ;
-:ajpri 20 profile_start _ajpri_ 20 profile_end ;
-:_loadtxt_  mark here 'ed.nombre LOAD 0 SWAP C! fuente DUP 'pantaini> ! here ( C@+ 1? )( 13 =? ( OVER C@ 10 =? ( DROP SWAP 1+
- SWAP )( DROP ) ) 10 =? ( DROP C@+ 13 <>? ( DROP 1- 13 ) ) ROT C!+ SWAP ) 2DROP '$fuente ! 0lin errorlin -? ( DROP ed.ncar 'fuente>
- +! ed.ipan 'pantaini> +! ajpri empty ; ) fuente ( SWAP 1? )( 1- SWAP >>13 2 + ) DROP 'fuente> ! ed.ncar +? ( DUP 'fuente> +! ) DROP empty ;
-:loadtxt 21 profile_start _loadtxt_ 21 profile_end ;
-:_savetxt_  mark fuente ( C@+ 1? )(
- 13 =? ( ,c 10 ) ,c ) 2DROP 'ed.nombre savemem empty 0 DUP "debug.err" SAVE 0 DUP "runtime.err" SAVE fuente> fuente - 'ed.ncar ! pantaini> fuente - 'ed.ipan ! ed.save ;
-:savetxt 22 profile_start _savetxt_ 22 profile_end ;
-:_copysel_  inisel 0? ( DROP ; ) clipboard SWAP finsel OVER - PICK2 OVER + 'clipboard> ! CMOVE ;
-:copysel 23 profile_start _copysel_ 23 profile_end ;
-:_borrasel_  inisel finsel $fuente finsel - 4+ CMOVE finsel inisel -
- NEG '$fuente +! fuente> inisel >=? ( finsel <=? ( inisel 'fuente> ! )( finsel inisel - OVER SWAP - 'fuente> ! ) ) DROP 0 DUP 'inisel ! 'finsel ! ;
-:borrasel 24 profile_start _borrasel_ 24 profile_end ;
-:_kdel_  inisel 0? ( del )( borrasel ) DROP ;
-:kdel 25 profile_start _kdel_ 25 profile_end ;
-:_kback_  inisel 0? ( back )( borrasel ) DROP ;
-:kback 26 profile_start _kback_ 26 profile_end ;
-:_posfijo?_  ( C@+ 1? )( 46 =? ( DROP ; ) DROP ) NIP ;
-:posfijo? 27 profile_start _posfijo?_ 27 profile_end ;
-:_controle_  ed.save savetxt fuente> ( DUP 1- C@ $FF AND 32 >? )( DROP 1- ) DROP DUP C@ $5E <>? ( 2DROP ; ) DROP DUP fuente - 'ed.ncar !
- DUP posfijo? 0? ( 2DROP ; ) DUP "mem/inc-%w.mem" mprint PICK2 1+ DUP ( C@+ $FF AND 32 >? )( DROP ) DROP 1- OVER - ROT SAVE "r4/system/inc-%w.txt" mprint RUN ;
-:controle 28 profile_start _controle_ 28 profile_end ;
-:_controlc_  copysel ;
-:controlc 29 profile_start _controlc_ 29 profile_end ;
-:_controlx_  controlc borrasel ;
-:controlx 30 profile_start _controlx_ 30 profile_end ;
-:_controlv_  clipboard clipboard> OVER - 0? ( 3DROP ; ) fuente> DUP PICK2 + SWAP $fuente OVER - 1+ CMOVE> fuente> ROT ROT DUP '$fuente +! CMOVE clipboard> clipboard - 'fuente> +! ;
-:controlv 31 profile_start _controlv_ 31 profile_end ;
-:_controlz_  undobuffer> undobuffer =? ( DROP ; ) 1- DUP C@ 9 =? ( DROP 1- DUP C@ [ -1 'fuente> +! ; ] >R ) lins 'undobuffer> ! ;
-:controlz 32 profile_start _controlz_ 32 profile_end ;
-:_=w_  ( C@+ 32 >? )( toupp ROT C@+ toupp ROT - 1? ( 3DROP 0 ; ) DROP SWAP ) 3DROP 1 ;
-:=w 33 profile_start _=w_ 33 profile_end ;
-:_exactw_  DROP DUP PICK3 =w ;
-:exactw 34 profile_start _exactw_ 34 profile_end ;
-:_setcur_  DROP NIP NIP DUP 'wordact ! 'fuente> ! ;
-:setcur 35 profile_start _setcur_ 35 profile_end ;
-:_controla_  wordact DUP
- C@ 33 <? ( 2DROP ; ) toupp OVER 1- ( fuente >? )( DUP C@ toupp PICK2 =? ( exactw 1? ( setcur ; ) ) DROP 1- ) 3DROP ;
-:controla 36 profile_start _controla_ 36 profile_end ;
-:_controls_  wordact DUP C@ 33 <? ( 2DROP ; ) $3A =? ( DROP 1+ DUP C@ ) $23
- =? ( DROP 1+ DUP C@ ) toupp OVER 1+ ( $fuente <? )( DUP C@ toupp PICK2 =? ( exactw 1? ( setcur ; ) ) DROP 1+ ) 3DROP ;
-:controls 37 profile_start _controls_ 37 profile_end ;
- #findpad )( 32
- #findmode
-:_controlf_  findmode 1 XOR 'findmode ! 0 'findpad ! refreshfoco ;
-:controlf 38 profile_start _controlf_ 38 profile_end ;
-:_controld_  ;
-:controld 39 profile_start _controld_ 39 profile_end ;
-:_controln_  ;
-:controln 40 profile_start _controln_ 40 profile_end ;
-:_drawcur_  blink 1? ( DROP ; ) DROP
- fuente> >? ( ; ) DUP ( fuente> <? )( C@+ 13 =? ( 2DROP ; ) gemit ) modo 'lins =? ( $FFFFFF )( $FFFF00 ) INK DROP printcur DROP ;
-:drawcur 41 profile_start _drawcur_ 41 profile_end ;
-:_drawsel_  inisel 0? ( DROP ; ) DROP finsel >=? ( ; ) DUP (
- inisel <? )( C@+ 13 =? ( 2DROP ; ) gemit ) sel>> $88 INK ( finsel <? )( C@+ 13 =? ( 2DROP sel<< ; ) gemit ) DROP sel<< ;
-:drawsel 42 profile_start _drawsel_ 42 profile_end ;
-:_drawcode_  pantaini>
- 0 ( cntlinea <? )( gris DUP prilinea + "%d" print ccw 2 << DUP 'tx1 ! 'ccx ! SWAP drawsel lf drawcur lf >>lineacolor0 0 'tx1 ! 0? ( 2DROP cntlinea
- $fuente )( cr ) SWAP 1+ ) DROP $fuente <? ( 1- ) 'pantafin> ! fuente> ( pantafin> >? )( scrolldw ) ( pantaini> <? )( scrollup ) DROP errorlin -? (
- DROP ; ) prilinea <? ( DROP ; ) prilinea - cntlinea >=? ( DROP ; ) 3 SWAP gotoxy ">" rojo fillp blanco print 'errormsg "< %s " rojo fillpr blanco printr ;
-:drawcode 43 profile_start _drawcode_ 43 profile_end ;
- #panelcontrol
-:_controlon_  1 'panelcontrol ! ;
-:controlon 44 profile_start _controlon_ 44 profile_end ;
-:_controloff_  0 'panelcontrol ! ;
-:controloff 45 profile_start _controloff_ 45 profile_end ;
-:_drawpanelcontrol_  panelcontrol 0? ( DROP ; ) DROP blanco 'controle 18 ?key " E-Edit" print 'controlz 44 ?key " Z-Undo" print 'controlx 45 ?key
- " X-Cut" print 'controlc 46 ?key " C-Copy" print 'controlv 47 ?key " V-Paste" print 'controld 32 ?key " D-Def" print 'controln 49 ?key " N-New" print 'controlf 33 ?key " F-Find" print 'controla <up> 'controls <dn> ;
-:drawpanelcontrol 46 profile_start _drawpanelcontrol_ 46 profile_end ;
-:_showclip_  cr clipboard> clipboard <>? ( cyan cr clipboard ( OVER <? )( C@+ emit ) DROP cr ) DROP ;
-:showclip 47 profile_start _showclip_ 47 profile_end ;
-:_mmemit_  ROT C@+ 13 =?
- ( 0 NIP ) 0? ( DROP 1- ROT ROT SW + ; ) 9 =? ( DROP SWAP $FFFFFFE0 AND $20 + )( DROP SWAP ccw + ) ROT SWAP ;
-:mmemit 48 profile_start _mmemit_ 48 profile_end ;
-:_cursormouse_  XYMOUSE pantaini> SWAP
- cch 2* ( OVER <? )( cch + ROT >>13 2 + ROT ROT ) 2DROP SWAP ccw 2 << ccw + ( OVER <? )( mmemit ) 2DROP 'fuente> ! ;
-:cursormouse 49 profile_start _cursormouse_ 49 profile_end ;
-:_dns_  cursormouse fuente> '1sel ! ;
-:dns 50 profile_start _dns_ 50 profile_end ;
-:_mos_  cursormouse fuente> 1sel OVER <? ( SWAP ) 'finsel ! 'inisel ! ;
-:mos 51 profile_start _mos_ 51 profile_end ;
-:_ups_  cursormouse fuente> 1sel OVER <? ( SWAP ) 'finsel ! 'inisel ! ;
-:ups 52 profile_start _ups_ 52 profile_end ;
-:_directrun_  savetxt 'ed.nombre RUN ;
-:directrun 53 profile_start _directrun_ 53 profile_end ;
-:_profiler_  savetxt "r4/IDE/profiler-code.txt" RUN ;
-:profiler 54 profile_start _profiler_ 54 profile_end ;
-:_debugrun_  savetxt "r4/IDE/debug-code.txt" RUN ;
-:debugrun 55 profile_start _debugrun_ 55 profile_end ;
-:_mkplain_  savetxt "r4/system/r4plain.txt" RUN ;
-:mkplain 56 profile_start _mkplain_ 56 profile_end ;
-:_mkasm_  savetxt "r4/system/r4fasmo.txt" RUN ;
-:mkasm 57 profile_start _mkasm_ 57 profile_end ;
-:_mkasmf_  savetxt "r4/system/r4fasmof.txt" RUN ;
-:mkasmf 58 profile_start _mkasmf_ 58 profile_end ;
-:_mknewc_  savetxt "r4/ide/r4-i86opt.txt" RUN ;
-:mknewc 59 profile_start _mknewc_ 59 profile_end ;
-:_mknewc_  savetxt "r4/compiler/r4-com4.txt" RUN ;
-:mknewc 60 profile_start _mknewc_ 60 profile_end ;
-:_buscapad_  fuente 'findpad findstri 0? ( DROP ; ) 'fuente> ! ;
-:buscapad 61 profile_start _buscapad_ 61 profile_end ;
-:_findmodekey_  0 'panelcontrol ! blanco "?" print 'controlf <enter> 'exit >esc< 'buscapad 'findpad 31 inputexec ;
-:findmodekey 62 profile_start _findmodekey_ 62 profile_end ;
-:_teclado_  findmode 1? ( DROP findmodekey ; ) DROP drawpanelcontrol panelcontrol 1? ( DROP 'controloff >ctrl< ;
- ) DROP [ KEY toasc modo EXEC ; ] <visible> 'kback <back> 'kdel <del> 'karriba <up> 'kabajo <dn> 'kder <ri> 'kizq <le> 'khome <home> 'kend <end> 'kpgup <pgup> 'kpgdn <pgdn> [ modo
- 'lins =? ( 'lover )( 'lins ) 'modo ! DROP ; ] <ins> [ 13 modo EXEC ; ] <enter> [ 9 modo EXEC ; ] <tab> 'exit >esc< 'controlon <ctrl> ;
-:teclado 63 profile_start _teclado_ 63 profile_end ;
-:_nowcompile_  mkasm ;
-:nowcompile 64 profile_start _nowcompile_ 64 profile_end ;
+:>>13 7 profile_start _>>13_ 7 profile_end ;
+:_scrollup_  pantaini> 1- <<13 1- <<13 1+ 'pantaini> ! prilinea 1? ( 1- ) 'prilinea ! ;
+:scrollup 8 profile_start _scrollup_ 8 profile_end ;
+:_scrolldw_  pantaini> >>13 2 + 'pantaini> ! pantafin> >>13 2 + 'pantafin> ! 1 'prilinea +! ;
+:scrolldw 9 profile_start _scrolldw_ 9 profile_end ;
+:_drawcur_  blink 1? ( DROP ; ) DROP fuente> >? ( ; ) DUP ( fuente> <? )( C@+ 13 =? ( 2DROP ; ) gemit ) $FFFFFF INK printcur DROP ;
+:drawcur 10 profile_start _drawcur_ 10 profile_end ;
 :_barv_  $333333 INK 0 0 OP 0 SH PLINE ccw 2 << 0 OP ccw 2 << SH PLINE POLI ;
-:barv 65 profile_start _barv_ 65 profile_end ;
-:_editor_  $111111 'paper ! fonti clrscr rows 1- 'cntlinea ! show clrscr 'dns 'mos 'ups guiMap barv
- $777777 INK 1 linesfill verde DUP ":R%d" print blanco "eDIT " printx blanco 'ed.nombre sp printx sp teclado 'directrun DUP <f1> "1Run" $4777 flink sp 'debugrun DUP <f2> "2Debug" $4777 flink sp 'profiler
- DUP <f3> "3Profile" $4777 flink sp 'mkplain DUP <f4> "4Plain" $4777 flink sp 'nowcompile DUP <f5> "5Compile" $4777 flink sp 'mknewc DUP <f10> "10devcomp" $F0777 flink sp cr chome! drawcode cminiflecha ;
-:editor 66 profile_start _editor_ 66 profile_end ;
-:_ram_  here DUP 'fuente ! DUP 'fuente> ! DUP '$fuente ! $3FFFF + DUP 'clipboard ! DUP 'clipboard> ! $3FFF + DUP 'undobuffer ! DUP 'undobuffer> ! $FFFF + 'here ! mark ;
-:ram 67 profile_start _ram_ 67 profile_end ;
-:_cpy|_  SWAP ( C@+ $7C <>? )( ROT C!+ SWAP ) DROP 0 ROT C! ;
-:cpy| 68 profile_start _cpy|_ 68 profile_end ;
-:_cargaestado_  mark -1
- 'errorlin ! 0 'ed.ncar ! here DUP "debug.err" LOAD empty OVER 4+ <? ( 2DROP ed.load ; ) 0 SWAP ! 'ed.nombre cpy| ?sint 'errorlin ! ?sint 'ed.ncar ! 'errormsg strcpy ;
-:cargaestado 69 profile_start _cargaestado_ 69 profile_end ;
-:_main_  ram cargaestado loadtxt editor savetxt ;
-:main 70 profile_start _main_ 70 profile_end ;
-:_run_  mark 4 main ;
-: 71 "r4/IDE/edit-code.txt" profile_mem _run_ profile_save ;
+:barv 11 profile_start _barv_ 11 profile_end ;
+:_viewscreen_  XFB> show 'exit DUP <f5> >esc< ;
+:viewscreen 12 profile_start _viewscreen_ 12 profile_end ;
+:_karriba_  fuente> fuente =? ( DROP ; ) DUP 1- <<13 SWAP OVER - SWAP DUP 1- <<13 SWAP OVER - ROT min + fuente max 'fuente> ! ;
+:karriba 13 profile_start _karriba_ 13 profile_end ;
+:_kabajo_  fuente> $fuente >=? ( DROP ; ) DUP 1- <<13 OVER SWAP - SWAP >>13 1+ DUP 1+ >>13 1+ OVER - ROT min + 'fuente> ! ;
+:kabajo 14 profile_start _kabajo_ 14 profile_end ;
+:_kder_  fuente> $fuente <? ( 1+ 'fuente> ! ; ) DROP ;
+:kder 15 profile_start _kder_ 15 profile_end ;
+:_kizq_  fuente> fuente >? ( 1- 'fuente> ! ; ) DROP ;
+:kizq 16 profile_start _kizq_ 16 profile_end ;
+:_kpgup_  20 ( 1? )( 1- karriba ) DROP ;
+:kpgup 17 profile_start _kpgup_ 17 profile_end ;
+:_kpgdn_  20 ( 1? )( 1- kabajo ) DROP ;
+:kpgdn 18 profile_start _kpgdn_ 18 profile_end ;
+:_gotosrc_  <<ip 0? ( DROP ; ) tok>src 'fuente> ! ;
+:gotosrc 19 profile_start _gotosrc_ 19 profile_end ;
+:_nocr_  OVER @ ( OVER <? )( C@+ 13 =? ( 3DROP 0 ; ) DROP ) DROP ;
+:nocr 20 profile_start _nocr_ 20 profile_end ;
+:_cadalinea_  ( " " ,s DUP ,printinfoword " " ,s DUP 16 + @ nocr 1? )( DROP 16 + ) DROP 0 ,c ;
+:cadalinea 21 profile_start _cadalinea_ 21 profile_end ;
+:_buildinfo_  here 'wlist ! indicepal< ( indicepal> <? )( DUP @ , cadalinea 16 + ) DROP 0 , ;
+:buildinfo 22 profile_start _buildinfo_ 22 profile_end ;
+:_inwlist_  wlist ( @+ 1? )( PICK2 >? ( DROP 4 - 'wnow ! ; ) DROP >>0 ) 2DROP wlist 'wnow ! ;
+:inwlist 23 profile_start _inwlist_ 23 profile_end ;
+:_wline_  wnow 4+ DUP blanco fillpr negro printr >>0 'wnow ! ;
+:wline 24 profile_start _wline_ 24 profile_end ;
+ #varlist )( $FFF
+ #varlistc
+ #varows
+:_prevars_  'varlist >A
+ indicepal< ( indicepal> <? )( DUP 8 + @ 1 AND? ( OVER 'indicepal - 4 >> A!+ ) DROP 16 + ) DROP A> 'varlist - 2 >> 'varlistc ! ;
+:prevars 25 profile_start _prevars_ 25 profile_end ;
+:_showvars_  0
+ ( varows <? )( varlistc >=? ( DROP ; ) DUP 2 << 'varlist + @ DUP dic>str @ "%w = " violeta print nro>mem @ "%d" blanco print cr 1+ ) DROP ;
+:showvars 26 profile_start _showvars_ 26 profile_end ;
+:_drawcode_  barv 0 1 gotoxy SW ccw 5 << -
+ 'tx2 ! pantaini> inwlist 0 ( cntlinea <? )( gris DUP prilinea + "%d" print ccw 2 << DUP 'tx1 ! 'ccx ! SWAP drawcur lf >>lineacolor0 wnow @ >? ( wline
+ ) 0 'tx1 ! 0? ( 2DROP cntlinea $fuente )( cr ) SWAP 1+ ) DROP $fuente <? ( 1- ) 'pantafin> ! fuente> ( pantafin> >? )( scrolldw ) ( pantaini>
+ <? )( scrollup ) DROP SW 'tx2 ! showvstack SW ccw 5 << - 'tx1 ! 0 1 gotoxy showvars [ fuente> breakpoint playvm gotosrc ; ] <f1> [ stepvm gotosrc ;
+ ] <f2> [ stepvmn gotosrc ; ] <f3> [ resetvm gotosrc ; ] <f5> [ viewscreen ; ] <f6> 'karriba <up> 'kabajo <dn> 'kder <ri> 'kizq <le> 'kpgup <pgup> 'kpgdn <pgdn> ;
+:drawcode 27 profile_start _drawcode_ 27 profile_end ;
+:_drawstatus_  home $6600 INK 1 linesfill blanco 'ed.nombre " %s " print cyan indiceinc> 'indiceinc -
+ 3 >> "| %d Includes | " print cntuwords "%d Used Words | " print cntuvars "%d Used Vars" print 0 rows 1- gotoxy $2200 INK 1 linesfill blanco verde DUP ":R%d" print blanco "dEBUG " printx " |F1-play2c|F2-step|F3-stepn||F5-reset|F6-view " print amarillo "|      D       |      R         " printr ;
+:drawstatus 28 profile_start _drawstatus_ 28 profile_end ;
+:_fillb_  0 FRAMEV SW SH * FILL ;
+:fillb 29 profile_start _fillb_ 29 profile_end ;
+:_debugcode_  $111111 paper resetvm prevars fonti clrscr rows 2 - DUP 'cntlinea ! 10 - 'varows ! 4 show fillb scr home drawcode drawstatus 'exit >esc< 'insideword <enter> cminiflecha ;
+:debugcode 30 profile_start _debugcode_ 30 profile_end ;
+:_ram_  mark iniXFB here DUP 'fuente ! DUP 'fuente> ! DUP '$fuente ! $3FFFF + 'here ! ;
+:ram 31 profile_start _ram_ 31 profile_end ;
+:_ajpri_  0 fuente ( pantaini> <? )( C@+ 13 =? ( ROT 1+ ROT ROT ) DROP ) DROP 'prilinea ! ;
+:ajpri 32 profile_start _ajpri_ 32 profile_end ;
+:_loadtxt_  ed.load mark here 'ed.nombre LOAD 0 SWAP C! fuente DUP 'pantaini> ! here ( C@+ 1? )( 13 =? ( OVER C@ 10 =? ( DROP SWAP 1+ SWAP )( DROP )
+ ) 10 =? ( DROP C@+ 13 <>? ( DROP 1- 13 ) ) ROT C!+ SWAP ) 2DROP 0 SWAP C!+ '$fuente ! ed.ncar 'fuente> +! ed.ipan 'pantaini> +! ajpri ;
+:loadtxt 33 profile_start _loadtxt_ 33 profile_end ;
+:_errortok_  mark 'ed.nombre ,s errorlincar "|%d|%d|" ,print errormsg ,s nroerror 3 <? ( poserror " '%w'" ,print ) DROP "debug.err" savemem empty ;
+:errortok 34 profile_start _errortok_ 34 profile_end ;
+:_main_  ram loadtxt fuente tokeniza 1? ( errortok ; ) DROP tokenpostusa buildinfo tokenmem debugcode fuente> fuente - 'ed.ncar ! pantaini> fuente - 'ed.ipan ! ed.save ;
+:main 35 profile_start _main_ 35 profile_end ;
+:_run_  main ;
+: 36 "r4/IDE/debug-code.txt" profile_mem _run_ profile_save ;

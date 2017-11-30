@@ -8,7 +8,7 @@
 #y 1
 
 :calcbit | n --
-	>r rule 1 r << and
+	>r rule 1 r@ << and
 	0? ( drop $ffffff )( drop 0 )
 	'rulebits r> 4 * + !
 	;

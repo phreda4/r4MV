@@ -79,7 +79,7 @@ STARTUPINFO StartupInfo; //This is an [in] parameter
 //------------
 static const char wndclass[] = ":r4";
 
-char setings[256];
+char path[256];
 int rebotea;
 
 //#define ULTIMOMACRO 6
@@ -451,14 +451,14 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
     case ATO: NOS++;*NOS=TOS;TOS=rega;continue;
     case AF: NOS++;*NOS=TOS;TOS=*(int*)rega;continue;
     case AS: *(int*)rega=TOS;TOS=*NOS;NOS--;continue;
-    case AA: rega+=TOS*4;TOS=*NOS;NOS--;continue;
+    case AA: rega+=TOS;TOS=*NOS;NOS--;continue;
     case AFA: NOS++;*NOS=TOS;TOS=*(int*)rega;rega+=4;continue;
     case ASA: *(int*)rega=TOS;TOS=*NOS;NOS--;rega+=4;continue;    
     case TOB: regb=TOS;TOS=*NOS;NOS--;continue;
     case BTO: NOS++;*NOS=TOS;TOS=regb;continue;
     case BF: NOS++;*NOS=TOS;TOS=*(int*)regb;continue;
     case BS: *(int*)regb=TOS;TOS=*NOS;NOS--;continue;
-    case BA: regb+=TOS*4;TOS=*NOS;NOS--;continue;
+    case BA: regb+=TOS;TOS=*NOS;NOS--;continue;
     case BFA: NOS++;*NOS=TOS;TOS=*(int*)regb;regb+=4;continue;
     case BSA: *(int*)regb=TOS;TOS=*NOS;NOS--;regb+=4;continue;    
 // por velocidad         
@@ -957,17 +957,7 @@ act->nombre=n; }
 #define CLOSEERROR 2
 #define CODIGOERROR 3
 
-char tolower(char c)
-{
-if (c>0x40 && c<0x5b) c+=0x20;
-return c;
-}
-
-char toupper(char c)
-{
-if (c>0x60 && c<0x7b) c-=0x20;
-return c;
-}
+char toupper(char c) { return (c>0x60 && c<0x7b)?c-=0x20:c; }
 
 //---------------------------------------------------------------
 // compila el archivo
@@ -976,11 +966,11 @@ int compilafile(char *name)
 FILE *stream;
 char *ahora,*palabra,*copia;
 char lineat[512];
-// SEBAS: 2006-10-14 
-ahora=name;
-while (*ahora>32) { *ahora=tolower(*ahora);ahora++; }
 
-strcpy(lineat,name);
+if (*name=='.')
+   sprintf(lineat,"%s%s",path,name);
+else
+    strcpy(lineat,name);
 if((stream=fopen(lineat,"rb"))==NULL) {
   sprintf(error,"%s|0|0|no existe %s",linea,lineat);
   return OPENERROR;
@@ -1313,7 +1303,7 @@ ldebug("ini..");
 
 if (*aa==0) {
     file=fopen("r4.ini","rb");// cargar r4.ini
-    if (file!=NULL) { fread(setings,sizeof(char),1024,file);fclose(file);aa=setings; }
+    if (file!=NULL) { fread(path,sizeof(char),1024,file);fclose(file);aa=path; }
     } 
     
 noborde=0;	
@@ -1356,16 +1346,15 @@ if(!(hDC=GetDC(hWnd)))  return -3;
 if (gr_init(w,h)<0) return -1;
 
 ShowWindow(hWnd,SW_NORMAL);
-//--------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------
+#ifdef PRINTER
 phDC=CreateDC("winspool", printername , NULL, NULL );
 mimemset((char*)&di,0,sizeof (DOCINFO));
 di.cbSize = sizeof (DOCINFO);
 di.lpszDocName = "r4doc";
-
 cWidthPels = GetDeviceCaps(phDC, HORZRES);
 cHeightPels = GetDeviceCaps(phDC, VERTRES);
-
 SetBkMode(phDC, TRANSPARENT);
 strcpy(plf.lfFaceName,"Arial");
 plf.lfWeight = FW_NORMAL;
@@ -1373,10 +1362,9 @@ plf.lfEscapement = 0;
 hfnt = CreateFontIndirect(&plf); 
 hfntPrev = SelectObject(phDC, hfnt);
 SetTextAlign(phDC,TA_UPDATECP);
+#endif
 
 InitJoystick(hWnd);
-//loaddir(".//");
-//WSAStartup(2, &wsaData);
 
 #ifdef FMOD
     if (!FSOUND_Init(44100, 32, 0)) return -4;
@@ -1417,6 +1405,10 @@ if (bootaddr==0 && bootstr[0]!=0){
    ldebug("compila...");
    #endif
 
+   strcpy(path,linea);// para ^. ahora pone el path del codigo origen
+   aa=path+strlen(path);
+   while (path<aa) { if (*aa=='/'||*aa=='\\') { *aa=0;break; } aa--; }
+ 
    if (compilafile(linea)!=COMPILAOK) {
       #ifdef LOGMEM
       ldebug("NO COMPILA");ldebug(linea);
@@ -1450,7 +1442,7 @@ if (bootaddr==0) {
 #endif
 
 #ifdef LOGMEM
-dumpex();dumplocal("BOOT");
+dumpex();//dumplocal("BOOT");
 #endif
 memlibre=data+cntdato; // comienzo memoria libre
 if (silent!=1 && interprete(bootaddr)==1) goto recompila;
@@ -1470,9 +1462,11 @@ if (rebotea==0)
    sound_close();
 #endif
 
+#ifdef PRINTER
 SelectObject(phDC, hfntPrev);
 DeleteObject(hfnt);
 DeleteDC(phDC);
+#endif
 
 ReleaseJoystick();
 
@@ -1484,12 +1478,10 @@ if (rebotea==1)  {
        ldebug("REBOOT..");
        sprintf(linea," %d *****\r",rebotea);ldebug(linea);
 #endif
-
    ReleaseDC(hWnd,hDC);
    DestroyWindow(hWnd);
    goto reboot;
    }
-
 
 ReleaseDC(hWnd,hDC);
 DestroyWindow(hWnd);

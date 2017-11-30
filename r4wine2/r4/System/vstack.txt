@@ -156,6 +156,7 @@
 ::v2*   d.pop 2* d.pushVar ;
 ::v<<   d.pop2 << d.pushVar ;
 ::v>>   d.pop2 >> d.pushVar ;
+::v0>>   d.pop2 0>> d.pushVar ;
 ::v1-   d.pop 1- d.pushVar ;
 ::v1+   d.pop 1+ d.pushVar ;
 ::v4+   d.pop 4+ d.pushVar ;
@@ -192,11 +193,7 @@
 |--- pila de direccion
 ::v>R		d.pop r.pushDec ;
 ::vR>		r.pop d.pushDec ;
-::vR		r.tos d.pushDec ;
-::vR+		r.pop d.pop + r.pushDec ;
-::vR@+		r.pop @+ d.pushDec r.pushDec ;
-::vR!+		d.pop r.pop !+ r.pushDec ;
-::vRDROP	r.pop drop ;
+::vR@		r.tos d.pushDec ;
 
 |----- imprime pilas
 

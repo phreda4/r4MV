@@ -499,7 +499,7 @@
 	loadm
 	;
 
-: ram 
+: ram
 main
 |keytest
 savem ;

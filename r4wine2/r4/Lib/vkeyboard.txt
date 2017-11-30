@@ -46,14 +46,14 @@
 
 ::vkeyboard
 	sw 10 / sh 12 /	2dup dim
-	0 >r
+	0 >b
 	0 ( 4 <? )(
 		0 ( 10 <? )(
 			pick3 over * pick4 2/ +
 			pick3 pick3 * pick4 2/ + pick4 3 << +
 			pos
-			r tecla
-			1 r+
+			b> tecla
+			1 b+
 			1+ ) drop
 		1+ ) drop
-	2drop rdrop ;
+	2drop ;

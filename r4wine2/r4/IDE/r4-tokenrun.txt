@@ -124,6 +124,17 @@
 :iA@+	rega @+ d.pushVar 'rega ! ;
 :iA!+   d.pop rega !+ 'rega ! ;
 
+#regb
+
+:i>B	d.pop 'regb ! ;
+:iB>	regb d.pushVar ;
+:iB@    regb @ d.pushVar ;
+:iB!    d.pop regb ! ;
+:iB+	d.pop 'regb +! ;
+:iB@+	regb @+ d.pushVar 'regb ! ;
+:iB!+   d.pop regb !+ 'regb ! ;
+
+
 |---- pantalla
 :iSW 		sw d.pushDec ;
 :iSH  		sh d.pushDec ;
@@ -203,12 +214,13 @@ i(		i)(		i)		i[		i]		iEXEC
 i0?		i+?		i-?		i1?		i=?		i<?		i>?		i<=?	i>=?	i<>?	iAND?	iNAND?
 vDUP	vDROP	vOVER	vPICK2	vPICK3	vPICK4	vSWAP	vNIP	vROT
 v2DUP	v2DROP	v3DROP	v4DROP	v2OVER	v2SWAP
-v>R		vR>		vR
+v>R		vR>		vR@
 vAND	vOR		vXOR	vNOT	v+		v-		v*		v/		v*/
 v*>>	v/MOD	vMOD	vABS	vSQRT   vCLZ	v<</
-vNEG	v1+		v4+		v1-		v2/		v2*		v<<		v>>
+vNEG	v1+		v4+		v1-		v2/		v2*		v<<		v>>	v0>>
 i@		iC@		iW@		i!		iC!		iW!		i+!		iC+!	iW+!	i@+		i!+		iC@+	iC!+	iW@+	iW!+
 i>A	iA> iA@ iA! iA+ iA@+ iA!+
+i>B	iB> iB@ iB! iB+ iB@+ iB!+
 iMOVE	iMOVE>	iFILL iCMOVE	iCMOVE> iCFILL
 iMEM	iFFIRST	iFNEXT
 iLOAD	iSAVE	iAPPEND

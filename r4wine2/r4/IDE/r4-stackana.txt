@@ -270,7 +270,7 @@
 
 :,>r	dpop rpush ;
 :,r>	rpop dpush ;
-:,r		rcnt 0? ( drop newreg dpush ; ) drop	| show consume R, no dR for now!
+:,r@	rcnt 0? ( drop newreg dpush ; ) drop	| show consume R, no dR for now!
 		r.TOS regR newreg dpush ;			|R		-- a R: a -- a
 :,r+	r.TOS regW ,drop ;				|R+		a -- R: b -- c
 :,r@+	r.TOS dup regM regW newreg dpush ;	|R@+	-- a R: b -- c
@@ -317,7 +317,7 @@
 ,dup ,drop ,over ,pk2 ,pk3 ,pk4
 ,swap ,nip ,rot ,2dup ,2drop ,3drop ,4drop
 ,2over ,2swap
-,>r ,r> ,r |,r+ ,r@+ ,r!+ ,rdrop
+,>r ,r> ,r@
 op2a1 op2a1 op2a1 op1a1 |,and ,or ,xor ,not
 op2a1 op2a1	|,+ ,-
 op2a1 op2a1 |,* ,/
@@ -327,14 +327,13 @@ op3a1 vop3a1 |,*/ ,*>>
 op2a2 vop2a1 |,/mod ,mod
 vop1a1 op1a1 vop1a1 vop3a1 |,abs ,sqrt ,clz ,<</
 op1a1 op1a1 op1a1 op1a1 op1a1 op1a1 |,neg ,1+ ,4+ ,1- ,2/ ,2*
-xop2a1 xop2a1 |,<< ,>>
+xop2a1 xop2a1 xop2a1 |,<< ,>> ,0>>
 1@ 1@ 1@        |,@ ,c@ ,w@
 1! 1! 1!	|,! ,c! ,w!
 2+! 2+!	2+!	|,+! ,c+! ,w+!
 2@ 2! 2@ 2! 2@ 2!       |,@+ ,!+ ,c@+ ,c!+ ,w@+ ,w!+
-
 ,>a ,a> ,a@ ,a! ,a+ ,a@+ ,a!+
-
+,>a ,a> ,a@ ,a! ,a+ ,a@+ ,a!+
 ,uso3	|MOVE  abc --       a,b es ddat
 ,uso3	|MOVE> abc --		a,b es ddat
 ,uso3	|FILL  abc --       a,b es ddat
@@ -572,13 +571,13 @@ xop2a1 xop2a1 |,<< ,>>
 	;
 
 ::setREG | val r reg --
-	2 << dup >r 'regt + ! r 'regv + ! 0 r> 'regs + ! ;
+	2 << dup >r 'regt + ! r@ 'regv + ! 0 r> 'regs + ! ;
 
 ::set+	| suma reg --
 	2 << 'regs + +! ;
 ::set*	| value reg --
 	2 << 'reg + >r
-	5 << r @ or r> ! ;
+	5 << r@ @ or r> ! ;
 
 
 ::dumpstk | lin --

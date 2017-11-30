@@ -179,7 +179,7 @@
 
 :hole	     code> 4 - c.push ;
 :label	     code> c.push ;
-:holefix     code> c.pop dup >r 4+ - 8 << r @ or r> ! ;
+:holefix     code> c.pop dup >r 4+ - 8 << r@ @ or r> ! ;
 :labelfix    c.pop code> 4 - dup @ rot code> - 8 << or swap ! ;
 
 |---  Macros

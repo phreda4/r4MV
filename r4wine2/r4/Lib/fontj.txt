@@ -135,10 +135,10 @@
 :char8j | c --
 	ccx ccy setxy
 	$7f and 3 << 'fuente8x8 +
-	sw 8 - swap
+	sw 8 - 2 << swap
 	8 ( 1? )( 1- swap c@+
 		$80 ( 1? )(
-			over and? ( ink@ a!+ )( 1 a+ )
+			over and? ( ink@ a!+ )( 4 a+ )
 			2/ ) 2drop
 		pick2 a+
 	swap )
@@ -152,18 +152,18 @@
 :charsize8j2 16 nip ;
 
 :scanline2 | val mask -- val mask
-	over nand? ( 2 a+ ; )
+	over nand? ( 8 a+ ; )
 	ink@ dup dup a!+ a!+
-	sw 2 - a+
+	sw 2 - 2 << a+
 	dup a!+ a!+
-	sw neg a+ ;
+	sw neg 2 << a+ ;
 
 ::char8j2 | c --
 	ccx ccy setxy
 	$7f and 3 << 'fuente8x8 +
 	8 ( 1? )( 1- swap c@+  |cnt adr bit
 		$80 ( 1? )( scanline2 2/ ) 2drop
-		sw 2* 16 - a+
+		sw 2* 16 - 2 << a+
 		swap )
 	2drop ;
 
@@ -175,20 +175,20 @@
 :charsize8j3 24 nip ;
 
 :scanline3 |
-	and? ( ink@ dup dup a!+ a!+ a!+ )( 3 a+ ) ;
+	and? ( ink@ dup dup a!+ a!+ a!+ )( 12 a+ ) ;
 
 :char8j3 | c --
 	ccx ccy setxy
 	$7f and 3 << 'fuente8x8 +
-	sw 24 - >r
+	sw 24 - 2 << >r
 	8 ( 1? )( 1- swap c@+  |cnt adr bit
 		$80 ( 1? )( dup >r scanline3 r> 2/ ) drop
-		r a+
+		r@ a+
 		$80 ( 1? )( dup >r scanline3 r> 2/ ) drop
-		r a+
+		r@ a+
 		$80 ( 1? )( dup >r scanline3 r> 2/ ) drop
 		drop
-		r a+
+		r@ a+
 		swap )
 	2drop r> drop ;
 
@@ -200,22 +200,22 @@
 :charsize8j4 32 nip ;
 
 :scanline4 |
-	and? ( ink@ dup 2dup a!+ a!+ a!+ a!+ )( 4 a+ ) ;
+	and? ( ink@ dup 2dup a!+ a!+ a!+ a!+ )( 16 a+ ) ;
 
 :char8j4 | c --
 	ccx ccy setxy
 	$7f and 3 << 'fuente8x8 +
-	sw 32 - >r
+	sw 32 - 2 << >r
 	8 ( 1? )( 1- swap c@+  |cnt adr bit
 		$80 ( 1? )( dup >r scanline4 r> 2/ ) drop
-		r a+
+		r@ a+
 		$80 ( 1? )( dup >r scanline4 r> 2/ ) drop
-		r a+
+		r@ a+
 		$80 ( 1? )( dup >r scanline4 r> 2/ ) drop
-		r a+
+		r@ a+
 		$80 ( 1? )( dup >r scanline4 r> 2/ ) drop
 		drop
-		r a+
+		r@ a+
 		swap )
 	2drop r> drop ;
 

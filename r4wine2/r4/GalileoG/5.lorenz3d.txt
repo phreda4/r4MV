@@ -64,13 +64,16 @@
 	lorenz>
 	'lorenz> =? ( 'lorenz nip )	| ultimo punto
 	dup @ over 4+ @ pick2 8 + @ 3dop
+	12 +
 	( 'lorenz> <? )(
 		dup @ over 4+ @ pick2 8 + @
 		3dline
+		12 +
 		) drop
 	'lorenz ( lorenz> <? )(
 		dup @ over 4+ @ pick2 8 + @
 		3dline
+		12 +
 		) drop
 
 	lorenz> 12 -
@@ -104,7 +107,7 @@
 	xm over 'xm ! - neg 7 << neg 'ry +!  ;
 
 :inicio
-	0 paper
+	0 'paper !
 	show clrscr
 
      	teclado

@@ -267,16 +267,16 @@
 ::char8i2 | c --
 	ccx ccy setxy 
 	3 << dup 2/ + 'rom8x12 +
-	sw 8 - swap
+	sw 8 - 2 << swap
 	12 ( 1? )( 1- swap c@+
-		$80 and? ( ink@ a!+ )( 1 a+ )
-		$40 and? ( ink@ a!+ )( 1 a+ )
-		$20 and? ( ink@ a!+ )( 1 a+ )
-		$10 and? ( ink@ a!+ )( 1 a+ )
-		$8 and? ( ink@ a!+ )( 1 a+ )
-		$4 and? ( ink@ a!+ )( 1 a+ )
-		$2 and? ( ink@ a!+ )( 1 a+ )
-		$1 and? ( ink@ a!+ )( 1 a+ )
+		$80 and? ( ink@ a!+ )( 4 a+ )
+		$40 and? ( ink@ a!+ )( 4 a+ )
+		$20 and? ( ink@ a!+ )( 4 a+ )
+		$10 and? ( ink@ a!+ )( 4 a+ )
+		$8 and? ( ink@ a!+ )( 4 a+ )
+		$4 and? ( ink@ a!+ )( 4 a+ )
+		$2 and? ( ink@ a!+ )( 4 a+ )
+		$1 and? ( ink@ a!+ )( 4 a+ )
 		drop
 		pick2 a+
 		swap )
@@ -285,11 +285,11 @@
 ::char8i | c --
 	ccx ccy setxy
 	3 << dup 2/ + 'rom8x12 +
-	sw 8 - swap
+	sw 8 - 2 << swap
 	12 ( 1? )( 1-
 		swap c@+
 		$80 ( 1? )(
-			over and? ( ink@ a!+ )( 1 a+ )
+			over and? ( ink@ a!+ )( 4 a+ )
 			2/ ) 2drop
 		pick2 a+
 		swap )
@@ -302,18 +302,18 @@
 ::charsize8id 16 nip ;
 
 :scanline | val mask -- val mask
-	over nand? ( 2 a+ ; )
+	over nand? ( 8 a+ ; )
 	ink@ dup dup a!+ a!+
-	sw 2 - a+
+	sw 2 - 2 << a+
 	dup a!+ a!+
-	sw neg a+ ;
+	sw neg 2 << a+ ;
 
 ::char8id | c --
 	ccx ccy setxy
 	3 << dup 2/ + 'rom8x12 +
 	12 ( 1? )( 1- swap c@+  |cnt adr bit
 		$80 ( 1? )( scanline 2/ ) 2drop
-		sw 2* 16 - a+
+		sw 2* 16 - 2 << a+
 		swap )
 	2drop ;
 
@@ -325,18 +325,18 @@
 |	>r r@+ dup $ff and swap 8 >> $ff and
 |	( 1? )( r@+
 |		pick2 ( 1? )( 1- swap
-|			1 and? ( ink@ a!+ )( 1 a+ )
+|			1 and? ( ink@ a!+ )( 4 a+ )
 |			2/ swap ) 2drop
-|		sw pick2 - a+
+|		sw pick2 - 2 << a+
 |		1- ) drop
 |	'ccx +!
 |	rdrop ;
 	@+ dup $ff and swap 8 >> $ff and
 	( 1? )( rot @+
 		pick3 ( 1? )( 1- swap
-			1 and? ( ink@ a!+ )( 1 a+ )
+			1 and? ( ink@ a!+ )( 4 a+ )
 			2/ swap ) 2drop
-		sw pick2 - a+
+		sw pick2 - 2 << a+
 		rot rot 1- ) drop
 	'ccx +!
 	drop ;
@@ -346,9 +346,9 @@
 	@+ dup $ff and swap 8 >> $ff and
 	( 1? )( rot @+
 		pick3 ( 1? )( 1- swap
-			1 and? ( pick4 a!+ )( 1 a+ )
+			1 and? ( pick4 a!+ )( 4 a+ )
 			2/ swap ) 2drop
-		sw pick2 - a+
+		sw pick2 - 2 << a+
 		rot rot 1- ) drop
 	'ccx +!
 	drop ;
@@ -358,9 +358,9 @@
 	@+ dup $ff and swap 8 >> $ff and
 	( 1? )( rot @+
 		pick3 ( 1? )( 1- swap
-			1 nand? ( ink@ a!+ )( 1 a+ )
+			1 nand? ( ink@ a!+ )( 4 a+ )
 			2/ swap ) 2drop
-		sw pick2 - a+
+		sw pick2 - 2 << a+
 		rot rot 1- ) drop
 	'ccx +!
 	drop ;

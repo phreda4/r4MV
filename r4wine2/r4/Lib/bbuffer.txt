@@ -79,15 +79,15 @@
 	setxy ink@ a!+ ;
 
 :proc8 | mask -- mask
-	$ff nand? ( 8 a+ ; )	| todos 0
-	$01 and? ( ink@ a!+ )( 1 a+ )
-	$02 and? ( ink@ a!+ )( 1 a+ )
-	$04 and? ( ink@ a!+ )( 1 a+ )
-	$08 and? ( ink@ a!+ )( 1 a+ )
-	$10 and? ( ink@ a!+ )( 1 a+ )
-	$20 and? ( ink@ a!+ )( 1 a+ )
-	$40 and? ( ink@ a!+ )( 1 a+ )
-	$80 and? ( ink@ a!+ )( 1 a+ )
+	$ff nand? ( 32 a+ ; )	| todos 0
+	$01 and? ( ink@ a!+ )( 4 a+ )
+	$02 and? ( ink@ a!+ )( 4 a+ )
+	$04 and? ( ink@ a!+ )( 4 a+ )
+	$08 and? ( ink@ a!+ )( 4 a+ )
+	$10 and? ( ink@ a!+ )( 4 a+ )
+	$20 and? ( ink@ a!+ )( 4 a+ )
+	$40 and? ( ink@ a!+ )( 4 a+ )
+	$80 and? ( ink@ a!+ )( 4 a+ )
 	;
 
 :oneword | nro --
@@ -129,7 +129,7 @@
 	swap - 1 rot $1f and << | cnty mask
 	swap 1+
 	( 1? )( 1- | mask cnty
-		r @ pick2 and? ( ink@ a!+ )( 1 a+ )
+		r @ pick2 and? ( ink@ a!+ )( 4 a+ )
 		pick2 not and r!+
 		sw 1- px+!
 		bbw 1- 2 << r+
@@ -143,7 +143,7 @@
 	rot gmask2 rot gmask1 and	| cntx mask
 	swap 1+ ( 1? )(
 		r @ pick2 over and oneword pick2 not and r!+
-		sw 32 - a+
+		sw 32 - 2 << a+
 		bbw 1- 2 << r+
 		1- ) 2drop rdrop ;
 
@@ -162,7 +162,7 @@
 		over ( 1? )( r @ oneword 0 r!+ 1- ) drop
 		pick3 r @ 2dup and oneword swap not and r!+			| x2 cntx
 		bbw pick2 2 + - 2 << r+
-		sw pick2 2 + 5 << - a+
+		sw pick2 2 + 5 << - 2 << a+
 		1- ) 4drop rdrop ;
 
 

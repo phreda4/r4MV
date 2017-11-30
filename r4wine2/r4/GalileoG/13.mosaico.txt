@@ -52,24 +52,24 @@
 
 |-------- version 2
 :tile@ | w h x y adr --
-	>r
+	>b
 	setxy
-   	sw pick2 -
+   	sw pick2 - 2 << 
    	swap		| w dw h
 	( 1? )(
-		pick2 ( 1? )( r@+ a!+ 1- ) drop
+		pick2 ( 1? )( b@+ a!+ 1- ) drop
 		over a+
 		1- ) 3drop
-	rdrop ;
+	;
 
 :tile! | w h x y adr --
-	>r
+	>b
 	setxy
-   	sw pick2 -
+   	sw pick2 - 2 <<
    	swap		| w dw h
 	( 1? )(
-		pick2 ( 1? )( px@ r!+ 1 px+! 1- ) drop
-		over px+!
+		pick2 ( 1? )( a@+ b!+ 1- ) drop
+		over a+
 		1- ) 3drop
 	rdrop ;
 

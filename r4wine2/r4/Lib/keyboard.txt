@@ -77,9 +77,9 @@
 ::>ri< $4d ?ukey ;	::>le< $4b ?ukey ;
 
 ::<ins> $52 ?key ;	::<del> $53 ?key ;
-::<pgup> $51 ?key ; ::<pgdn> $49 ?key ;
+::<pgup> $49 ?key ; ::<pgdn> $51 ?key ;
 ::>ins< $52 ?ukey ;	::>del< $53 ?ukey ;
-::>pgup< $51 ?key ; ::>pgdn< $49 ?key ;
+::>pgup< $49 ?key ; ::>pgdn< $51 ?key ;
 
 ::<f1> $3b ?key ;	::<f2> $3c ?key ;
 ::<f3> $3d ?key ; 	::<f4> $3e ?key ;

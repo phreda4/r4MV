@@ -190,7 +190,7 @@
 |--- Compila saltos
 :hole	     prog> 4 - c.push ;
 :label	     prog> c.push ;
-:holefix     prog> c.pop dup >r 4+ - 8 << r @ or r> ! ;
+:holefix     prog> c.pop dup >r 4+ - 8 << r@ @ or r> ! ;
 :labelfix    c.pop prog> 4 - dup @ rot prog> - 8 << or swap ! ;
 
 |--- calculo de longitud

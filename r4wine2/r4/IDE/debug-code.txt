@@ -302,8 +302,7 @@
 	;
 
 :fillb
-	framev sw sh * 
-	( 1? )( 1- 0 rot !+ swap ) 2drop ;
+	0 framev sw sh * FILL ;
 
 :debugcode
 	$111111 paper
