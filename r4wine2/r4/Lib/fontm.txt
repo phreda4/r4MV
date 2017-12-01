@@ -20,7 +20,7 @@
 	ccw ( 1? )( 1- swap dup $3 and 2 << 'acc + @ exec 2 >> swap ) 2drop ;
 
 :charm | c --
-    charlin * charrom + 
+    charlin * charrom +
 	ccx ccy setxy
 	sw ccw - 2 <<
 	cch ( 1? )( 1-
@@ -50,8 +50,7 @@
 
 
 ::fontm | 'fontm --
-	@+ dup 2 << 'charlin !
-	swap @+ rot fixsize
-	'charrom !
+	>a a@+ dup 2 << 'charlin !
+	a@+ swap fixsize
+	a> 'charrom !
 	'charm 'charsizem setfont ;
-
