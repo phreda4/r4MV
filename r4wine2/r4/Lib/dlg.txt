@@ -6,6 +6,8 @@
 ^r4/lib/cursor.txt
 ^r4/lib/fontt.txt
 ^r4/lib/color.txt
+^r4/lib/xfb.txt
+
 ^r4/lib/trace.txt
 
 |--- precalculo

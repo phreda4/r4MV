@@ -59,26 +59,26 @@
 :t000
 	pick2 pick2 pick2 ;
 :t001
-	isovec> 36 - >r
-	pick2 r@+ + pick2 r@+ + pick2 r> @ + ;
+	isovec> 36 - >a
+	pick2 a@+ + pick2 a@+ + pick2 a@ + ;
 :t010
-	isovec> 24 - >r
-	pick2 r@+ + pick2 r@+ + pick2 r> @ + ;
+	isovec> 24 - >a
+	pick2 a@+ + pick2 a@+ + pick2 a@ + ;
 :t011
-	isovec> 36 - >r
-	pick2 r@+ + r 8 + @ + pick2 r@+ + r 8 + @ + pick2 r@+ + r> 8 + @ + ;
+	isovec> 36 - >a
+	pick2 a@+ + a> 8 + @ + pick2 a@+ + a> 8 + @ + pick2 a@+ + a> 8 + @ + ;
 :t100
-	isovec> 12 - >r
-	pick2 r@+ + pick2 r@+ + pick2 r> @ + ;
+	isovec> 12 - >a
+	pick2 a@+ + pick2 a@+ + pick2 a@ + ;
 :t101
-	isovec> 36 - >r
-	pick2 r@+ + r 20 + @ + pick2 r@+ + r 20 + @ + pick2 r@+ + r> 20 + @ + ;
+	isovec> 36 - >a
+	pick2 a@+ + a> 20 + @ + pick2 a@+ + a> 20 + @ + pick2 a@+ + a> 20 + @ + ;
 :t110
-	isovec> 24 - >r
-	pick2 r@+ + r 8 + @ + pick2 r@+ + r 8 + @ + pick2 r@+ + r> 8 + @ + ;
+	isovec> 24 - >a
+	pick2 a@+ + a> 8 + @ + pick2 a@+ + a> 8 + @ + pick2 a@+ + a> 8 + @ + ;
 :t111
-	isovec> 36 - >r
-	pick2 r@+ + r 8 + @ + r 20 + @ + pick2 r@+ + r 8 + @ + r 20 + @ + pick2 r@+ + r 8 + @ + r> 20 + @ + ;
+	isovec> 36 - >a
+	pick2 a@+ + a> 8 + @ + a> 20 + @ + pick2 a@+ + a> 8 + @ + a> 20 + @ + pick2 a@+ + a> 8 + @ + a> 20 + @ + ;
 
 #lsuma t000 t001 t010 t011 t100 t101 t110 t111
 
@@ -86,37 +86,37 @@
 	2 << 'lsuma + @ exec ;
 
 :getmm | --
-	isovec> 36 - >r
-	r@+ -? ( 0 )( 0 swap ) 'xmax ! 'xmin !
-	r@+ -? ( 0 )( 0 swap ) 'ymax ! 'ymin !
-	4 r+
-	r@+ -? ( 'xmin )( 'xmax ) +!
-	r@+ -? ( 'ymin )( 'ymax ) +!
-	4 r+
-	r@+ -? ( 'xmin )( 'xmax ) +!
-	r@+ -? ( 'ymin )( 'ymax ) +!
-	rdrop ;
+	isovec> 36 - >a
+	a@+ -? ( 0 )( 0 swap ) 'xmax ! 'xmin !
+	a@+ -? ( 0 )( 0 swap ) 'ymax ! 'ymin !
+	4 a+
+	a@+ -? ( 'xmin )( 'xmax ) +!
+	a@+ -? ( 'ymin )( 'ymax ) +!
+	4 a+
+	a@+ -? ( 'xmin )( 'xmax ) +!
+	a@+ -? ( 'ymin )( 'ymax ) +!
+	;
 
 :getzm | minz
-	isovec> 28 - >r
-	r@+ 0 min 8 r+ r@+ 0 min + 8 r+ r> @ 0 min + ;
+	isovec> 28 - >a
+	a@+ 0 min 8 a+ a@+ 0 min + 8 a+ a@ 0 min + ;
 
 :getzc | minz
-	isovec> 28 - >r
-	r@+ 8 r+ r@+ + 8 r+ r> @ + 2/ ;
+	isovec> 28 - >a
+	a@+ 8 a+ a@+ + 8 a+ a@ + 2/ ;
 
 :getbbox
-	isovec> 36 - >r
-	r@+ -? ( 0 )( 0 swap ) 'xmax ! 'xmin !
-	r@+ -? ( 0 )( 0 swap ) 'ymax ! 'ymin !
-	r@+ -? ( 0 )( 0 swap ) 'zmax ! 'zmin !
-	r@+ -? ( 'xmin )( 'xmax ) +!
-	r@+ -? ( 'ymin )( 'ymax ) +!
-	r@+ -? ( 'zmin )( 'zmax ) +!
-	r@+ -? ( 'xmin )( 'xmax ) +!
-	r@+ -? ( 'ymin )( 'ymax ) +!
-	r@+ -? ( 'zmin )( 'zmax ) +!
-	rdrop ;
+	isovec> 36 - >a
+	a@+ -? ( 0 )( 0 swap ) 'xmax ! 'xmin !
+	a@+ -? ( 0 )( 0 swap ) 'ymax ! 'ymin !
+	a@+ -? ( 0 )( 0 swap ) 'zmax ! 'zmin !
+	a@+ -? ( 'xmin )( 'xmax ) +!
+	a@+ -? ( 'ymin )( 'ymax ) +!
+	a@+ -? ( 'zmin )( 'zmax ) +!
+	a@+ -? ( 'xmin )( 'xmax ) +!
+	a@+ -? ( 'ymin )( 'ymax ) +!
+	a@+ -? ( 'zmin )( 'zmax ) +!
+	;
 
 |--- draw box
 :drawbox | x y z oct --

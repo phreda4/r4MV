@@ -322,25 +322,17 @@
 
 ::drawico | c --
 	ccx ccy setxy
-|	>r r@+ dup $ff and swap 8 >> $ff and
-|	( 1? )( r@+
-|		pick2 ( 1? )( 1- swap
-|			1 and? ( ink@ a!+ )( 4 a+ )
-|			2/ swap ) 2drop
-|		sw pick2 - 2 << a+
-|		1- ) drop
-|	'ccx +!
-|	rdrop ;
 	@+ dup $ff and swap 8 >> $ff and
 	( 1? )( rot @+
 		pick3 ( 1? )( 1- swap
 			1 and? ( ink@ a!+ )( 4 a+ )
 			2/ swap ) 2drop
+		rot rot 1-
 		sw pick2 - 2 << a+
-		rot rot 1- ) drop
+		) drop
 	'ccx +!
 	drop ;
-	
+
 ::drawcico | color c --
 	ccx ccy setxy
 	@+ dup $ff and swap 8 >> $ff and
@@ -348,10 +340,11 @@
 		pick3 ( 1? )( 1- swap
 			1 and? ( pick4 a!+ )( 4 a+ )
 			2/ swap ) 2drop
+		rot rot 1-
 		sw pick2 - 2 << a+
-		rot rot 1- ) drop
+		) drop
 	'ccx +!
-	drop ;
+	2drop ;
 
 ::drawnico | c --
 	ccx ccy setxy
@@ -360,7 +353,8 @@
 		pick3 ( 1? )( 1- swap
 			1 nand? ( ink@ a!+ )( 4 a+ )
 			2/ swap ) 2drop
+		rot rot 1-
 		sw pick2 - 2 << a+
-		rot rot 1- ) drop
+		) drop
 	'ccx +!
 	drop ;

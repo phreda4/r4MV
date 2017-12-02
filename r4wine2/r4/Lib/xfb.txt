@@ -1,6 +1,8 @@
 | framebuffer secundario
 | PHREDA 2017
 |-------------------------
+^r4/lib/gui.txt
+
 #mxfb
 #s
 ::iniXFB
@@ -10,3 +12,6 @@
 ::XFB mxfb ;
 ::XFB> framev mxfb s MOVE ;
 ::>XFB mxfb framev s MOVE ;
+
+::xfb>scr
+	xfb> scr home guistart ;
