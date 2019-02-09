@@ -22,6 +22,7 @@
 // PHREDA 23/8/2008 switches
 // PHREDA 13/12/2008 fuera DLL!! version WINE
 // rest in googlecode http://code.google.com/p/reda4/
+// PHREDA 31/12/2017 0>>,FILL,CFILL,register A&B remove r!+,r@+,r+,XFB..,SETXY..
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
@@ -221,7 +222,7 @@ BYTE *RSP[1024];// 1k pila de direcciones
 BYTE ultimapalabra[]={ SISEND };
 //--- Memoria
 BYTE prog[1024*1024];// 1MB de programa
-BYTE data[1024*1024*512];// 512 MB de datos
+BYTE data[1024*1024*256];// 256 MB de datos
 
 void mimemset(char *p,char v,int c)
 {
@@ -910,7 +911,7 @@ numero=0;
 char **m=macros;
 while (**m!=0) {
   if (!strcmp(*m,p)) return 1;
-  *m++;numero++; }    
+  *m++;numero++; }
 return 0;  }
 
 int espalabra(char *p)
@@ -1042,7 +1043,7 @@ otrapalabra:
       case E_PROG: 
 		aprognro(numero);break; // compila apila numero
       };
-    }    
+    }
   else if (esmacro(palabra)==1)  // macro
     {
     switch (estado) {
@@ -1080,7 +1081,7 @@ otrapalabra:
             } else if (aux==2) { // repeticion
               aux=desapila();
               if (salto==1) { if ((aux-cntprog-1)==(char)(aux-cntprog-1)) { prog[cntprog]=aux-cntprog-1;cntprog++;salto=0; }
-                 else { sprintf(error,"bloque muy largo ");goto error; } } 
+                 else { sprintf(error,"bloque muy largo ");goto error; } }
                 else { // repeat
                   aprog(JMPR);prog[cntprog]=aux-cntprog-1;cntprog++;
                    }
@@ -1114,7 +1115,7 @@ otrapalabra:
                 else { sprintf(error,")( falta condicion");goto error; }
             } else
                 { sprintf(error,")( mal cerrado");goto error; }
-            break;               
+            break;
 		  case 4:// [ palabra anonima
 			aprog(LIT);aprogint(cntprog+4+2);
 			aprog(JMPR);apila(cntprog);apila(4);cntprog++;
@@ -1170,7 +1171,10 @@ if (fclose(stream)) return CLOSEERROR;
 return COMPILAOK;
 
 error:
-  sprintf(lineat,"%s|%d|%d|%s",name,nrolinea,ahora-lineat,error);
+  if (*name=='.')
+    sprintf(lineat,"%s%s|%d|%d|%s",path,name+1,nrolinea,ahora-lineat,error);    
+  else
+    sprintf(lineat,"%s|%d|%d|%s",name,nrolinea,ahora-lineat,error);    
   strcpy(error,lineat);
 return CODIGOERROR;
 }
@@ -1216,7 +1220,7 @@ if ((j-i)>32)
    }
 for (;i<j;i+=4)
     fprintf(stream,"%d ",*(int*)i);
-fprintf(stream,"%d )\r",e->ContextRecord->Edi);    // edi=TOS    
+fprintf(stream,"%d )\r",e->ContextRecord->Edi);    // edi=TOS
 fprintf(stream,"R: ");
 i=(int)RSP;
 j=*(int*)(e->ContextRecord->Ebp-16); // es variable local 

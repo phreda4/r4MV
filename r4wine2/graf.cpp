@@ -324,6 +324,12 @@ do { gr_pixel(gr_pos);gr_pos+=gr_ypitch; } while (gr_pos<pf);
 bool gr_clipline(int *X1,int *Y1,int *X2,int *Y2)
 {
 int C1,C2,V;
+//C1=(((*X1)>>31)&0x1)|((~(*X1-gr_ancho)>>30)&0x2)|(((*Y1)>>29)&0x4)|((~(*Y1-gr_alto+1)>>28)&0x8);
+//C2=(((*X2)>>31)&0x1)|((~(*X2-gr_ancho)>>30)&0x2)|(((*Y2)>>29)&0x4)|((~(*Y2-gr_alto+1)>>28)&0x8);
+
+C1=(((*X1)&0x10000000)|((~(*X1-gr_ancho))&0x20000000)|((*Y1)&0x40000000)|((~(*Y1-gr_alto+1))&0x80000000))>>28;
+C2=(((*X2)&0x10000000)|((~(*X2-gr_ancho))&0x20000000)|((*Y2)&0x40000000)|((~(*Y2-gr_alto+1))&0x80000000))>>28;
+/*
 if (*X1<0) C1=1; else C1=0;
 if (*X1>=gr_ancho) C1|=0x2;
 if (*Y1<0) C1|=0x4;
@@ -332,18 +338,25 @@ if (*X2<0) C2=1; else C2=0;
 if (*X2>=gr_ancho) C2|=0x2;
 if (*Y2<0) C2|=0x4;
 if (*Y2>=gr_alto-1) C2|=0x8;
+*/
 if ((C1&C2)==0 && (C1|C2)!=0) {
 	if ((C1&12)!=0) {
 		if (C1<8) V=0; else V=gr_alto-2;
 		*X1+=(V-*Y1)*(*X2-*X1)/(*Y2-*Y1);*Y1=V;
+		C1=(((*X1)>>31)&0x1)|((~(*X1-gr_ancho)>>30)&0x2);
+/*
 		if (*X1<0) C1=1; else C1=0;
 		if (*X1>=gr_ancho) C1|=0x2;
+*/
 		}
     if ((C2&12)!=0) {
 		if (C2<8) V=0; else V=gr_alto-2;
 		*X2+=(V-*Y2)*(*X2-*X1)/(*Y2-*Y1);*Y2=V;
+		C2=(((*X2)>>31)&0x1)|((~(*X2-gr_ancho)>>30)&0x2);
+/*
 		if (*X2<0) C2=1; else C2=0;
 		if (*X2>=gr_ancho) C2|=0x2;
+*/
 		}
     if ((C1&C2)==0 && (C1|C2)!=0) {
 		if (C1!=0) {
