@@ -84,7 +84,7 @@
 	mat> 4+ >a
 	dup sin swap cos
 	a@ a> 4+ @ | s c b c
-|	a @+ swap @
+|	a> @+ swap @
 	pick2 pick2 *. pick4 neg pick2 *. + a!+ | s c b c
 	pick2 *. >r pick2 *. r> + a!+ 8 a+
 	a@ a> 4+ @ | s c f g

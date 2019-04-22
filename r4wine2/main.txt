@@ -453,11 +453,6 @@
 |		$777777 ink linefill | linea abajo
 		'newfile over ":R%d" mprint sp $0f0777 flink sp
 |		">" print blanco 'padin 1024 inputcr cr cr
-		"ho" count "%d %s " print
-		"hol" count "%d %s " print
-		"hola" count "%d %s " print
-		"holam" count "%d %s " print
-
 		toolbar
 		chome!
 

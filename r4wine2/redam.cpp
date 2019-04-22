@@ -77,6 +77,13 @@ HBITMAP hBmp = 0;
 PROCESS_INFORMATION ProcessInfo; //This is what we get as an [out] parameter
 STARTUPINFO StartupInfo; //This is an [in] parameter
 
+//------------ SERIAL
+char  ComPortName[32]="COM3"; // Name of the Serial port(May Change) to be opened,
+HANDLE   m_hCom;
+DCB      m_dcb;
+COMMTIMEOUTS m_CommTimeouts;
+DWORD    iBytesRW;
+
 //------------
 static const char wndclass[] = ":r4";
 
@@ -129,6 +136,7 @@ char *macros[]={// directivas del compilador
 "DOCINI","DOCEND","DOCAT","DOCLINE","DOCTEXT","DOCFONT","DOCBIT","DOCRES","DOCSIZE", //-- impresora
 #endif
 "SYSTEM",
+"SERIALR","SERIALW",
 ""};
 
 // instrucciones de maquina (son compilables a assembler)
@@ -177,6 +185,7 @@ OPENURL,
 DOCINI,DOCEND,DOCMOVE,DOCLINE,DOCTEXT,DOCFONT,DOCBIT,DOCRES,DOCSIZE,
 #endif
 SYSTEM,
+SERIALR,SERIALW,
 ULTIMAPRIMITIVA// de aqui en mas.. apila los numeros 0..255-ULTIMAPRIMITIVA
 };
 
@@ -721,6 +730,14 @@ while (true)  {// Charles Melice  suggest next:... goto next; bye !
         StartupInfo.cb = sizeof StartupInfo ; //Only compulsory field
         TOS=CreateProcess(NULL,(char*)TOS,NULL,NULL,FALSE,CREATE_NO_WINDOW,NULL,NULL,&StartupInfo,&ProcessInfo);
         continue;
+    case SERIALR: // buff -- cnt
+         ReadFile(m_hCom,(void*)TOS,1,&iBytesRW,NULL);			
+         TOS=iBytesRW;
+         continue;         
+    case SERIALW:  // buff cnt -- cnt
+         WriteFile(m_hCom,(void*)(*NOS),TOS,&iBytesRW,NULL);
+         NOS--;TOS=iBytesRW;
+         continue;                
 	default: // completa los 8 bits con apila numeros 0...
         NOS++;*NOS=TOS;TOS=W-ULTIMAPRIMITIVA;continue;
 	} } };
@@ -1254,7 +1271,7 @@ return SHUTDOWN_NORETRY; //return EXCEPTION_CONTINUE_SEARCH;
 #endif
 
 #endif
-
+/*
 static void print_usage(void) {
   printf(":R4 console\n"
   "  c<CODIGO> compile\n"
@@ -1266,7 +1283,7 @@ static void print_usage(void) {
   "  s without screen\n"
   "  ? help\n" , "r4");
 }
-
+*/
 //char *NDEBUG="debug.txt";
 char *DEBUGR4X="debug.r4x";
 
@@ -1326,7 +1343,8 @@ while (*aa!=0) {
       if ('f'==*aa) { w=devmodo.dmPelsWidth;h=devmodo.dmPelsHeight;noborde=1; }
       if ('s'==*aa) { silent=1; }
       if ('p'==*aa) { strcpy(printername,(aa+1)); } // pPrimo PDF
-      if ('?'==*aa) { print_usage();return 0; }
+      if ('r'==*aa) { esnumero(aa+1);sprintf(ComPortName,"com%d",numero); }
+//    if ('?'==*aa) { print_usage();return 0; }
       while (*aa!=32&&*aa!=0) aa++;
       if (32==*aa) *aa=0;
       aa++; }
@@ -1375,6 +1393,30 @@ InitJoystick(hWnd);
 #else
     if (sound_open(hWnd)!=0) return -4;
 #endif
+
+//----------------------------------- serial
+#ifdef LOGMEM
+ldebug("**");
+ldebug(ComPortName);
+ldebug("**");
+#endif
+m_hCom = CreateFile(ComPortName,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+//m_hCom = CreateFile("com3",GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+SetupComm(m_hCom,128,128);
+GetCommState(m_hCom, &m_dcb);
+m_dcb.BaudRate= 9600;
+m_dcb.ByteSize = 8;
+m_dcb.Parity = NOPARITY;
+m_dcb.StopBits = ONESTOPBIT;
+m_dcb.fAbortOnError = TRUE;
+SetCommState(m_hCom, &m_dcb);
+GetCommTimeouts(m_hCom, &m_CommTimeouts);
+m_CommTimeouts.ReadIntervalTimeout = 0;
+m_CommTimeouts.ReadTotalTimeoutConstant = 0;
+m_CommTimeouts.ReadTotalTimeoutMultiplier = 1;
+m_CommTimeouts.WriteTotalTimeoutConstant = 0;
+m_CommTimeouts.WriteTotalTimeoutMultiplier = 1;
+SetCommTimeouts(m_hCom, &m_CommTimeouts);
 
 //--------------------------------------------------------------------------
 recompila:
@@ -1486,6 +1528,8 @@ if (rebotea==1)  {
    DestroyWindow(hWnd);
    goto reboot;
    }
+
+CloseHandle(m_hCom);//Closing the Serial Port
 
 ReleaseDC(hWnd,hDC);
 DestroyWindow(hWnd);

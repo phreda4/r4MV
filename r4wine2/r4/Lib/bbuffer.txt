@@ -91,15 +91,15 @@
 	;
 
 :oneword | nro --
-	0? ( 32 a+ drop ; )
+	0? ( 128 a+ drop ; )
 	-1 =? ( 32 ( 1? )( ink@ a!+ 1- ) 2drop ; )
 	proc8 8 >> proc8 8 >> proc8 8 >> proc8 drop ;
 
 :maskfpxl | x1 y x2 --
 	pick2 $ffffffe0 and pick2 setxy 		| x y x2
-	pick2 5 >> rot bbw * + 2 << bb + >a	| x x2
+	pick2 5 >> rot bbw * + 2 << bb + >b	| x x2
 	gmask1 swap gmask2 and
-	a@ 2dup and oneword swap not and a! ;
+	b@ 2dup and oneword swap not and b! ;
 
 ::maskfpx | x y x --
 	dup 5 >> pick3 5 >> -
